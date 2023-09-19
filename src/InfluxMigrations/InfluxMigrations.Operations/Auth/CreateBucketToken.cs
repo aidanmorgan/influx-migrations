@@ -22,8 +22,6 @@ public class CreateBucketToken : IMigrationOperation
     public IResolvable<string?>? TokenDescription { get; set; }
     public List<IResolvable<string?>> Permissions { get; set; } = new List<IResolvable<string?>>();
     
-    private IInfluxDBClient Influx => _context.MigrationExecutionContext.EnvironmentContext.Influx;
-
     public CreateBucketToken(IOperationExecutionContext context)
     {
         _context = context;
@@ -51,7 +49,7 @@ public class CreateBucketToken : IMigrationOperation
 
         Authorization auth = null;
 
-        var bucket = await Influx.GetBucketsApi().FindBucketByIdAsync(bucketId);
+        var bucket = await _context.Influx.GetBucketsApi().FindBucketByIdAsync(bucketId);
         
         var actionEnums = Permissions.Select(x => x.Resolve(_context)).Select(x => _actionEnums[x])
             .ToList();
@@ -61,7 +59,7 @@ public class CreateBucketToken : IMigrationOperation
         if (userId != null)
         {
             
-            auth = await Influx.GetAuthorizationsApi().CreateAuthorizationAsync(
+            auth = await _context.Influx.GetAuthorizationsApi().CreateAuthorizationAsync(
                 new AuthorizationPostRequest(
                     bucket.OrgID,
                     userId,
@@ -79,7 +77,7 @@ public class CreateBucketToken : IMigrationOperation
         }
         else
         {
-            auth = await Influx.GetAuthorizationsApi().CreateAuthorizationAsync(
+            auth = await _context.Influx.GetAuthorizationsApi().CreateAuthorizationAsync(
                 bucket.OrgID,
                 actionEnums.Select(x => new Permission(x, 
                     new PermissionResource()
