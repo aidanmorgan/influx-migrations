@@ -1,10 +1,10 @@
 ﻿namespace InfluxMigrations.Yaml;
 
-public class YamlOutputParserAttribute : Attribute
+public class YamlTaskParserAttribute : Attribute
 {
     public string Keyword { get; private set; }
 
-    public YamlOutputParserAttribute(string keyword)
+    public YamlTaskParserAttribute(string keyword)
     {
         Keyword = keyword;
     }

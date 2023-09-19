@@ -4,7 +4,7 @@ using YamlDotNet.RepresentationModel;
 
 namespace InfluxMigrations.Yaml.Output;
 
-[YamlOutputParser("echo")]
+[YamlTaskParser("echo")]
 public class EchoTaskParser : IYamlTaskParser
 {
     public IMigrationTaskBuilder Parse(YamlMappingNode node)

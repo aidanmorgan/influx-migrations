@@ -4,7 +4,7 @@ using YamlDotNet.RepresentationModel;
 
 namespace InfluxMigrations.Yaml.Output;
 
-[YamlOutputParser("set")]
+[YamlTaskParser("set")]
 public class SetVariableTaskParser : IYamlTaskParser
 {
     public IMigrationTaskBuilder Parse(YamlMappingNode node)

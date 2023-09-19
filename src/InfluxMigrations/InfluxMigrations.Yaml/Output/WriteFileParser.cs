@@ -4,7 +4,7 @@ using YamlDotNet.RepresentationModel;
 
 namespace InfluxMigrations.Yaml.Output;
 
-[YamlOutputParser("file")]
+[YamlTaskParser("file")]
 public class WriteFileParser : IYamlTaskParser
 {
     public IMigrationTaskBuilder Parse(YamlMappingNode node)

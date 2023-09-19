@@ -39,7 +39,7 @@ public class YamlMigrationParser
             LoadPluggableBuilders(typeof(YamlOperationParserAttribute), typeof(IYamlOperationParser), (x) => ((YamlOperationParserAttribute)x).Keyword)
                 .ForEach(x => _parseableOperations[x.Item1] = x.Item2);
             
-            LoadPluggableBuilders(typeof(YamlOutputParserAttribute), typeof(IYamlTaskParser), (x) => ((YamlOutputParserAttribute)x).Keyword)
+            LoadPluggableBuilders(typeof(YamlTaskParserAttribute), typeof(IYamlTaskParser), (x) => ((YamlTaskParserAttribute)x).Keyword)
                 .ForEach(x => _outputs[x.Item1] = x.Item2);
     }
     
