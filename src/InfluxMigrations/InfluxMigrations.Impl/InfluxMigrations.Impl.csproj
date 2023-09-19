@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net7.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\InfluxMigrations.Core\InfluxMigrations.Core.csproj" />
+      <ProjectReference Include="..\InfluxMigrations.Yaml\InfluxMigrations.Yaml.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Pastel" Version="4.1.0" />
+    </ItemGroup>
+
+</Project>

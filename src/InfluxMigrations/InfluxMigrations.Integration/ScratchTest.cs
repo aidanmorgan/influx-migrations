@@ -1,0 +1,121 @@
+﻿using InfluxDB.Client;
+using InfluxMigrations.Commands.Auth;
+using InfluxMigrations.Commands.Bucket;
+using InfluxMigrations.Commands.Organisation;
+using InfluxMigrations.Commands.User;
+using InfluxMigrations.Core;
+using InfluxMigrations.Impl;
+using InfluxMigrations.IntegrationCommon;
+using InfluxMigrations.Outputs;
+
+namespace InfluxMigrations.IntegrationTests;
+
+public class ScratchTest
+{
+    private InfluxFixture _influxFixture;
+    private IInfluxFactory _influx;
+    private Random _random;
+
+    [SetUp]
+    public async Task SetUp()
+    {
+        _influxFixture = new InfluxFixture();
+        _influx = await _influxFixture.Setup();
+        
+        _random = new Random();
+    }
+
+    [TearDown]
+    public async Task TearDown()
+    {
+        await _influxFixture.TearDown();
+    }
+
+
+    [Test]
+    public async Task ChainTest()
+    {
+        var organisationName = _random.RandomString(16);
+        var randomBucketNames = new List<string>
+        {
+            _random.RandomString(16),
+            _random.RandomString(16),
+            _random.RandomString(16)
+        };
+
+        var randomUserNames = new List<string>
+        {
+            _random.RandomString(16),
+            _random.RandomString(16),
+            _random.RandomString(16)
+        };
+        
+        var environment = new DefaultEnvironmentContext(_influx, new TextWriterMigrationLoggerFactory(Console.Out));
+
+        CaptureResultBuilder createdUserResult = new CaptureResultBuilder();
+
+        var migration = new Migration("0001");
+        migration.AddUp("create-organisation", new CreateOrganisationBuilder().WithName(organisationName));
+        migration.AddUp("create-bucket-1", new CreateBucketBuilder()
+            .WithOrganisation(organisationName)
+            .WithBucketName(randomBucketNames[0]));
+        migration.AddUp("create-user1", new CreateUserBuilder()
+            .WithUsername(randomUserNames[0])
+            .WithPassword("p@ssw0rd"));
+        migration.AddUp("add-user1-to-organisation", new AddUserToOrganisationBuilder()
+            .WithOrganisationId("${step:create-organisation:${result:id}}")
+            .WithUserId("${step:create-user1:${result:id}}"));
+        migration.AddUp("assign-testuser1-test-bucket-1", new CreateBucketTokenBuilder()
+            .WithBucketId("${step:create-bucket-1:${result:id}}")
+            .WithUserId("${step:create-user1:${result:id}}")
+            .WithPermission("read"));
+        
+        migration.AddUp("create-bucket-2", new CreateBucketBuilder()
+            .WithOrganisation(organisationName)
+            .WithBucketName(randomBucketNames[1]));
+        migration.AddUp("create-user2", new CreateUserBuilder()
+            .WithUsername(randomUserNames[1])
+            .WithPassword("p@ssw0rd"));
+        migration.AddUp("add-user2-to-organisation", new AddUserToOrganisationBuilder()
+            .WithOrganisationId("${step:create-organisation:${result:id}}")
+            .WithUserId("${step:create-user2:${result:id}}"));
+        migration.AddUp("assign-testuser2-test-bucket-2", new CreateBucketTokenBuilder()
+            .WithBucketId("${step:create-bucket-2:${result:id}}")
+            .WithUserId("${step:create-user2:${result:id}}")
+            .WithPermission("read"));
+
+        
+        migration.AddUp("create-bucket-3", new CreateBucketBuilder()
+            .WithOrganisation(organisationName)
+            .WithBucketName(randomBucketNames[2]));
+        migration.AddUp("create-user3", new CreateUserBuilder()
+            .WithUsername(randomUserNames[2])
+            .WithPassword("p@ssw0rd"));
+        migration.AddUp("add-user3-to-organisation", new AddUserToOrganisationBuilder()
+            .WithOrganisationId("${step:create-organisation:${result:id}}")
+            .WithUserId("${step:create-user3:${result:id}}"));
+        migration.AddUp("assign-testuser3-test-bucket-3", new CreateBucketTokenBuilder()
+            .WithBucketId("${step:create-bucket-3:${result:id}}")
+            .WithUserId("${step:create-user3:${result:id}}")
+            .WithPermission("read"));
+
+//        migration.AddUp("force-fail", new ForceErrorBuilder().ErrorExecute());
+
+        var echoTask = new EchoTaskBuilder();
+        migration.AddOutput(echoTask
+            .WithString(
+                "Username: ${step:create-user1:${result:name}} Bucket: ${step:create-bucket-1:${result:name}} Token: ${step:assign-testuser1-test-bucket-1:${result:token}}")
+            .WithString(
+                "Username: ${step:create-user2:${result:name}} Bucket: ${step:create-bucket-2:${result:name}} Token: ${step:assign-testuser2-test-bucket-2:${result:token}}")
+            .WithString(
+                "Username: ${step:create-user3:${result:name}} Bucket: ${step:create-bucket-3:${result:name}} Token: ${step:assign-testuser3-test-bucket-3:${result:token}}"));
+        
+
+        var result = await migration.ExecuteAsync(environment, MigrationDirection.Up);
+        
+        Assert.That(result.Success, Is.EqualTo(true));
+        Assert.That(result.Inconsistent, Is.EqualTo(false));
+        Assert.That(result.Issues.Count, Is.EqualTo(0));
+        
+    }
+}

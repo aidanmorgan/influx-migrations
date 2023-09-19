@@ -1,0 +1,47 @@
+migration:
+  version: 00001
+  up:      
+  - operation: create-bucket
+    id: step1
+    name: test-bucket-1
+    organisation: test-organisation
+    retention: 5d
+    tasks:
+    - task: set
+      expr: other_variable_name=${result:bucketid}
+      scope: Migration
+    - task: set
+      expr: local_variable_name=${result:bucketid}
+      scope: Local
+    - task: file
+      file: step1.txt
+      content: Created ${result:bucketid} with ${other_variable_name}
+    - task: echo
+      expr: 
+      - "All should be the same value:"
+      - ${migration:other_variable_name}
+      - ${local_variable_name}
+      - ${result:bucketid}
+      - "----"
+  - operation: create-bucket
+    name: test-bucket-2
+    id: step2
+    organisation: test-organisation
+    retention: 10d
+    tasks:
+    - task: set
+      expr: key_name = local_variable_name
+      scope: Local
+    - task: echo
+      expr: Hello ${migration:other_variable_name} i like cheese
+    - task: file
+      file: step2.txt
+      content: 
+      - "New Bucket Id : ${result:bucketid}"
+      - "THE FOLLOWING FOUR VALUES SHOULD ALL BE THE SAME VALUE"
+      - "1: ${step:step1:${result:bucketid}}"
+      - "2: ${step:step1:${local_variable_name}}"
+      - "3: ${migration:other_variable_name}"
+      - "4: ${step:step1:${${step:step2:${key_name}}}}"
+  
+  

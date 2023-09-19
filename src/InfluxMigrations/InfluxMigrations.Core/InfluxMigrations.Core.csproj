@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net7.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+
+    <ItemGroup>
+      <PackageReference Include="Flurl.Http" Version="4.0.0-pre3" />
+      <PackageReference Include="InfluxDB.Client" Version="4.14.0-dev.11972" />
+    </ItemGroup>
+
+
+
+
+
+
+
+</Project>

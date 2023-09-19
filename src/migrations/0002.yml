@@ -1,0 +1,13 @@
+﻿migration:
+  version: 0002
+  up:
+    - operation: create-bucket
+      name: test-bucket1
+      organisation: test-organisation
+    - operation: create-bucket
+      name: test-bucket2
+      organisation: test-organisation
+  down:
+    - operation: delete-bucket
+      name: test-bucket
+    

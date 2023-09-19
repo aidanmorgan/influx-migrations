@@ -1,0 +1,2 @@
+﻿namespace InfluxMigrations.Core;
+
