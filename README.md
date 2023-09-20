@@ -32,13 +32,13 @@ Resolvable values include the following:
 
 | Function                                            | Format                          | Example                          |
 |-----------------------------------------------------|---------------------------------|----------------------------------|
-| Value from an execute phase                         | ${result:<>}              | ```${result:id}```               |
-| Value from a commit phase                           | ${commit:<>}              | ```${commit:id}```               |
-| Value from a rollback phase                         | ${rollback:<>}            | ```${rollback:id}```               |
-| Value from the environment where migrations are run | ${env:<>}                 | ```${env:INFLUX_TOKEN}```              |
-| Value from the migration itself                     | ${migration:<>}           | ```${migration:BUCKET_NAME}```         |
-| Value from the migration operation/task itself      | ${local:<>}               | ```${local:BUCKET_NAME}```             |
-| Current time (UTC in UNIX Milliseconds)             | ${now}                          | ```${now}```                           |
+| Value from an execute phase                         | ```${result:<>}```              | ```${result:id}```               |
+| Value from a commit phase                           | ```${commit:<>}```              | ```${commit:id}```               |
+| Value from a rollback phase                         | ```${rollback:<>}```            | ```${rollback:id}```               |
+| Value from the environment where migrations are run | ```${env:<>}```                 | ```${env:INFLUX_TOKEN}```              |
+| Value from the migration itself                     | ```${migration:<>}```           | ```${migration:BUCKET_NAME}```         |
+| Value from the migration operation/task itself      | ```${local:<>}```               | ```${local:BUCKET_NAME}```             |
+| Current time (UTC in UNIX Milliseconds)             | ```${now}```                          | ```${now}```                           |
 | Value from a previous step                          | ```${step:<>:<>}``` | ```${step:step1:${result:bucketid}}``` |
 
 
