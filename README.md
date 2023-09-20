@@ -46,9 +46,9 @@ All operations and tasks support the ability to reference values from elsewhere 
 
 | Function                                            | Format                          | Example                          |
 |-----------------------------------------------------|---------------------------------|----------------------------------|
-| Value from an execute phase                         | ${result:<>}              | ${result.id}               |
-| Value from a commit phase                           | ${commit:<>}              | ${commit.id}               |
-| Value from a rollback phase                         | ${rollback:<>}            | ${rollback.id}               |
+| Value from an execute phase                         | ${result:<>}              | ${result:id}               |
+| Value from a commit phase                           | ${commit:<>}              | ${commit:id}               |
+| Value from a rollback phase                         | ${rollback:<>}            | ${rollback:id}               |
 | Value from the environment where migrations are run | ${env:<>}                 | ${env:INFLUX_TOKEN}              |
 | Value from the migration itself                     | ${migration:<>}           | ${migration:BUCKET_NAME}         |
 | Value from the migration operation/task itself      | ${local:<>}               | ${local:BUCKET_NAME}             |
