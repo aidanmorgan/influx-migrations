@@ -5,15 +5,15 @@ namespace InfluxMigrations.Yaml;
 
 public class YamlMigrationParser
 {
-    private static IDictionary<string, Type> _parseableOperations = new Dictionary<string, Type>();
-    private static IDictionary<string, Type> _outputs = new Dictionary<string, Type>();
-    
+    private static readonly IDictionary<string, Type> ParseableOperations = new Dictionary<string, Type>();
+    private static readonly IDictionary<string, Type> Outputs = new Dictionary<string, Type>();
+
     public YamlMigrationParser()
     {
-        
     }
 
-    private static List<Tuple<string, Type>> LoadPluggableBuilders(Type attributeType, Type interfaceType, Func<object, string> keywordExtractor)
+    private static List<Tuple<string, Type>> LoadPluggableBuilders(Type attributeType, Type interfaceType,
+        Func<object, string> keywordExtractor)
     {
         return AppDomain.CurrentDomain
             .GetAssemblies()
@@ -33,24 +33,26 @@ public class YamlMigrationParser
             .Where(x => x != null)
             .ToList()!;
     }
-    
+
     static YamlMigrationParser()
     {
-            LoadPluggableBuilders(typeof(YamlOperationParserAttribute), typeof(IYamlOperationParser), (x) => ((YamlOperationParserAttribute)x).Keyword)
-                .ForEach(x => _parseableOperations[x.Item1] = x.Item2);
-            
-            LoadPluggableBuilders(typeof(YamlTaskParserAttribute), typeof(IYamlTaskParser), (x) => ((YamlTaskParserAttribute)x).Keyword)
-                .ForEach(x => _outputs[x.Item1] = x.Item2);
+        LoadPluggableBuilders(typeof(YamlOperationParserAttribute), typeof(IYamlOperationParser),
+                (x) => ((YamlOperationParserAttribute)x).Keyword)
+            .ForEach(x => ParseableOperations[x.Item1] = x.Item2);
+
+        LoadPluggableBuilders(typeof(YamlTaskParserAttribute), typeof(IYamlTaskParser),
+                (x) => ((YamlTaskParserAttribute)x).Keyword)
+            .ForEach(x => Outputs[x.Item1] = x.Item2);
     }
-    
-    
-    public async Task<Migration> ParseFile(string inputFile)
+
+
+    public async Task<IMigration> ParseFile(string inputFile)
     {
         using var file = new StreamReader(File.OpenRead(inputFile));
         return await ParseString(await file.ReadToEndAsync());
     }
 
-    public async Task<Migration> ParseString(string content)
+    public async Task<IMigration> ParseString(string content, Func<string, IMigration>? migrationFactory = null)
     {
         var stream = new YamlStream();
         stream.Load(new StringReader(content));
@@ -61,119 +63,127 @@ public class YamlMigrationParser
             throw new YamlMigrationParsingException();
         }
 
-        var migration = new Migration();
-        if (root.ContainsKey("version"))
+        var version = string.Empty;
+        root.Value("version", (x) =>
         {
-            migration.Version = ((YamlScalarNode)root["version"]).Value ?? string.Empty;
-        }
+            version = x;
+        });
 
-        if (root.ContainsKey("up"))
+        
+        var migration = migrationFactory != null ? migrationFactory(version) : new Migration()
         {
-            var upOperations = ((YamlSequenceNode)root["up"]);
-            foreach (var taskNode in upOperations)
-            {
-                ParseOperation(taskNode, (a, b) => migration.AddUp(a, b));
-            }
-        }
+            Version = version
+        };
 
-        if (root.ContainsKey("down"))
-        {
-            var downOperations = ((YamlSequenceNode)root["down"]);
-            foreach (var taskNode in downOperations)
+        root.ForEach("up", (x) => { x.
+            ForEach((y) =>
             {
-                ParseOperation(taskNode, (a, b) => migration.AddDown(a, b));
-            }
-        }
+                ParseOperation(y, (a, b) => migration.AddUp(a, b));
+            }); 
+        });
+        
+        root.ForEach("down", 
+            (x) => { x.ForEach((y) =>
+            {
+                ParseOperation(y, (a, b) => migration.AddDown(a, b));
+            }); 
+        });
+        
+        root.ForEach("tasks", (x) =>
+        {
+            x.ForEach((y) =>
+            {
+                var outputKey = x.GetStringValue("task");
+
+                if (!Outputs.ContainsKey(outputKey))
+                {
+                    throw new YamlMigrationParsingException($"Cannot find parser for output type {outputKey}");
+                }
+
+                var taskParser = (IYamlTaskParser?)Activator.CreateInstance(Outputs[outputKey]);
+                var taskBuilder = taskParser?.Parse((YamlMappingNode)x);
+
+                if (taskBuilder != null)
+                {
+                    migration.AddTask(taskBuilder);
+                }
+            });
+        });
 
         return migration;
     }
 
-    private void ParseOperation(YamlNode operationNode, Func<string, IMigrationOperationBuilder, MigrationOperationInstance> _addCallback )
+    private void ParseOperation(YamlNode operationNode, Func<string, IMigrationOperationBuilder, MigrationOperationInstance> addCallback)
     {
-            var operationKey = ((YamlScalarNode)operationNode["operation"]).Value;
+        var operationKey = operationNode.GetStringValue("operation");
+        if (!ParseableOperations.ContainsKey(operationKey))
+        {
+            throw new YamlMigrationParsingException($"Could not find parser for operation {operationKey}");
+        }
 
-            if (!_parseableOperations.ContainsKey(operationKey))
+        var id = Guid.NewGuid().ToString();
+        operationNode.Value("id", (x) =>
+        {
+            id = x;
+        });
+
+        var commandParser = (IYamlOperationParser?)Activator.CreateInstance(ParseableOperations[operationKey]);
+        var commandBuilder = commandParser?.Parse((YamlMappingNode)operationNode);
+
+        if (commandBuilder == null)
+        {
+            return;
+        }
+
+        var operation = addCallback(id, commandBuilder);
+
+        operationNode.ForEach("tasks", (x) =>
+        {
+            var outputKey = x.GetStringValue("task");
+            if (!Outputs.ContainsKey(outputKey))
             {
-                throw new YamlMigrationParsingException($"Could not find parser for operation {operationKey}");
+                throw new YamlMigrationParsingException($"Cannot find parser for output type {outputKey}");
             }
 
-            var id = Guid.NewGuid().ToString();
-            if (operationNode.ContainsKey("id"))
-            {
-                id = ((YamlScalarNode)operationNode["id"]).Value!;
-            }
+            var taskParser = (IYamlTaskParser?)Activator.CreateInstance(Outputs[outputKey]);
+            var taskBuilder = taskParser?.Parse((YamlMappingNode)x);
 
-            var commandParser = (IYamlOperationParser)Activator.CreateInstance(_parseableOperations[operationKey]);
-            var commandBuilder = commandParser.Parse((YamlMappingNode)operationNode);
-
-            var operation = _addCallback(id, commandBuilder);
-
-            if (!operationNode.ContainsKey("tasks"))
+            if (taskBuilder == null)
             {
                 return;
             }
-            else
+
+            var phased = x.ForEach("phases", (x) =>
             {
-                var tasksNode = ((YamlSequenceNode)operationNode["tasks"]);
-                
-                foreach (var output in tasksNode.Children)
+                switch (x.GetStringValue())
                 {
-                    var outputKey = ((YamlScalarNode)((YamlMappingNode)output)["task"]).Value;
+                    case "execute":
+                        operation.AddExecuteTask(taskBuilder);
+                        break;
 
-                    if (!_outputs.ContainsKey(outputKey))
+                    case "commit":
                     {
-                        throw new YamlMigrationParsingException($"Cannot find parser for output type {outputKey}");
+                        operation.AddCommitTask(taskBuilder);
+                        break;
                     }
-                    
-                    var outputParser = (IYamlTaskParser)Activator.CreateInstance(_outputs[outputKey]);
-                    var outputBuilder = outputParser.Parse((YamlMappingNode)output);
 
-                    if (output.ContainsKey("phases"))
+                    case "rollback":
                     {
-                        foreach (var phase in ((YamlSequenceNode)output["phases"]))
-                        {
-                            switch (((YamlScalarNode)phase).Value)
-                            {
-                                case  "execute":
-                                    operation.AddExecuteTask(outputBuilder);
-                                    break;
-
-                                case "commit":
-                                {
-                                    operation.AddCommitTask(outputBuilder);
-                                    break;
-                                }
-
-                                case "rollback":
-                                {
-                                    operation.AddRollbackTask(outputBuilder);
-                                    break;
-                                }
-                            }
-                        }
+                        operation.AddRollbackTask(taskBuilder);
+                        break;
                     }
-                    else
+
+                    default:
                     {
-                        // we assume if no phases are specified then it's an execute output task
-                        operation.AddExecuteTask(outputBuilder);
+                        break;
                     }
                 }
-            }
-    }
-}
+            });
 
-public static class YamlNodeExtensions
-{
-    public static bool ContainsKey(this YamlNode node, string name)
-    {
-        try
-        {
-            var result = node[name];
-            return true;
-        }
-        catch (Exception x)
-        {
-            return false;
-        }
+            if (!phased)
+            {
+                operation.AddExecuteTask(taskBuilder);
+            }
+        });
     }
 }

@@ -39,11 +39,11 @@ public class EchoTask : IMigrationTask
 
 public class EchoTaskBuilder : IMigrationTaskBuilder
 {
-    private readonly List<string> _resolvables = new List<string>();
+    public List<string> Lines { get; private set; }= new List<string>();
 
     public EchoTaskBuilder WithString(string val)
     {
-        _resolvables.Add(val);
+        Lines.Add(val);
         return this;
     }
     
@@ -51,7 +51,7 @@ public class EchoTaskBuilder : IMigrationTaskBuilder
     {
         return new EchoTask()
         {
-            Values = _resolvables.Select(StringResolvable.Parse).ToList(),
+            Values = Lines.Select(StringResolvable.Parse).ToList(),
         };
     }
 }

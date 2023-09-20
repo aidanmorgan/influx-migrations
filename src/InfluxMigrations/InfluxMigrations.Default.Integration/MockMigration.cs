@@ -4,8 +4,16 @@ namespace InfluxMigrations.Default.Integration;
 
 public class MockMigration : IMigration
 {
-    public string Version { get; private set; }
+    public string Version { get; set; }
     private MigrationResult? _result;
+
+    public List<MigrationOperationInstance> UpOperations { get; private set; } = 
+        new List<MigrationOperationInstance>();
+
+    public List<MigrationOperationInstance> DownOperations { get; private set; } =
+        new List<MigrationOperationInstance>();
+    public List<IMigrationTaskBuilder> Tasks { get; private set; } = 
+        new List<IMigrationTaskBuilder>();
     
     public MigrationDirection Direction { get; private set; }
 
@@ -27,12 +35,16 @@ public class MockMigration : IMigration
     
     public MigrationOperationInstance AddUp(string id, IMigrationOperationBuilder operation)
     {
-        throw new NotImplementedException();
+        var entry = new MigrationOperationInstance(id, operation);
+        UpOperations.Add(entry);
+        return entry;
     }
 
     public MigrationOperationInstance AddDown(string id, IMigrationOperationBuilder operation)
     {
-        throw new NotImplementedException();
+        var entry = new MigrationOperationInstance(id, operation);
+        DownOperations.Add(entry);
+        return entry;
     }
 
     public Task<MigrationResult> ExecuteAsync(IMigrationEnvironmentContext env, MigrationDirection direction, MigrationOptions? opts = null)
@@ -43,8 +55,9 @@ public class MockMigration : IMigration
         return Task.FromResult(_result);
     }
 
-    public Migration AddOutput(IMigrationTaskBuilder task)
+    public IMigration AddTask(IMigrationTaskBuilder task)
     {
-        throw new NotImplementedException();
+        Tasks.Add(task);
+        return this;
     }
 }

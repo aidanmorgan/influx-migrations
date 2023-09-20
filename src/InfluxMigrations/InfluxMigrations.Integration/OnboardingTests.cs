@@ -91,7 +91,7 @@ public class OnboardingTests
             new CreateBucketBuilder()
                 .WithBucketName(_random.RandomString(8))
                 .WithOrganisation(org));
-        migration.AddOutput(new EchoTaskBuilder().WithString("Admin token: ${env:admin_token}"));
+        migration.AddTask(new EchoTaskBuilder().WithString("Admin token: ${env:admin_token}"));
 
         var result = await migration.ExecuteAsync(new DefaultEnvironmentContext(_influx).Set("admin_token", token), MigrationDirection.Up);
         

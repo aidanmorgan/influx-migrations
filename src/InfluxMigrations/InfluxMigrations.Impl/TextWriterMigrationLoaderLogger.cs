@@ -19,7 +19,7 @@ public class TextWriterMigrationLoaderLogger : IMigrationLoaderLogger
         _stream.WriteLine($"{exception.StackTrace}".Pastel(ConsoleColor.Red));
     }
 
-    public void FoundMigration(string file, Migration x)
+    public void FoundMigration(string file, IMigration x)
     {
        _stream.WriteLine($"Found migration: {x.Version} in {file}");
     }

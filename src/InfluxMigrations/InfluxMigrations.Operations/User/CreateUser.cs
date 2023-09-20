@@ -86,34 +86,34 @@ public class CreateUserResult : IExecuteResult
 
 public class CreateUserBuilder : IMigrationOperationBuilder
 {
-    private string _username;
-    private string _password;
+    public string UserName { get; private set; }
+    public string Password { get; private set; }
 
     private readonly List<IMigrationTaskBuilder> _output = new List<IMigrationTaskBuilder>();
     
     public IMigrationOperation Build(IOperationExecutionContext context)
     {
-        if (string.IsNullOrEmpty(_username))
+        if (string.IsNullOrEmpty(UserName))
         {
             throw new MigrationOperationBuildingException("No Username specified.");
         }
         
         return new CreateUser(context)
         {
-            Username = StringResolvable.Parse(_username),
-            Password = StringResolvable.Parse(_password)
+            Username = StringResolvable.Parse(UserName),
+            Password = StringResolvable.Parse(Password)
         };
     }
 
     public CreateUserBuilder WithUsername(string username)
     {
-        this._username = username;
+        this.UserName = username;
         return this;
     }
 
     public CreateUserBuilder WithPassword(string password)
     {
-        this._password = password;
+        this.Password = password;
         return this;
     }
 }

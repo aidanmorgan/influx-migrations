@@ -9,20 +9,33 @@ public class OnboardingParser : IYamlOperationParser
 {
     public IMigrationOperationBuilder Parse(YamlMappingNode node)
     {
-        var org = ((YamlScalarNode)node["organisation"]).Value;
-        var token = ((YamlScalarNode)node["token"]).Value;
-        var bucket = ((YamlScalarNode)node["bucket"]).Value;
-        var username = ((YamlScalarNode)node["username"]).Value;
-        var password = ((YamlScalarNode)node["password"]).Value;
+        var builder = new OnboardingBuilder();
+
+        node.Value(CommonTags.OrganisationName, (x) =>
+        {
+            builder.WithOrganisation(x);
+        });
+
+        node.Value("token", (x) =>
+        {
+            builder.WithAdminToken(x);
+        });
+
+        node.Value(CommonTags.BucketName, (x) =>
+        {
+            builder.WithBucket(x);
+        });
+
+        node.Value(CommonTags.UserName, (x) =>
+        {
+            builder.WithUsername(x);
+        });
         
-        
-        
-        var result = new OnboardingBuilder()
-            .WithBucket(bucket)
-            .WithOrganisation(org)
-            .WithAdminToken(token)
-            .WithUsername(username)
-            .WithPassword(password);
-        return result;
+        node.Value("password", (x) =>
+        {
+            builder.WithPassword(x);
+        });
+
+        return builder;
     }
 }

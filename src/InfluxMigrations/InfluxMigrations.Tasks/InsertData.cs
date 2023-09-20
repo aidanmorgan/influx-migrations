@@ -90,46 +90,45 @@ public class InsertData : IMigrationTask
 
 public class InsertDataBuilder : IMigrationTaskBuilder
 {
-    private List<string> _lines = new List<string>();
-    private string _bucketId;
-    private string _bucketName;
-
-    private string _organisationId;
-    private string _organisationName;
+    public List<string> Lines { get; private set; } = new List<string>();
+    public string BucketId { get; private set; }
+    public string BucketName { get; private set; }
+    public string OrganisationId { get; private set; }
+    public string OrganisationName { get; private set; }
 
     public InsertDataBuilder WithBucketId(string id)
     {
-        this._bucketId = id;
+        this.BucketId = id;
         return this;
     }
 
     public InsertDataBuilder WithBucketName(string id)
     {
-        this._bucketName = id;
+        this.BucketName = id;
         return this;
     }
 
     public InsertDataBuilder WithOrganisationId(string id)
     {
-        this._organisationId = id;
+        this.OrganisationId = id;
         return this;
     }
 
     public InsertDataBuilder WithOrganisationName(string name)
     {
-        this._organisationName = name;
+        this.OrganisationName = name;
         return this;
     }
 
     public InsertDataBuilder AddLine(string line)
     {
-        this._lines.Add(line);
+        this.Lines.Add(line);
         return this;
     }
 
     public InsertDataBuilder AddLines(List<string> lines)
     {
-        this._lines.AddRange(lines);
+        this.Lines.AddRange(lines);
         return this;
     }
     
@@ -137,13 +136,13 @@ public class InsertDataBuilder : IMigrationTaskBuilder
     {
         return new InsertData()
             {
-                Data = _lines.Select(StringResolvable.Parse).ToList(),
+                Data = Lines.Select(StringResolvable.Parse).ToList(),
                 WritePrecision = WritePrecision.Ms
             }
             .Initialise(x =>
             {
-                x.Bucket.WithName(_bucketName).WithId(_bucketId);
-                x.Organisation.WithName(_organisationName).WithId(_organisationId);
+                x.Bucket.WithName(BucketName).WithId(BucketId);
+                x.Organisation.WithName(OrganisationName).WithId(OrganisationId);
             });
     }
 }

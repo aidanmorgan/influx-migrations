@@ -20,7 +20,7 @@ public class DefaultMigrationLoaderOptions : IMigrationLoaderServiceOptions
 
     private static YamlMigrationParser _parser = new YamlMigrationParser();
 
-    public Func<string, Task<Migration>> Parse { get; init; } = (x) => _parser.ParseFile(x);
+    public Func<string, Task<IMigration>> Parse { get; init; } = (x) => _parser.ParseFile(x);
 
     public IMigrationLoaderLogger Logger { get; init; } = new NoOpMigrationLoaderLogger();
 }
@@ -43,7 +43,7 @@ public class DefaultMigrationLoaderService : IMigrationLoaderService
 
     public async Task<List<IMigration>> LoadMigrationsAsync()
     {
-        var migrations = new List<Migration>();
+        var migrations = new List<IMigration>();
         var option = Options.IncludeSubdirectories ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
 
         var logger = Options.Logger;

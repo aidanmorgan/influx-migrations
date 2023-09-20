@@ -38,24 +38,24 @@ public class WriteFileTask : IMigrationTask
 
 public class WriteFileTaskBuilder : IMigrationTaskBuilder
 {
-    private string _file;
-    private List<string> _content = new List<string>();
+    public string File { get; private set; }
+    public List<string> Content { get; private set; } = new List<string>();
 
     public WriteFileTaskBuilder WithFile(string file)
     {
-        this._file = file;
+        this.File = file;
         return this;
     }
 
     public WriteFileTaskBuilder WithContent(string content)
     {
-        _content.Add(content);
+        Content.Add(content);
         return this;
     }
 
     public WriteFileTaskBuilder WithContent(List<string> content)
     {
-        _content.AddRange(content);
+        Content.AddRange(content);
         return this;
     }
     
@@ -64,8 +64,8 @@ public class WriteFileTaskBuilder : IMigrationTaskBuilder
     {
         return new WriteFileTask()
         {
-            Content = _content.Select(StringResolvable.Parse).ToList(),
-            File = StringResolvable.Parse(_file),
+            Content = Content.Select(StringResolvable.Parse).ToList(),
+            File = StringResolvable.Parse(File),
         };
     }
 }

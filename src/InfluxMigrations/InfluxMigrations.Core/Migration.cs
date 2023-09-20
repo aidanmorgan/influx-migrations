@@ -101,11 +101,11 @@ record MigrationOperationRuntimeState(string Id, MigrationOperationInstance Inst
 
 public interface IMigration
 {
-    string Version { get;  }
+    string Version { get; set; }
     MigrationOperationInstance AddUp(string id, IMigrationOperationBuilder operation);
     MigrationOperationInstance AddDown(string id, IMigrationOperationBuilder operation);
     Task<MigrationResult> ExecuteAsync(IMigrationEnvironmentContext env, MigrationDirection direction, MigrationOptions? opts = null);
-    Migration AddOutput(IMigrationTaskBuilder task);
+    IMigration AddTask(IMigrationTaskBuilder task);
 }
 
 public class MigrationOptions
@@ -306,7 +306,6 @@ public class Migration : IMigration
                         {
                             throw new MigrationExecutionException($"Task threw exception.");
                         }
-                        
                     }
                 }
             }
@@ -359,13 +358,13 @@ public class Migration : IMigration
                         rollbackLog.Failed(x);
                     }
 
-                    foreach (var output in state.Instance.RollbackTasks.Select(x => x.Build()))
+                    foreach (var task in state.Instance.RollbackTasks.Select(x => x.Build()))
                     {
-                        var outputLog = rollbackLog.TaskStart(output);
+                        var outputLog = rollbackLog.TaskStart(task);
 
                         try
                         {
-                            await output.ExecuteAsync(state.ExecutionContext);
+                            await task.ExecuteAsync(state.ExecutionContext);
                             outputLog.Complete();
                         }
                         catch (Exception x)
@@ -394,12 +393,12 @@ public class Migration : IMigration
         }
         finally
         {
-            foreach (var output in _migrationTasks.Select(x => x.Build()))
+            foreach (var task in _migrationTasks.Select(x => x.Build()))
             {
-                var outputLogger =logger.TaskStart(output);
+                var outputLogger =logger.TaskStart(task);
                 try
                 {
-                    await output.ExecuteAsync(context);
+                    await task.ExecuteAsync(context);
                     outputLogger.Complete();
                 }
                 catch (Exception x)
@@ -408,7 +407,7 @@ public class Migration : IMigration
                     {
                         Severity = MigrationIssueSeverity.Fail,
                         Category = MigrationIssueCategory.Task,
-                        Id = $"{output.GetType().FullName}",
+                        Id = $"{task.GetType().FullName}",
                         Phase = MigrationPhase.Migration,
                         Exception = x
                     });      
@@ -421,7 +420,7 @@ public class Migration : IMigration
         return migrationResult;
     }
 
-    public Migration AddOutput(IMigrationTaskBuilder task)
+    public IMigration AddTask(IMigrationTaskBuilder task)
     {
         _migrationTasks.Add(task);
         return this;

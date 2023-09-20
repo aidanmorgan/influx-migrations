@@ -5,8 +5,9 @@ namespace InfluxMigrations.Yaml;
 public class YamlOperationParserAttribute : Attribute
 {
     public string Keyword { get; private set; }
+    public List<string> Fields { get; private set; }
 
-    public YamlOperationParserAttribute(string keyword)
+    public YamlOperationParserAttribute(string keyword, params string[] fields)
     {
         if (string.IsNullOrEmpty(keyword))
         {
@@ -15,5 +16,6 @@ public class YamlOperationParserAttribute : Attribute
         }
         
         Keyword = keyword;
+        Fields = fields?.ToList() ?? new List<string>();
     }
 }

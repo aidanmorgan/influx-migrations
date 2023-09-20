@@ -110,26 +110,26 @@ public class DeleteBucketResult : IExecuteResult
 
 public class DeleteBucketBuilder : IMigrationOperationBuilder
 {
-    private string _bucketId;
-    private string _bucketName;
+    public string BucketId { get; private set; }
+    public string BucketName { get; private set; }
 
     public DeleteBucketBuilder() {}
 
     public DeleteBucketBuilder WithBucketId(string id)
     {
-        _bucketId = id;
+        BucketId = id;
         return this;
     }
 
     public DeleteBucketBuilder WithBucketName(string id)
     {
-        _bucketName = id;
+        BucketName = id;
         return this;
     }
     
     public IMigrationOperation Build(IOperationExecutionContext context)
     {
-        if (string.IsNullOrEmpty(_bucketId) && string.IsNullOrEmpty(_bucketName))
+        if (string.IsNullOrEmpty(BucketId) && string.IsNullOrEmpty(BucketName))
         {
             throw new MigrationOperationBuildingException("No Bucket specified.");
         }
@@ -137,8 +137,8 @@ public class DeleteBucketBuilder : IMigrationOperationBuilder
         return new DeleteBucket(context).Initalise(x =>
         {
             x.Bucket
-                .WithId(StringResolvable.Parse(_bucketId))
-                .WithName(StringResolvable.Parse(_bucketName));
+                .WithId(StringResolvable.Parse(BucketId))
+                .WithName(StringResolvable.Parse(BucketName));
         });
     }
 }

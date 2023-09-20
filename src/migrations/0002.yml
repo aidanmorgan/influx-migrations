@@ -2,12 +2,17 @@
   version: 0002
   up:
     - operation: create-bucket
-      name: test-bucket1
-      organisation: test-organisation
+      id: one
+      bucket_name: test-bucket1
+      organisation_name: test-organisation
+      retention: 5d
     - operation: create-bucket
-      name: test-bucket2
-      organisation: test-organisation
+      bucket_name: test-bucket2
+      organisation_id: ${step:one:${result:organisationid}}
+      retention: 2d
   down:
     - operation: delete-bucket
-      name: test-bucket
+      bucket_name: test-bucket1
+    - operation: delete-bucket
+      bucket_name: test-bucket1
     

@@ -10,18 +10,27 @@ public class CreateBucketYamlParser : IYamlOperationParser
     public IMigrationOperationBuilder Parse(YamlMappingNode yamlNode)
     {
         CreateBucketBuilder builder = new CreateBucketBuilder();
-        builder.WithBucketName(((YamlScalarNode)yamlNode["name"]).Value);
 
-        if (yamlNode.ContainsKey("retention"))
+        yamlNode.Value(CommonTags.BucketName, (x) =>
         {
-            builder.WithRetention(((YamlScalarNode)yamlNode["retention"]).Value);
-        }
+            builder.WithBucketName(x);
+        });
 
-        if (yamlNode.ContainsKey("organisation"))
+        yamlNode.Value("retention", (x) =>
         {
-            builder.WithOrganisation(((YamlScalarNode)yamlNode["organisation"]).Value);
-        }
+            builder.WithRetention(x);
+        });
 
+        yamlNode.Value(CommonTags.OrganisationName, (x) =>
+        {
+            builder.WithOrganisation(x);
+        });
+
+        yamlNode.Value(CommonTags.OrganisationId, (x) =>
+        {
+            builder.WithOrganisationId(x);
+        });
+        
         return builder;
     }
 }

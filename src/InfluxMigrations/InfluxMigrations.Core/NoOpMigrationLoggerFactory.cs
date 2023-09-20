@@ -37,7 +37,7 @@ public class NoOpMigrationLoaderLogger : IMigrationLoaderLogger
     {
     }
 
-    public void FoundMigration(string file, Migration x)
+    public void FoundMigration(string file, IMigration x)
     {
     }
 

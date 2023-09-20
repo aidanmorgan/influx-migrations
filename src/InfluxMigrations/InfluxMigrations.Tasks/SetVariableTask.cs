@@ -14,9 +14,16 @@ public enum VariableScope
 
 public class SetVariableTask : IMigrationTask
 {
+    private static readonly IDictionary<string, VariableScope> VariableScopeLookup = new Dictionary<string, VariableScope>()
+    {
+        { "local", VariableScope.Local },
+        { "migration", VariableScope.Migration },
+        { "global", VariableScope.Global }
+    };
+    
     public  IResolvable<string> Key { get; set; }
     public IResolvable<string> Value { get; set; }
-    public VariableScope Scope { get; set; } = VariableScope.Local;
+    public IResolvable<string> Scope { get; set; } = StringResolvable.Parse("local");
 
     public SetVariableTask()
     {
@@ -27,7 +34,9 @@ public class SetVariableTask : IMigrationTask
         var key = Key.Resolve(context);
         var value = Value.Resolve(context);
 
-        switch (Scope)
+        var scope = VariableScopeLookup[Scope.Resolve(context)];
+        
+        switch (scope)
         {
             case VariableScope.Local:
             {
@@ -55,8 +64,9 @@ public class SetVariableTask : IMigrationTask
     {
         var key = Key.Resolve(executionContext);
         var value = Value.Resolve(executionContext);
+        var scope = VariableScopeLookup[Scope.Resolve(executionContext)];
 
-        switch (Scope)
+        switch (scope)
         {
             case VariableScope.Local:
             {
@@ -83,11 +93,9 @@ public class SetVariableTask : IMigrationTask
 
 public class SetVariableTaskBuilder : IMigrationTaskBuilder
 {
-    private string Key { get;  set; }
-    private string Value { get; set; }
-    private VariableScope Scope { get; set; } = VariableScope.Local;
-
-
+    public string Key { get;  private set; }
+    public string Value { get; private set; }
+    public string Scope { get; private set; } = "local";
     
     public SetVariableTaskBuilder WithKey(string key)
     {
@@ -101,7 +109,7 @@ public class SetVariableTaskBuilder : IMigrationTaskBuilder
         return this;
     }
 
-    public SetVariableTaskBuilder WithScope(VariableScope scope)
+    public SetVariableTaskBuilder WithScope(string scope)
     {
         this.Scope = scope;
         return this;
@@ -113,7 +121,7 @@ public class SetVariableTaskBuilder : IMigrationTaskBuilder
         {
             Key = StringResolvable.Parse(Key),
             Value = StringResolvable.Parse(Value),
-            Scope = Scope,
+            Scope = StringResolvable.Parse(Scope),
         };
     }
 }

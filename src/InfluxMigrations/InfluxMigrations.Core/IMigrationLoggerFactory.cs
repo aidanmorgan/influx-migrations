@@ -14,7 +14,7 @@ public interface IMigrationHistoryLogger
 public interface IMigrationLoaderLogger
 {
     void Exception(Exception exception);
-    void FoundMigration(string file, Migration x);
+    void FoundMigration(string file, IMigration x);
     void ParsingFailed(string file, MigrationParsingException x);
 }
 

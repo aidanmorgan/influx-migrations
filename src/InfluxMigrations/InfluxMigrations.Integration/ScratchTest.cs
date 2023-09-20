@@ -102,7 +102,7 @@ public class ScratchTest
 //        migration.AddUp("force-fail", new ForceErrorBuilder().ErrorExecute());
 
         var echoTask = new EchoTaskBuilder();
-        migration.AddOutput(echoTask
+        migration.AddTask(echoTask
             .WithString(
                 "Username: ${step:create-user1:${result:name}} Bucket: ${step:create-bucket-1:${result:name}} Token: ${step:assign-testuser1-test-bucket-1:${result:token}}")
             .WithString(

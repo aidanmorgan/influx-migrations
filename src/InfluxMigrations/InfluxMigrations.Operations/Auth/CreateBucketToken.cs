@@ -8,7 +8,7 @@ namespace InfluxMigrations.Commands.Auth;
 
 public class CreateBucketToken : IMigrationOperation
 {
-    private static readonly IDictionary<string, Permission.ActionEnum> _actionEnums =
+    private static readonly IDictionary<string, Permission.ActionEnum> ActionEnums =
         new Dictionary<string, Permission.ActionEnum>()
         {
             { "read", Permission.ActionEnum.Read },
@@ -51,7 +51,7 @@ public class CreateBucketToken : IMigrationOperation
 
         var bucket = await _context.Influx.GetBucketsApi().FindBucketByIdAsync(bucketId);
         
-        var actionEnums = Permissions.Select(x => x.Resolve(_context)).Select(x => _actionEnums[x])
+        var actionEnums = Permissions.Select(x => x.Resolve(_context)).Select(x => ActionEnums[x])
             .ToList();
 
         // if a userid is set, then it should be set as the owner of the authroization, otherwise the authorization
@@ -96,12 +96,12 @@ public class CreateBucketToken : IMigrationOperation
         });
     }
     
-    public Task<OperationResult<OperationCommitState, ICommitResult?>> CommitAsync(IExecuteResult result)
+    public Task<OperationResult<OperationCommitState, ICommitResult>> CommitAsync(IExecuteResult result)
     {
         return OperationResults.CommitUnnecessary(result);
     }
 
-    public Task<OperationResult<OperationRollbackState, IRollbackResult?>> RollbackAsync(IExecuteResult result)
+    public Task<OperationResult<OperationRollbackState, IRollbackResult>> RollbackAsync(IExecuteResult result)
     {
         return OperationResults.RollbackImpossible(result);
     }
@@ -123,13 +123,13 @@ public class CreateBucketTokenResult : IExecuteResult
 
 public class CreateBucketTokenBuilder : IMigrationOperationBuilder
 {
-    private string _tokenName;
-    private string _bucket;
-    private string _bucketId;
-    private string _user;
-    private string _userId;
+    public string TokenName { get; private set; }
+    public string BucketName  { get; private set; }
+    public string BucketId  { get; private set; }
+    public string UserName  { get; private set; }
+    public string UserId  { get; private set; }
     
-    private List<string> _permissions = new List<string>();
+    public List<string> Permissions { get; private set; } = new List<string>();
 
     public CreateBucketTokenBuilder WithTokenName(string name)
     {
@@ -138,24 +138,24 @@ public class CreateBucketTokenBuilder : IMigrationOperationBuilder
             throw new MigrationConfigurationException($"Cannot set a null write token name.");
         }
         
-        _tokenName = name;
+        TokenName = name;
         return this;
     }
 
-    public CreateBucketTokenBuilder WithBucket(string name)
+    public CreateBucketTokenBuilder WithBucketName(string name)
     {
         if (string.IsNullOrEmpty(name))
         {
             throw new MigrationConfigurationException("Cannot set a null bucket name.");
         }
 
-        _bucket = name;
+        BucketName = name;
         return this;
     }
 
     public CreateBucketTokenBuilder WithBucketId(string name)
     {
-        _bucketId = name;
+        BucketId = name;
         return this;
     }
 
@@ -166,36 +166,36 @@ public class CreateBucketTokenBuilder : IMigrationOperationBuilder
             throw new MigrationConfigurationException("Cannot add a null permission");
         }
 
-        _permissions.Add(name);
+        Permissions.Add(name);
         return this;
     }
     
-    public CreateBucketTokenBuilder WithUser(string username)
+    public CreateBucketTokenBuilder WithUserName(string username)
     {
-        _user = username;
+        UserName = username;
         return this;
     }
 
     public CreateBucketTokenBuilder WithUserId(string id)
     {
-        _userId = id;
+        UserId = id;
         return this;
     }
 
     public IMigrationOperation Build(IOperationExecutionContext context)
     {
-        var permissions = _permissions.Select(x => StringResolvable.Parse(x) ?? null).Where(x => x != null).ToList();
+        var permissions = Permissions.Select(x => StringResolvable.Parse(x) ?? null).Where(x => x != null).ToList();
         if (permissions == null || permissions.Count == 0)
         {
             throw new MigrationOperationBuildingException("No permissions specified.");
         }
 
-        if (string.IsNullOrEmpty(_bucketId) && string.IsNullOrEmpty(_bucket))
+        if (string.IsNullOrEmpty(BucketId) && string.IsNullOrEmpty(BucketName))
         {
             throw new MigrationOperationBuildingException("No Bucket specified.");
         }
 
-        if (string.IsNullOrEmpty(_user) && string.IsNullOrEmpty(_userId))
+        if (string.IsNullOrEmpty(UserName) && string.IsNullOrEmpty(UserId))
         {
             throw new MigrationOperationBuildingException("No User specified.");
         }
@@ -203,11 +203,11 @@ public class CreateBucketTokenBuilder : IMigrationOperationBuilder
         return new CreateBucketToken(context)
         {
             Permissions = permissions!,
-            TokenDescription = StringResolvable.Parse(_tokenName)
+            TokenDescription = StringResolvable.Parse(TokenName)
         }.Initialise(val =>
         {
-            val.Bucket.WithId(StringResolvable.Parse(_bucketId)).WithName(StringResolvable.Parse(_bucket));
-            val.User.WithId(StringResolvable.Parse(_userId)).WithName(StringResolvable.Parse(_user));
+            val.Bucket.WithId(StringResolvable.Parse(BucketId)).WithName(StringResolvable.Parse(BucketName));
+            val.User.WithId(StringResolvable.Parse(UserId)).WithName(StringResolvable.Parse(UserName));
         });
     }
 }

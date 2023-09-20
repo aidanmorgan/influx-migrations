@@ -67,11 +67,11 @@ public class AuthManagementTests
         var migration = new Migration("0002");
         migration.AddUp("create-bucket-token",
                 new CreateBucketTokenBuilder()
-                    .WithBucket("specific_user_bucket")
+                    .WithBucketName("specific_user_bucket")
                     .WithPermission("read")
                     .WithPermission("write")
                     .WithTokenName("new-user-token")
-                    .WithUser("username"))
+                    .WithUserName("username"))
             .AddExecuteTask(createBucketResult);
         
         var environment = new DefaultEnvironmentContext(_influx, new TextWriterMigrationLoggerFactory(Console.Out));

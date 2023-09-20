@@ -78,39 +78,39 @@ public class OnboardingResult : IExecuteResult
 
 public class OnboardingBuilder : IMigrationOperationBuilder
 {
-    private string _organisation;
-    private string _bucket;
-    private string _username;
-    private string _password;
-    private string _token;
+    public string OrganisationName { get; private set; }
+    public string BucketName { get; private set; }
+    public string UserName { get; private set; }
+    public string Password { get; private set; }
+    public string Token { get; private set; }
 
     public OnboardingBuilder WithOrganisation(string name)
     {
-        this._organisation = name;
+        this.OrganisationName = name;
         return this;
     }
 
     public OnboardingBuilder WithBucket(string name)
     {
-        this._bucket = name;
+        this.BucketName = name;
         return this;
     }
 
     public OnboardingBuilder WithUsername(string name)
     {
-        this._username = name;
+        this.UserName = name;
         return this;
     }
 
     public OnboardingBuilder WithPassword(string password)
     {
-        this._password = password;
+        this.Password = password;
         return this;
     }
 
     public OnboardingBuilder WithAdminToken(string token)
     {
-        this._token = token;
+        this.Token = token;
         return this;
     }
     
@@ -118,11 +118,11 @@ public class OnboardingBuilder : IMigrationOperationBuilder
     {
         return new Onboarding(context)
         {
-            Bucket = StringResolvable.Parse(_bucket),
-            Organisation = StringResolvable.Parse(_organisation),
-            Password = StringResolvable.Parse(_password),
-            Username = StringResolvable.Parse(_username),
-            Token = StringResolvable.Parse(_token)
+            Bucket = StringResolvable.Parse(BucketName),
+            Organisation = StringResolvable.Parse(OrganisationName),
+            Password = StringResolvable.Parse(Password),
+            Username = StringResolvable.Parse(UserName),
+            Token = StringResolvable.Parse(Token)
         };
     }
 }

@@ -16,6 +16,7 @@
       <ProjectReference Include="..\InfluxMigrations.Operations\InfluxMigrations.Operations.csproj" />
       <ProjectReference Include="..\InfluxMigrations.Tasks\InfluxMigrations.Tasks.csproj" />
 
+
     </ItemGroup>
 
 

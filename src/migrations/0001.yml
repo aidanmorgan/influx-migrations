@@ -2,8 +2,8 @@ migration:
   version: 0001
   up:
     - operation: onboarding
-      organisation: test-organisation
-      username: admin-user
+      organisation_name: test-organisation
+      user_name: admin-user
       password: admin-password
       token: 1E5WgKfy6XAEo9N5BE4U7AssABDCI9lB
-      bucket: new-bucket
+      bucket_name: new-bucket
