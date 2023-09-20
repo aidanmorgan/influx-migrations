@@ -1,6 +1,7 @@
 ﻿using InfluxMigrations.Core;
 using InfluxMigrations.Core.Resolvers;
 using InfluxMigrations.Impl;
+using NUnit.Framework;
 
 namespace InfluxMigrations.Abstractions.Tests;
 

@@ -10,7 +10,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{004940CC
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InfluxMigrations.Yaml.Tests", "InfluxMigrations.Yaml.Tests\InfluxMigrations.Yaml.Tests.csproj", "{AF399DF6-234F-492B-BCE0-AF9BDC18EE01}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InfluxMigrations.Abstractions.Tests", "InfluxMigrations.Abstractions.Tests\InfluxMigrations.Abstractions.Tests.csproj", "{4C85CF9D-373B-4C09-8F9C-BE827BB42871}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InfluxMigrations.Core.Tests", "InfluxMigrations.Core.Tests\InfluxMigrations.Core.Tests.csproj", "{4C85CF9D-373B-4C09-8F9C-BE827BB42871}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InfluxMigrations.Tasks", "InfluxMigrations.Tasks\InfluxMigrations.Tasks.csproj", "{8EA5FE74-8822-44F4-AC84-079E93CDB2B0}"
 EndProject
