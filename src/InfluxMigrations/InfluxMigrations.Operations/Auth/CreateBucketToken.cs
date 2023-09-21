@@ -1,5 +1,6 @@
 ﻿using InfluxDB.Client;
 using InfluxDB.Client.Api.Domain;
+using InfluxDB.Client.Core.Exceptions;
 using InfluxMigrations.Commands.Bucket;
 using InfluxMigrations.Core;
 using InfluxMigrations.Core.Resolvers;
@@ -38,62 +39,70 @@ public class CreateBucketToken : IMigrationOperation
 
     public async Task<OperationResult<OperationExecutionState, IExecuteResult>> ExecuteAsync()
     {
-        var bucketId = await Bucket.GetAsync(_context);
-        if (string.IsNullOrEmpty(bucketId))
+        try
         {
-            throw new MigrationExecutionException($"Cannot retrieve Bucket id for provided id/name");
-        }
-        
-        var description = TokenDescription?.Resolve(_context) ??  $"Token created via Migration {_context.MigrationExecutionContext.Version}";
-        var userId = await User.GetAsync(_context);
+            var bucketId = await Bucket.GetAsync(_context);
+            if (string.IsNullOrEmpty(bucketId))
+            {
+                return OperationResults.ExecutionFailed($"Coult not resolve Bucket id.");
+            }
 
-        Authorization auth = null;
+            var description = TokenDescription?.Resolve(_context) ??
+                              $"Token created via Migration {_context.MigrationExecutionContext.Version}";
+            var userId = await User.GetAsync(_context);
 
-        var bucket = await _context.Influx.GetBucketsApi().FindBucketByIdAsync(bucketId);
-        
-        var actionEnums = Permissions.Select(x => x.Resolve(_context)).Select(x => ActionEnums[x])
-            .ToList();
+            Authorization auth = null;
 
-        // if a userid is set, then it should be set as the owner of the authroization, otherwise the authorization
-        // is created with the Auth token as the owner.
-        if (userId != null)
-        {
-            
-            auth = await _context.Influx.GetAuthorizationsApi().CreateAuthorizationAsync(
-                new AuthorizationPostRequest(
+            var bucket = await _context.Influx.GetBucketsApi().FindBucketByIdAsync(bucketId);
+
+            var actionEnums = Permissions.Select(x => x.Resolve(_context)).Select(x => ActionEnums[x])
+                .ToList();
+
+            // if a userid is set, then it should be set as the owner of the authroization, otherwise the authorization
+            // is created with the Auth token as the owner.
+            if (userId != null)
+            {
+
+                auth = await _context.Influx.GetAuthorizationsApi().CreateAuthorizationAsync(
+                    new AuthorizationPostRequest(
+                        bucket.OrgID,
+                        userId,
+                        actionEnums.Select(x => new Permission(x,
+                            new PermissionResource()
+                            {
+                                Id = bucketId,
+                                Type = PermissionResource.TypeBuckets
+                            })
+                        ).ToList(),
+                        AuthorizationUpdateRequest.StatusEnum.Active,
+                        description
+                    )
+                );
+            }
+            else
+            {
+                auth = await _context.Influx.GetAuthorizationsApi().CreateAuthorizationAsync(
                     bucket.OrgID,
-                    userId,
-                    actionEnums.Select(x => new Permission(x, 
+                    actionEnums.Select(x => new Permission(x,
                         new PermissionResource()
                         {
                             Id = bucketId,
                             Type = PermissionResource.TypeBuckets
-                        })
-                    ).ToList(),
-                    AuthorizationUpdateRequest.StatusEnum.Active,
-                    description
-                )
-            );
+                        })).ToList());
+            }
+
+            return OperationResults.ExecuteSuccess(new CreateBucketTokenResult()
+            {
+                Token = auth.Token,
+                TokenId = auth.Id,
+                BucketId = bucketId,
+                OwnerId = auth.Links?.User
+            });
         }
-        else
+        catch (Exception x)
         {
-            auth = await _context.Influx.GetAuthorizationsApi().CreateAuthorizationAsync(
-                bucket.OrgID,
-                actionEnums.Select(x => new Permission(x, 
-                    new PermissionResource()
-                    {
-                        Id = bucketId,
-                        Type = PermissionResource.TypeBuckets
-                    })).ToList());
+            return OperationResults.ExecutionFailed(x);
         }
-        
-        return OperationResults.ExecuteSuccess(new CreateBucketTokenResult()
-        {
-            Token = auth.Token,
-            TokenId = auth.Id,
-            BucketId = bucketId,
-            OwnerId = auth.Links?.User
-        });
     }
     
     public Task<OperationResult<OperationCommitState, ICommitResult>> CommitAsync(IExecuteResult result)

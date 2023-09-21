@@ -50,6 +50,13 @@ public class DefaultMigrationRunnerService : IMigrationRunnerService
         
         var loaded = await _options.Loader.LoadMigrationsAsync();
 
+        if (loaded
+                .GroupBy(x => x.Version, new ComparerAdapter<string>(_options.VersionComparer))
+                .Any(x => x.Count() > 1))
+        {
+            throw new MigrationRunnerException($"Cannot execute Migration(s), duplicate Migrations found: [{string.Join(",", loaded.Select(x => x.Version))}]");
+        }
+
         var alreadyExecuted = history.Where(x => x.Success.HasValue && x.Success.Value)
             .Select(x => x.Version)
             .ToList();
@@ -72,7 +79,6 @@ public class DefaultMigrationRunnerService : IMigrationRunnerService
                 var toExecute = loaded.Where(x => toRollback.Any(y => _options.VersionComparer.Compare(y, x.Version) == 0)).ToList();
 
                 logger.ExecutionPlan(toExecute, MigrationDirection.Down);
-                
                 return await Execute(influx, toExecute, MigrationDirection.Down, _options.MigrationOptions, logger);
             }
             else

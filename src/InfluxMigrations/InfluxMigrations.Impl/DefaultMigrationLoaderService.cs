@@ -16,13 +16,15 @@ public class DefaultMigrationLoaderOptions : IMigrationLoaderServiceOptions
 
     // allows us to determine the version of a migration from the filename rather than 
     // a value that is inside the file.
-    public Func<string, string> VersionFromFilenameCallback { get; init; } = null;
+    public Func<string, string> VersionFromFilenameCallback { get; init; } = Path.GetFileNameWithoutExtension;
 
     private static YamlMigrationParser _parser = new YamlMigrationParser();
 
     public Func<string, Task<IMigration>> Parse { get; init; } = (x) => _parser.ParseFile(x);
 
     public IMigrationLoaderLogger Logger { get; init; } = new NoOpMigrationLoaderLogger();
+
+    public IComparer<string> VersionComparator { get; init; } = new DefaultVersionComparer();
 }
 
 public class DefaultMigrationLoaderService : IMigrationLoaderService
@@ -58,16 +60,15 @@ public class DefaultMigrationLoaderService : IMigrationLoaderService
                     {
                         var migration = await Options.Parse(file);
 
-                        if (Options.VersionFromFilenameCallback != null)
+                        // if the version is not in the migration file, then we try to derive the version from the filename itself
+                        if (string.IsNullOrEmpty(migration.Version))
                         {
                             migration.Version = Options.VersionFromFilenameCallback(file);
                         }
-                        else
+
+                        if (string.IsNullOrEmpty(migration.Version))
                         {
-                            if (string.IsNullOrEmpty(migration.Version))
-                            {
-                                throw new MigrationLoadingException($"Found migration file {file}, but cannot determine version.");
-                            }
+                            throw new MigrationLoadingException($"Found migration file {file}, but cannot determine version.");
                         }
 
                         logger.FoundMigration(file, migration);
@@ -86,6 +87,27 @@ public class DefaultMigrationLoaderService : IMigrationLoaderService
             throw new MigrationLoadingException($"Exception thrown parsing migrations.", x);
         }
 
-        return migrations.OfType<IMigration>().ToList();
+        var result = migrations.OfType<IMigration>().ToList();
+        return result;
+    }
+}
+
+public class DelegateIEqualityComparer : IEqualityComparer<string>
+{
+    private readonly IComparer<string> _comparer;
+
+    public DelegateIEqualityComparer(IComparer<string> comparer)
+    {
+        _comparer = comparer;
+    }
+
+    public bool Equals(string? x, string? y)
+    {
+        return _comparer.Compare(x, y) == 0;
+    }
+
+    public int GetHashCode(string obj)
+    {
+        return obj.GetHashCode();
     }
 }

@@ -11,15 +11,15 @@ public class CaptureResultTask : IMigrationTask
         _callback = callback;
     }
 
-    public Task ExecuteAsync(IOperationExecutionContext context)
+    public Task<TaskResult> ExecuteAsync(IOperationExecutionContext context)
     {
         _callback(context.ExecuteResult);
-        return Task.CompletedTask;
+        return TaskResults.TaskSuccessAsync();
     }
 
-    public Task ExecuteAsync(IMigrationExecutionContext ctx)
+    public Task<TaskResult> ExecuteAsync(IMigrationExecutionContext ctx)
     {
-        throw new NotImplementedException($"Cannot resolve a result of a Migration.");
+        return TaskResults.TaskSuccessAsync();
     }
 }
 

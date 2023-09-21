@@ -35,46 +35,53 @@ public class CreateBucket : IMigrationOperation
 
     public async Task<OperationResult<OperationExecutionState, IExecuteResult>> ExecuteAsync()
     {
-        InfluxDB.Client.Api.Domain.Bucket result = null;
+        try
+        {
+            InfluxDB.Client.Api.Domain.Bucket result = null;
 
-        var organisationId = await Organisation.GetAsync(_context);
-        if (string.IsNullOrEmpty(organisationId))
-        {
-            return OperationResults.ExecutionFailed($"Cannot create Bucket, cannot locate Organisation id.");
-        }
-        
-        var bucketName  = Bucket.Resolve(_context);
+            var organisationId = await Organisation.GetAsync(_context);
+            if (string.IsNullOrEmpty(organisationId))
+            {
+                return OperationResults.ExecutionFailed($"Cannot create Bucket, cannot resolve Organisation id.");
+            }
 
-        var bucket = await _context.Influx.GetBucketsApi().FindBucketByNameAsync(bucketName);
-        if (bucket != null)
-        {
-            return OperationResults.ExecutionFailed($"Cannot create Bucket with name {bucketName}, one already exists.");
+            var bucketName = Bucket.Resolve(_context);
+
+            var bucket = await _context.Influx.GetBucketsApi().FindBucketByNameAsync(bucketName);
+            if (bucket != null)
+            {
+                return OperationResults.ExecutionFailed($"Cannot create Bucket with name {bucketName}, one already exists.");
+            }
+
+            if (RetentionPeriodSeconds != null)
+            {
+                var ts = TimeSpanParser.ParseTimeSpan(RetentionPeriodSeconds.Resolve(_context));
+
+                var retention = ts == null
+                    ? new BucketRetentionRules()
+                    : new BucketRetentionRules(BucketRetentionRules.TypeEnum.Expire, (long)ts.Value.TotalSeconds);
+
+                result = await _context.Influx.GetBucketsApi()
+                    .CreateBucketAsync(bucketName, retention, organisationId);
+            }
+            else
+            {
+                result = await _context.Influx.GetBucketsApi()
+                    .CreateBucketAsync(bucketName, organisationId);
+            }
+
+            return OperationResults.ExecuteSuccess(new CreateBucketResult()
+            {
+                OrganisationId = organisationId,
+                Id = result.Id,
+                Name = bucketName,
+                CreatedTime = result.CreatedAt
+            });
         }
-        
-        if (RetentionPeriodSeconds != null)
+        catch (Exception x)
         {
-            var ts = TimeSpanParser.ParseTimeSpan(RetentionPeriodSeconds.Resolve(_context));
-            
-            var retention = ts == null
-                ? new BucketRetentionRules()
-                : new BucketRetentionRules(BucketRetentionRules.TypeEnum.Expire, (long)ts.Value.TotalSeconds);
-            
-            result = await _context.Influx.GetBucketsApi()
-                .CreateBucketAsync(bucketName, retention, organisationId);
+            return OperationResults.ExecutionFailed(x);
         }
-        else
-        {
-            result = await _context.Influx.GetBucketsApi()
-                .CreateBucketAsync(bucketName, organisationId);
-        }
-        
-        return OperationResults.ExecuteSuccess(new CreateBucketResult()
-        {
-            OrganisationId = organisationId,
-            Id = result.Id,
-            Name = bucketName,
-            CreatedTime = result.CreatedAt
-        });
     }
 
     public Task<OperationResult<OperationCommitState, ICommitResult>> CommitAsync(IExecuteResult result)

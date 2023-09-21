@@ -13,26 +13,40 @@ public class WriteFileTask : IMigrationTask
         
     }
 
-    public Task ExecuteAsync(IOperationExecutionContext context)
+    public Task<TaskResult> ExecuteAsync(IOperationExecutionContext context)
     {
         var outputFile = File.Resolve(context);
         var content = string.Join("", Content.Select(x => x.Resolve(context)));
 
-        using StreamWriter output = new StreamWriter(outputFile);
-        output.WriteLine(content);
+        try
+        {
+            using StreamWriter output = new StreamWriter(outputFile);
+            output.WriteLine(content);
 
-        return Task.CompletedTask;
+            return TaskResults.TaskSuccessAsync();
+        }
+        catch (IOException x)
+        {
+            return TaskResults.TaskFailureAsync(x);
+        }
     }
     
-    public Task ExecuteAsync(IMigrationExecutionContext executionContext)
+    public Task<TaskResult> ExecuteAsync(IMigrationExecutionContext executionContext)
     {
         var outputFile = File.Resolve(executionContext);
         var content = string.Join("", Content.Select(x => x.Resolve(executionContext)));
 
-        using StreamWriter output = new StreamWriter(outputFile);
-        output.WriteLine(content);
+        try
+        {
+            using StreamWriter output = new StreamWriter(outputFile);
+            output.WriteLine(content);
 
-        return Task.CompletedTask;
+            return TaskResults.TaskSuccessAsync();
+        }
+        catch (IOException x)
+        {
+            return TaskResults.TaskFailureAsync(x);
+        }
     }    
 }
 

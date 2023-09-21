@@ -21,38 +21,45 @@ public class Onboarding : IMigrationOperation
 
     public async Task<OperationResult<OperationExecutionState, IExecuteResult>> ExecuteAsync()
     {
-        var allowed = await _context.Influx.IsOnboardingAllowedAsync();
-
-        if (!allowed)
+        try
         {
-            return OperationResults.ExecutionFailed("Cannot onboard Influx, it is not allowed.");
-        }
+            var allowed = await _context.Influx.IsOnboardingAllowedAsync();
 
-        var adminToken = Token.Resolve(_context);
+            if (!allowed)
+            {
+                return OperationResults.ExecutionFailed("Cannot onboard Influx, it is not allowed.");
+            }
 
-        var result = await _context.Influx.OnboardingAsync(
-            new OnboardingRequest(
-                Username.Resolve(_context),
-                Password.Resolve(_context),
-                Organisation.Resolve(_context),
-                Bucket.Resolve(_context),
-                token: Token.Resolve(_context)
+            var adminToken = Token.Resolve(_context);
+
+            var result = await _context.Influx.OnboardingAsync(
+                new OnboardingRequest(
+                    Username.Resolve(_context),
+                    Password.Resolve(_context),
+                    Organisation.Resolve(_context),
+                    Bucket.Resolve(_context),
+                    token: Token.Resolve(_context)
                 ));
 
-        if (!string.IsNullOrEmpty(adminToken))
-        {
-            _context.Accept(new ChangeAdminTokenVisitor(adminToken));
-        }
+            if (!string.IsNullOrEmpty(adminToken))
+            {
+                _context.Accept(new ChangeAdminTokenVisitor(adminToken));
+            }
 
-        return OperationResults.ExecuteSuccess(new OnboardingResult()
+            return OperationResults.ExecuteSuccess(new OnboardingResult()
+            {
+                BucketId = result.Bucket.Id,
+                BucketName = result.Bucket.Name,
+                OrganisationId = result.Org.Id,
+                OrganisationName = result.Org.Name,
+                User = result.User.Id,
+                UserName = result.User.Name
+            });
+        }
+        catch (Exception x)
         {
-            BucketId = result.Bucket.Id,
-            BucketName = result.Bucket.Name,
-            OrganisationId = result.Org.Id,
-            OrganisationName = result.Org.Name,
-            User = result.User.Id,
-            UserName = result.User.Name
-        });
+            return OperationResults.ExecutionFailed(x);
+        }
     }
 
     public Task<OperationResult<OperationCommitState, ICommitResult>> CommitAsync(IExecuteResult result)

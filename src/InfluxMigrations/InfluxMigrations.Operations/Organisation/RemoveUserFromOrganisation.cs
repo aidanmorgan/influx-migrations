@@ -26,23 +26,33 @@ public class RemoveUserFromOrganisation : IMigrationOperation
 
     public async Task<OperationResult<OperationExecutionState, IExecuteResult>> ExecuteAsync()
     {
-        var organisationId = await Organisation.GetAsync(_context);
-        if (string.IsNullOrEmpty(organisationId))
+        try
         {
-            return OperationResults.ExecutionFailed($"Cannot remove User for Organisation, no Organisation id set.");
+            var organisationId = await Organisation.GetAsync(_context);
+            if (string.IsNullOrEmpty(organisationId))
+            {
+                return OperationResults.ExecutionFailed(
+                    $"Cannot remove User for Organisation, no Organisation id set.");
+            }
+
+            var userId = await User.GetAsync(_context);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return OperationResults.ExecutionFailed($"Cannot remove User from Organisation, no User id set.");
+            }
+
+            var result = await _context.Influx.GetOrganizationsApi().AddMemberAsync(userId, organisationId);
+            
+            return OperationResults.ExecuteSuccess(new RemoveUserFromOrganisationResult()
+            {
+                OrganisationId = organisationId,
+                UserId = userId
+            });
         }
-        
-        var userId = await User.GetAsync(_context);
-        if (string.IsNullOrEmpty(userId))
+        catch (Exception x)
         {
-            return OperationResults.ExecutionFailed($"Cannot remove User from Organisation, no User id set.");
+            return OperationResults.ExecutionFailed(x);
         }
-        
-        return OperationResults.ExecuteSuccess(new RemoveUserFromOrganisationResult()
-        {
-            OrganisationId = organisationId,
-            UserId = userId
-        });
     }
 
     public async Task<OperationResult<OperationCommitState, ICommitResult>> CommitAsync(IExecuteResult? r)

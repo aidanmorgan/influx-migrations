@@ -37,7 +37,7 @@ public class InsertData : IMigrationTask
         return this;
     }
     
-    public async Task ExecuteAsync(IOperationExecutionContext ctx)
+    public async Task<TaskResult> ExecuteAsync(IOperationExecutionContext ctx)
     {
         var bucket = await Bucket.GetAsync(ctx);
         var organisation = await Organisation.GetAsync(ctx);
@@ -60,13 +60,15 @@ public class InsertData : IMigrationTask
                     .WriteRecordsAsync(pointData, WritePrecision.Ms, bucket, organisation);
             }
         }
-        catch (BadRequestException x)
+        catch (InfluxException x)
         {
-            throw new MigrationExecutionException("Error inserting.", x);
+            return TaskResults.TaskFailure(x);
         }
+
+        return TaskResults.TaskSuccess();
     }
 
-    public async Task ExecuteAsync(IMigrationExecutionContext ctx)
+    public async Task<TaskResult> ExecuteAsync(IMigrationExecutionContext ctx)
     {
         var bucket = await Bucket.GetAsync(ctx);
         var organisation = await Organisation.GetAsync(ctx);
@@ -77,14 +79,24 @@ public class InsertData : IMigrationTask
             return line;
         }).ToList();
 
-        if (string.IsNullOrEmpty(bucket) || string.IsNullOrEmpty(organisation))
+        try
         {
-            await ctx.Influx.GetWriteApiAsync().WriteRecordsAsync(pointData, WritePrecision.Ms);
+            if (string.IsNullOrEmpty(bucket) || string.IsNullOrEmpty(organisation))
+            {
+                await ctx.Influx.GetWriteApiAsync().WriteRecordsAsync(pointData, WritePrecision.Ms);
+            }
+            else
+            {
+                await ctx.Influx.GetWriteApiAsync()
+                    .WriteRecordsAsync(pointData, WritePrecision.Ms, bucket, organisation);
+            }
         }
-        else
+        catch (InfluxException x)
         {
-            await ctx.Influx.GetWriteApiAsync().WriteRecordsAsync(pointData, WritePrecision.Ms, bucket, organisation);
+            return TaskResults.TaskFailure(x);
         }
+        
+        return TaskResults.TaskSuccess();
     }
 }
 

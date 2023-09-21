@@ -25,6 +25,14 @@
         <Link>migrations\0002.yml</Link>
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
+      <Content Include="..\..\migrations\0003.yml">
+        <Link>migrations\0003.yml</Link>
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <Content Include="..\..\migrations\0004.yml">
+        <Link>migrations\0004.yml</Link>
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
     </ItemGroup>
 
 </Project>

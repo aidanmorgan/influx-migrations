@@ -18,15 +18,15 @@ public class CreateOrganisation : IMigrationOperation
 
     public async Task<OperationResult<OperationExecutionState, IExecuteResult?>> ExecuteAsync()
     {
-        var name = OrganisationName.Resolve(_context);
-
-        if (string.IsNullOrEmpty(name))
-        {
-            return OperationResults.ExecutionFailed("Cannot create organisation, name has not been specified.");
-        }
-
         try
         {
+            var name = OrganisationName.Resolve(_context);
+
+            if (string.IsNullOrEmpty(name))
+            {
+                return OperationResults.ExecutionFailed("Cannot create organisation, name has not been specified.");
+            }
+
             var result = await _context.Influx.GetOrganizationsApi().CreateOrganizationAsync(name);
             result.Status = Organization.StatusEnum.Active;
             
@@ -53,13 +53,13 @@ public class CreateOrganisation : IMigrationOperation
     {
         var result = (CreateOrganisationResult?)r;
 
-        if (string.IsNullOrEmpty(result?.Id))
-        {
-            return OperationResults.RollbackFailed(result, $"Cannot rollback {typeof(CreateOrganisation)}, no Organisation id was created.");
-        }
-
         try
         {
+            if (string.IsNullOrEmpty(result?.Id))
+            {
+                return OperationResults.RollbackFailed(result, $"Cannot rollback {typeof(CreateOrganisation)}, no Organisation id was created.");
+            }
+
             await _context.Influx.GetOrganizationsApi().DeleteOrganizationAsync(result.Id);
             return OperationResults.RollbackSuccess(result);
         }

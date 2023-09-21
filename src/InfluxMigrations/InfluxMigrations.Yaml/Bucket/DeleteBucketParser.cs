@@ -11,12 +11,12 @@ public class DeleteBucketParser : IYamlOperationParser
     {
         var builder = new DeleteBucketBuilder();
 
-        yamlNode.Value("bucket_name", (x) =>
+        yamlNode.Value(CommonTags.BucketName, (x) =>
         {
             builder.WithBucketName(x);
         });
 
-        yamlNode.Value("bucket_id", (x) =>
+        yamlNode.Value(CommonTags.BucketId, (x) =>
         {
             builder.WithBucketId(x);
         });

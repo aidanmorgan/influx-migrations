@@ -17,6 +17,8 @@ public class DefaultMigrationHistoryOptions : IMigrationHistoryServiceOptions
     public string MeasurementName { get; init; } = "migration";
 
     public IMigrationHistoryLogger Logger { get; init; } = new NoOpMigrationHistoryLogger();
+    public bool CreateHistoryOrganisationIfNotExists { get; init; } = true;
+    public bool CreateHistoryBucketIfNotExists { get; init; } = true;
 }
 
 public class DefaultMigrationHistoryService : IMigrationHistoryService
@@ -29,19 +31,19 @@ public class DefaultMigrationHistoryService : IMigrationHistoryService
 
     public DefaultMigrationHistoryService(IInfluxFactory client, DefaultMigrationHistoryOptions? options = null)
     {
-        this._client = client;
-        this.Options = options ?? new DefaultMigrationHistoryOptions();
+        _client = client;
+        Options = options ?? new DefaultMigrationHistoryOptions();
     }
     
     public async Task<List<MigrationHistory>> LoadMigrationHistoryAsync()
     {
-        var influx = _client.Create();
-        // this is a STUPID hack because influx won't let me create an unbounded query, but I figure nobody will have
-        // ever used this code since before the day I created it, so might as well just use that date as a starting point.
-        var historyDays = (int)Math.Ceiling((DateTimeOffset.UtcNow - HistoryEpoch).TotalDays);
-
         try
         {
+            var influx = _client.Create();
+            // this is a STUPID hack because influx won't let me create an unbounded query, but I figure nobody will have
+            // ever used this code since before the day I created it, so might as well just use that date as a starting point.
+            var historyDays = (int)Math.Ceiling((DateTimeOffset.UtcNow - HistoryEpoch).TotalDays);
+
             var result = await influx
                 .GetQueryApi(new MigrationHistoryMapper(Options))
                 .QueryAsync<MigrationHistory>(
@@ -50,13 +52,12 @@ public class DefaultMigrationHistoryService : IMigrationHistoryService
 
             return result.OfType<MigrationHistory>().OrderBy(x => x.Timestamp).ToList();
         }
+        catch (UnauthorizedException)
+        {
+            return new List<MigrationHistory>();
+        }
         catch (Exception x)
         {
-            if (x is UnauthorizedException)
-            {
-                return new List<MigrationHistory>();
-            }
-            
             Options.Logger.LoadException(x);
             return new List<MigrationHistory>();
         }
@@ -94,7 +95,7 @@ public class DefaultMigrationHistoryService : IMigrationHistoryService
         }
     }
 
-    public static async Task<Bucket> CreateHistoryBucketIfNotExists(IInfluxDBClient client, DefaultMigrationHistoryOptions opts)
+    public static async Task<Bucket?> CreateHistoryBucketIfNotExists(IInfluxDBClient client, DefaultMigrationHistoryOptions opts)
     {
         Bucket historyBucket = null;
         try
@@ -103,6 +104,10 @@ public class DefaultMigrationHistoryService : IMigrationHistoryService
         }
         catch (Exception)
         {
+            if (!opts.CreateHistoryBucketIfNotExists)
+            {
+                return null;
+            }
         }
 
         if (historyBucket == null)
@@ -112,7 +117,10 @@ public class DefaultMigrationHistoryService : IMigrationHistoryService
                     x => string.Equals(x?.Name, opts.OrganisationName), null);
             if (organisation == null)
             {
-                throw new MigrationRunnerException($"Cannot find Organisation for bucket: {opts.OrganisationName}");
+                if (opts.CreateHistoryOrganisationIfNotExists)
+                {
+                    organisation = await client.GetOrganizationsApi().CreateOrganizationAsync(opts.OrganisationName);
+                }
             }
 
             historyBucket = await client.GetBucketsApi().CreateBucketAsync(opts.BucketName, organisation.Id);

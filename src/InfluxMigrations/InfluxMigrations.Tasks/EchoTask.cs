@@ -12,7 +12,7 @@ public class EchoTask : IMigrationTask
         
     }
 
-    public Task ExecuteAsync(IMigrationExecutionContext ctx)
+    public Task<TaskResult> ExecuteAsync(IMigrationExecutionContext ctx)
     {
         var line = string.Join("\n", Values.Select(x => x.Resolve(ctx)));
 
@@ -20,19 +20,21 @@ public class EchoTask : IMigrationTask
         {
             Console.WriteLine(line);
         }
-        return Task.CompletedTask;
+        
+        return TaskResults.TaskSuccessAsync();
     }
 
    
-    public async Task ExecuteAsync(IOperationExecutionContext ctx)
+    public Task<TaskResult> ExecuteAsync(IOperationExecutionContext ctx)
     {
         var line  = string.Join("\n", Values.Select(x => x.Resolve(ctx)));
 
         if (!string.IsNullOrEmpty(line))
         {
             Console.WriteLine(line);
-            await Console.Out.FlushAsync();            
         }
+        
+        return TaskResults.TaskSuccessAsync();
     }
     
 }

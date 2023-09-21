@@ -48,4 +48,16 @@ public interface IMigrationTaskLogger
 {
     void Complete();
     void Failed(Exception x);
+
+    void TaskResult(TaskResult taskResult)
+    {
+        if (taskResult.State == TaskState.Success)
+        {
+            Complete();
+        }
+        else
+        {
+            Failed(taskResult.Exception);
+        }
+    }
 }

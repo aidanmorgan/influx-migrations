@@ -2,6 +2,55 @@
 
 namespace InfluxMigrations.Core;
 
+public enum TaskState
+{
+    Success,
+    Failure
+}
+
+public class TaskResult
+{
+    public TaskState State { get; init; }
+    public Exception? Exception { get; init; }
+}
+
+public static class TaskResults 
+{
+    public static Task<TaskResult> TaskSuccessAsync()
+    {
+        return Task.FromResult(new TaskResult()
+        {
+            State = TaskState.Success
+        });
+    }
+
+    public static Task<TaskResult> TaskFailureAsync(Exception? x)
+    {
+        return Task.FromResult(new TaskResult()
+        {
+            State = TaskState.Failure,
+            Exception = x
+        });
+    }
+    
+    public static TaskResult TaskFailure(Exception? x)
+    {
+        return new TaskResult()
+        {
+            State = TaskState.Failure,
+            Exception = x
+        };
+    }
+
+    public static TaskResult TaskSuccess()
+    {
+        return new TaskResult()
+        {
+            State = TaskState.Success
+        };
+    }
+}
+
 public enum OutputPhase
 {
     [EnumMember(Value = "up")] Up = 0,
@@ -18,9 +67,9 @@ public enum OutputPhase
 public interface IMigrationTask
 {
     // runs the task in the context of an 
-    Task ExecuteAsync(IOperationExecutionContext ctx);
+    Task<TaskResult> ExecuteAsync(IOperationExecutionContext ctx);
 
-    Task ExecuteAsync(IMigrationExecutionContext ctx);
+    Task<TaskResult> ExecuteAsync(IMigrationExecutionContext ctx);
 }
 
 

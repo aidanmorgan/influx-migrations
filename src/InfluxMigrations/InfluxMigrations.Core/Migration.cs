@@ -34,11 +34,26 @@ public class MigrationResult
 {
     public string Version { get; init; }
     
-    private List<MigrationIssue> _issues = new List<MigrationIssue>();
+    private readonly List<MigrationIssue> _issues = new List<MigrationIssue>();
     public List<MigrationIssue> Issues => new List<MigrationIssue>(_issues);
     
     public MigrationIssue AddIssue(MigrationIssue issue)
     {
+        _issues.Add(issue);
+        return issue;
+    }
+
+    public MigrationIssue AddIssue<TS,TR>(string id, MigrationIssueCategory category, MigrationPhase phase, MigrationIssueSeverity severity, OperationResult<TS, TR> result = null) where TS : Enum
+    {
+        var issue = new MigrationIssue()
+        {
+            Id = id,
+            Category = category,
+            Phase = phase,
+            Severity = severity,
+            Exception = result.Result is IExceptionResult exceptionResult ? exceptionResult.Exception : null
+        };
+        
         _issues.Add(issue);
         return issue;
     }
@@ -111,9 +126,6 @@ public interface IMigration
 public class MigrationOptions
 {
     public IMigrationLoggerFactory Logger { get; init; } = new NoOpMigrationLoggerFactory();
-    public bool ExecuteTaskFailureAborts { get; init; } = false;
-    public bool CommitTaskFailureAborts { get; init; } = false;
-    public bool RollbackTaskFailureAborts { get; init; } = false;
 }
 
 /// <summary>
@@ -133,25 +145,26 @@ public class Migration : IMigration
     
     public Migration(string version)
     {
-        this.Version = version;
+        Version = version;
     }
 
     public MigrationOperationInstance AddUp(string id, IMigrationOperationBuilder operation)
     {
         var entry = new MigrationOperationInstance(id, operation);
-        this._upOperations.Add(entry);
+        _upOperations.Add(entry);
         return entry;
     }
 
     public MigrationOperationInstance AddDown(string id, IMigrationOperationBuilder operation)
     {
         var entry = new MigrationOperationInstance(id, operation);
-        this._downOperations.Add(entry);
+        _downOperations.Add(entry);
         return entry;
     }
 
     public async Task<MigrationResult> ExecuteAsync(IMigrationEnvironmentContext env, MigrationDirection direction, MigrationOptions? o = null)
     {
+        // TODO : refactor this method, it's long and doing too many things
         var options = o ?? new MigrationOptions();
         var migrationResult = new MigrationResult()
         {
@@ -160,153 +173,66 @@ public class Migration : IMigration
             Options = options
         };
         
-        var logger = env.LoggerFactory.MigrationStart(this.Version, direction);
-        var context = env.CreateMigrationContext(this.Version);
+        var logger = env.LoggerFactory.MigrationStart(Version, direction);
+        var context = env.CreateMigrationContext(Version);
 
         var instanceOperations = new List<MigrationOperationRuntimeState>();
 
-        try{
+        try
+        {
             foreach (var op in (direction == MigrationDirection.Up ? _upOperations : _downOperations))
             {
                 var executeLog = logger.ExecuteStart(op);
 
-                try
+                var executionContext = context.CreateExecutionContext(op.Id);
+                var operation = op.Operation.Build(executionContext);
+                var operationResult = await operation.ExecuteAsync();
+
+                if (operationResult.State is OperationExecutionState.Success or OperationExecutionState.Skipped)
                 {
-                    var executionContext = context.CreateExecutionContext(op.Id);
-                    var operation = op.Operation.Build(executionContext);
-                    var operationResult = await operation.ExecuteAsync();
+                    executionContext.ExecuteResult = operationResult.Result;
+                    instanceOperations.Add(new MigrationOperationRuntimeState(op.Id, op, operation, operationResult, executionContext));
+                    executeLog.Complete(operationResult);
 
-                    if (operationResult.State is OperationExecutionState.Success or OperationExecutionState.Skipped)
+                    foreach (var output in op.ExecuteTasks.Select(x => x.Build()))
                     {
-                        executionContext.ExecuteResult = operationResult.Result;
-
-                        instanceOperations.Add(new MigrationOperationRuntimeState(op.Id, op, operation, operationResult, executionContext));
-                        executeLog.Complete(operationResult);
-
-                        foreach (var output in op.ExecuteTasks.Select(x => x.Build()))
-                        {
-                            var outputLog = executeLog.TaskStart(output);
-
-                            try
-                            {
-                                await output.ExecuteAsync(executionContext);
-                                outputLog.Complete();
-                            }
-                            catch (Exception x)
-                            {
-                                migrationResult.AddIssue(new MigrationIssue()
-                                {
-                                    Severity = MigrationIssueSeverity.Fail,
-                                    Category = MigrationIssueCategory.Task,
-                                    Id = $"{output.GetType().FullName}",
-                                    Phase = MigrationPhase.Task,
-                                    Exception = x
-                                });
-                                
-                                outputLog.Failed(x);
-
-                                if (options.ExecuteTaskFailureAborts)
-                                {
-                                    throw new MigrationExecutionException($"Task threw exception.");
-                                }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        migrationResult.AddIssue(new MigrationIssue()
-                        {
-                            Severity = MigrationIssueSeverity.Fail,
-                            Category = MigrationIssueCategory.Operation,
-                            Id = op.Id,
-                            Phase = MigrationPhase.Execute
-                        });
-                        
-                        executeLog.Failed(operationResult);
-                        throw new MigrationExecutionException($"Execution of step {op.Id} failed.");
+                        var outputLog = executeLog.TaskStart(output);
+                        var taskResult = await output.ExecuteAsync(executionContext);
+                        outputLog.TaskResult(taskResult);
                     }
                 }
-                catch (MigrationException x)
+                else
                 {
-                    migrationResult.AddIssue(new MigrationIssue()
-                    {
-                        Severity = MigrationIssueSeverity.Fail,
-                        Category = MigrationIssueCategory.Operation,
-                        Id = op.Id,
-                        Phase = MigrationPhase.Execute,
-                        Exception = x
-                    });                    
+                    migrationResult.AddIssue(op.Id, MigrationIssueCategory.Operation, MigrationPhase.Execute, MigrationIssueSeverity.Fail, operationResult);
+                    executeLog.Failed(operationResult);
                     
-                    executeLog.Failed(x);
-                    throw x;
+                    throw new MigrationExecutionException($"Execution of step {op.Id} failed.");
                 }
             }
 
+            // execute has finished successfully, time to perform commits
             foreach (var state in instanceOperations)
             {
                 var commitLog = logger.CommitStart(state.Instance);
-                try
-                {
-                    var commitResult = await state.Operation.CommitAsync(state.ExecuteResult.Result);
-                    state.ExecutionContext.CommitResult = commitResult?.Result;
+                var commitResult = await state.Operation.CommitAsync(state.ExecuteResult.Result);
+                state.ExecutionContext.CommitResult = commitResult?.Result;
 
-                    if (commitResult?.State == OperationCommitState.Failed)
-                    {
-                        migrationResult.AddIssue(new MigrationIssue()
-                        {
-                            Severity = MigrationIssueSeverity.Fail,
-                            Category = MigrationIssueCategory.Operation,
-                            Id = state.Id,
-                            Phase = MigrationPhase.Commit,
-                        });
-                        
-                        commitLog.Failed(commitResult!);
-                    }
-                    else
-                    {
-                        commitLog.Complete(commitResult);
-                    }
+                if (commitResult?.State == OperationCommitState.Failed)
+                {
+                    migrationResult.AddIssue(state.Id, MigrationIssueCategory.Operation, MigrationPhase.Commit, MigrationIssueSeverity.Fail, commitResult);
+                    commitLog.Failed(commitResult!);
                 }
-                catch (Exception x)
+                else
                 {
-                    migrationResult.AddIssue(new MigrationIssue()
-                    {
-                        Severity = MigrationIssueSeverity.Fail,
-                        Category = MigrationIssueCategory.Operation,
-                        Id = state.Id,
-                        Phase = MigrationPhase.Commit,
-                        Exception = x
-                    });                    
-                    commitLog.Failed(x);
-
-                    throw x;
+                    commitLog.Complete(commitResult);
                 }
 
                 foreach (var output in state.Instance.CommitTasks.Select(x => x.Build()))
                 {
                     var outputLog = commitLog.TaskStart(output);
-                    try
-                    {
-                        await output.ExecuteAsync(state.ExecutionContext);
-                        outputLog.Complete();
-                    }
-                    catch (Exception x)
-                    {
-                        migrationResult.AddIssue(new MigrationIssue()
-                        {
-                            Severity = MigrationIssueSeverity.Fail,
-                            Category = MigrationIssueCategory.Task,
-                            Id = $"{output.GetType().FullName}",
-                            Phase = MigrationPhase.Commit,
-                        });             
-                        
-                        outputLog.Failed(x);
-                        
-                        if (options.CommitTaskFailureAborts)
-                        {
-                            throw new MigrationExecutionException($"Task threw exception.");
-                        }
-                    }
+
+                    var taskResult = await output.ExecuteAsync(state.ExecutionContext);
+                    outputLog.TaskResult(taskResult);
                 }
             }
 
@@ -322,69 +248,25 @@ public class Migration : IMigration
                 {
                     var rollbackLog = logger.RollbackStart(state.Instance);
                     
-                    try
-                    {
-                        var rollbackResult = await state.Operation.RollbackAsync(state.ExecuteResult.Result);
-                        state.ExecutionContext.RollbackResult = rollbackResult?.Result;
+                    var rollbackResult = await state.Operation.RollbackAsync(state.ExecuteResult.Result);
+                    state.ExecutionContext.RollbackResult = rollbackResult?.Result;
 
-                        if (rollbackResult.State == OperationRollbackState.Failed)
-                        {
-                            migrationResult.AddIssue(new MigrationIssue()
-                            {
-                                Severity = MigrationIssueSeverity.Fail,
-                                Category = MigrationIssueCategory.Operation,
-                                Id = state.Id,
-                                Phase = MigrationPhase.Rollback,
-                            });                            
-                            
-                            rollbackLog.Failed(rollbackResult);
-                        }
-                        else
-                        {
-                            rollbackLog.Complete(rollbackResult);
-                        }
-                    }
-                    catch (Exception x)
+                    if (rollbackResult?.State == OperationRollbackState.Failed)
                     {
-                        migrationResult.AddIssue(new MigrationIssue()
-                        {
-                            Severity = MigrationIssueSeverity.Fail,
-                            Category = MigrationIssueCategory.Operation,
-                            Id = state.Id,
-                            Phase = MigrationPhase.Rollback,
-                            Exception = x
-                        });      
-                        
-                        rollbackLog.Failed(x);
+                        migrationResult.AddIssue(state.Id, MigrationIssueCategory.Operation, MigrationPhase.Rollback, MigrationIssueSeverity.Fail, rollbackResult);                            
+                        rollbackLog.Failed(rollbackResult);
+                    }
+                    else
+                    {
+                        rollbackLog.Complete(rollbackResult);
                     }
 
                     foreach (var task in state.Instance.RollbackTasks.Select(x => x.Build()))
                     {
                         var outputLog = rollbackLog.TaskStart(task);
 
-                        try
-                        {
-                            await task.ExecuteAsync(state.ExecutionContext);
-                            outputLog.Complete();
-                        }
-                        catch (Exception x)
-                        {
-                            migrationResult.AddIssue(new MigrationIssue()
-                            {
-                                Severity = MigrationIssueSeverity.Fail,
-                                Category = MigrationIssueCategory.Task,
-                                Id = state.Id,
-                                Phase = MigrationPhase.Rollback,
-                                Exception = x
-                            });                                  
-                            
-                            outputLog.Failed(x);
-                            
-                            if (options.RollbackTaskFailureAborts)
-                            {
-                                throw new MigrationExecutionException($"Task threw exception.");
-                            }
-                        }
+                        var result = await task.ExecuteAsync(state.ExecutionContext);
+                        outputLog.TaskResult(result);
                     }
                 }
             }
@@ -395,25 +277,10 @@ public class Migration : IMigration
         {
             foreach (var task in _migrationTasks.Select(x => x.Build()))
             {
-                var outputLogger =logger.TaskStart(task);
-                try
-                {
-                    await task.ExecuteAsync(context);
-                    outputLogger.Complete();
-                }
-                catch (Exception x)
-                {
-                    migrationResult.AddIssue(new MigrationIssue()
-                    {
-                        Severity = MigrationIssueSeverity.Fail,
-                        Category = MigrationIssueCategory.Task,
-                        Id = $"{task.GetType().FullName}",
-                        Phase = MigrationPhase.Migration,
-                        Exception = x
-                    });      
-                    
-                    outputLogger.Failed(x);
-                }
+                var outputLogger = logger.TaskStart(task);
+
+                var result = await task.ExecuteAsync(context);
+                outputLogger.TaskResult(result);
             }
         }
 

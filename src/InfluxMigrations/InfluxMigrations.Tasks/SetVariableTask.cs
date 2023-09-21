@@ -29,7 +29,7 @@ public class SetVariableTask : IMigrationTask
     {
     }
 
-    public Task ExecuteAsync(IOperationExecutionContext context)
+    public Task<TaskResult> ExecuteAsync(IOperationExecutionContext context)
     {
         var key = Key.Resolve(context);
         var value = Value.Resolve(context);
@@ -57,10 +57,10 @@ public class SetVariableTask : IMigrationTask
             }
         }
         
-        return Task.CompletedTask;
+        return TaskResults.TaskSuccessAsync();
     }
     
-    public Task ExecuteAsync(IMigrationExecutionContext executionContext)
+    public Task<TaskResult> ExecuteAsync(IMigrationExecutionContext executionContext)
     {
         var key = Key.Resolve(executionContext);
         var value = Value.Resolve(executionContext);
@@ -87,7 +87,7 @@ public class SetVariableTask : IMigrationTask
             }
         }
         
-        return Task.CompletedTask;
+        return TaskResults.TaskSuccessAsync();
     }    
 }
 

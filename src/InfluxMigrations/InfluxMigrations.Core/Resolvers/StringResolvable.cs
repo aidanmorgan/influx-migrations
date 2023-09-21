@@ -5,7 +5,7 @@ public class StringResolvable : IResolvable<string?>, IEquatable<StringResolvabl
     public const string KeyOpening = "${";
     public const string KeyClosing = "}";
 
-    private static Dictionary<Tuple<string,string>, IResolverFunction> _resolverFunctions = new Dictionary<Tuple<string,string>, IResolverFunction>();
+    private static readonly Dictionary<Tuple<string,string>, IResolverFunction> ResolverFunctions = new Dictionary<Tuple<string,string>, IResolverFunction>();
 
     static StringResolvable()
     {
@@ -33,7 +33,7 @@ public class StringResolvable : IResolvable<string?>, IEquatable<StringResolvabl
                         var suffix = KeyClosing;
 
                         var instance = (IResolverFunction)Activator.CreateInstance(x, prefix, suffix);
-                        _resolverFunctions[new Tuple<string, string>(prefix, suffix)] = instance;
+                        ResolverFunctions[new Tuple<string, string>(prefix, suffix)] = instance;
                     }
                 }
             });
@@ -125,11 +125,11 @@ public class StringResolvable : IResolvable<string?>, IEquatable<StringResolvabl
     /// </summary>
     private static IResolvable<string?> _Parse(string entry)
     {
-        foreach (var pair in _resolverFunctions.Keys)
+        foreach (var pair in ResolverFunctions.Keys)
         {
             if (entry.StartsWith(pair.Item1) && entry.EndsWith(pair.Item2))
             {
-                var function = _resolverFunctions[pair];
+                var function = ResolverFunctions[pair];
                 return function.Parse(entry, _Parse);
             }
         }

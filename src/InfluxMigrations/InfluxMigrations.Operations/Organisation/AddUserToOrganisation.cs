@@ -29,6 +29,7 @@ public class AddUserToOrganisation : IMigrationOperation
 
     public async Task<OperationResult<OperationExecutionState, IExecuteResult>> ExecuteAsync()
     {
+        try {
         var organisationId = await Organisation.GetAsync(_context);
         if (string.IsNullOrEmpty(organisationId))
         {
@@ -41,8 +42,6 @@ public class AddUserToOrganisation : IMigrationOperation
             return OperationResults.ExecutionFailed($"Cannot add user to Organisation, cannot find User id");
         }
 
-        try
-        {
             var result = await _context.Influx.GetOrganizationsApi().AddMemberAsync(userId, organisationId);
 
             return OperationResults.ExecuteSuccess(new AddUserToOrganisationResult()
@@ -68,13 +67,13 @@ public class AddUserToOrganisation : IMigrationOperation
     {
         var result = (AddUserToOrganisationResult?)r;
 
-        if (string.IsNullOrEmpty(result?.ResourceMemberId))
-        {
-            return OperationResults.RollbackFailed(result, $"Cannot rollback {typeof(AddUserToOrganisation)}, resource member id not provided.");
-        }
-
         try
         {
+            if (string.IsNullOrEmpty(result?.ResourceMemberId))
+            {
+                return OperationResults.RollbackFailed(result, $"Cannot rollback {typeof(AddUserToOrganisation)}, resource member id not provided.");
+            }
+
             await _context.Influx.GetOrganizationsApi().DeleteMemberAsync(result.UserId, result.OrganisationId);
             return OperationResults.RollbackSuccess(result);
         }
@@ -101,7 +100,7 @@ public class AddUserToOrganisationBuilder : IMigrationOperationBuilder
     private string _userName;
     private string _userId;
 
-    public AddUserToOrganisationBuilder WithUserName(string name)
+    public AddUserToOrganisationBuilder WithUsername(string name)
     {
         _userName = name;
         return this;

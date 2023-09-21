@@ -27,18 +27,18 @@ public class DeleteBucket : IMigrationOperation
     
     public async Task<OperationResult<OperationExecutionState, IExecuteResult>> ExecuteAsync()
     {
-        var bucketId = await Bucket.GetAsync(_context);
-        if (string.IsNullOrEmpty(bucketId))
+        try 
         {
-            return OperationResults.ExecutionFailed($"Cannot delete Bucket, no Bucket id provided.");
-        }
+            var bucketId = await Bucket.GetAsync(_context);
+            if (string.IsNullOrEmpty(bucketId))
+            {
+                return OperationResults.ExecutionFailed($"Cannot delete Bucket, no Bucket id provided.");
+            }
 
-        var bucket = await _context.Influx.GetBucketsApi().FindBucketByIdAsync(bucketId);
-        var oldName = bucket.Name;
-        bucket.Name = $"{DeletePrefix}{bucket.Name}";
+            var bucket = await _context.Influx.GetBucketsApi().FindBucketByIdAsync(bucketId);
+            var oldName = bucket.Name;
+            bucket.Name = $"{DeletePrefix}{bucket.Name}";
 
-        try
-        {
             var result = await _context.Influx.GetBucketsApi().UpdateBucketAsync(bucket);
 
             return OperationResults.ExecuteSuccess(new DeleteBucketResult()
@@ -58,13 +58,13 @@ public class DeleteBucket : IMigrationOperation
     {
         var result = (DeleteBucketResult?)r;
 
-        if (string.IsNullOrEmpty(result?.Id))
+        try 
         {
-            return OperationResults.CommitFailed(result, $"Cannot commit delete of bucket, cannot find bucket id.");
-        }
+            if (string.IsNullOrEmpty(result?.Id))
+            {
+                return OperationResults.CommitFailed(result, $"Cannot commit delete of bucket, cannot find bucket id.");
+            }
 
-        try
-        {
             await _context.Influx.GetBucketsApi().DeleteBucketAsync(result.Id);
         }
         catch (Exception x)
@@ -78,16 +78,17 @@ public class DeleteBucket : IMigrationOperation
     public async Task<OperationResult<OperationRollbackState, IRollbackResult>> RollbackAsync(IExecuteResult r)
     {
         var result = (DeleteBucketResult)r;
-        if (string.IsNullOrEmpty(result?.Id))
-        {
-            return OperationResults.RollbackFailed(result, $"Cannot commit delete of bucket, cannot find bucket id.");
-        }
-
-        var bucket = await _context.Influx.GetBucketsApi().FindBucketByIdAsync(result.Id);
-        bucket.Name = result.OldName;
 
         try
         {
+            if (string.IsNullOrEmpty(result?.Id))
+            {
+                return OperationResults.RollbackFailed(result, $"Cannot commit delete of bucket, cannot find bucket id.");
+            }
+
+            var bucket = await _context.Influx.GetBucketsApi().FindBucketByIdAsync(result.Id);
+            bucket.Name = result.OldName;
+
             await _context.Influx.GetBucketsApi().UpdateBucketAsync(bucket);
             return OperationResults.RollbackSuccess(result);
         }

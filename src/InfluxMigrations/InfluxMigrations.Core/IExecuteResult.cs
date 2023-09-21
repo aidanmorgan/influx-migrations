@@ -109,9 +109,24 @@ public static class OperationResults
     {
         return RollbackFailed(result, new MigrationExecutionException(x));
     }
+
+    public static OperationResult<OperationExecutionState,IExecuteResult> ExecuteSuccess()
+    {
+        return new OperationResult<OperationExecutionState, IExecuteResult>(OperationExecutionState.Success, new EmptyExecuteResult());
+    }
 }
 
-public class ExceptionExecuteResult : IExecuteResult
+public class EmptyExecuteResult : IExecuteResult
+{
+    
+}
+
+public interface IExceptionResult
+{
+    Exception Exception { get; }
+}
+
+public class ExceptionExecuteResult : IExecuteResult, IExceptionResult
 {
     public Exception Exception { get; private set; }
 
@@ -121,7 +136,7 @@ public class ExceptionExecuteResult : IExecuteResult
     }
 }
 
-public class ExceptionRollbackResult : IRollbackResult
+public class ExceptionRollbackResult : IRollbackResult, IExceptionResult
 {
     public Exception Exception { get; private set; }
     public IExecuteResult ExecutionResult { get; private set; }
@@ -133,10 +148,9 @@ public class ExceptionRollbackResult : IRollbackResult
     }
 }
 
-public class ExceptionCommitResult : ICommitResult
+public class ExceptionCommitResult : ICommitResult, IExceptionResult
 {
     public IExecuteResult ExecuteResult { get; private set; }
-    
     public Exception Exception { get; private set; }
 
     public ExceptionCommitResult(IExecuteResult result, Exception exception)

@@ -22,35 +22,44 @@ public class CreateUser : IMigrationOperation
     
     public async Task<OperationResult<OperationExecutionState, IExecuteResult>> ExecuteAsync()
     {
-        var username = Username.Resolve(_context);
-        if (string.IsNullOrEmpty(username))
+        try
         {
-            return OperationResults.ExecutionFailed($"Cannot create user, cannot resolve Username.");
-        }
+            var username = Username.Resolve(_context);
 
-        var user = await _context.Influx.GetUsersApi().CreateUserAsync(username);
-
-        var requestedPassword = Password.Resolve(_context); 
-        if (!string.IsNullOrEmpty(requestedPassword))
-        {
-            var response = await _context.Influx.Raw()
-                .AppendPathSegment($"/api/v2/users/{user.Id}/password")
-                .PostJsonAsync(new
-                {
-                    password = requestedPassword
-                });
-
-            if (response.StatusCode != 204)
+            if (string.IsNullOrEmpty(username))
             {
-                return OperationResults.ExecutionFailed($"Could not set initial user password for User with id {user.Id}.");
+                return OperationResults.ExecutionFailed($"Cannot create user, cannot resolve Username.");
             }
-        }
 
-        return OperationResults.ExecuteSuccess(new CreateUserResult()
+            var user = await _context.Influx.GetUsersApi().CreateUserAsync(username);
+
+            var requestedPassword = Password.Resolve(_context);
+            if (!string.IsNullOrEmpty(requestedPassword))
+            {
+                var response = await _context.Influx.Raw()
+                    .AppendPathSegment($"/api/v2/users/{user.Id}/password")
+                    .PostJsonAsync(new
+                    {
+                        password = requestedPassword
+                    });
+
+                if (response.StatusCode != 204)
+                {
+                    return OperationResults.ExecutionFailed(
+                        $"Could not set initial user password for User with id {user.Id}.");
+                }
+            }
+
+            return OperationResults.ExecuteSuccess(new CreateUserResult()
+            {
+                Name = user.Name,
+                Id = user.Id
+            });
+        }
+        catch (Exception x)
         {
-            Name = user.Name,
-            Id = user.Id
-        });
+            return OperationResults.ExecutionFailed(x);
+        }
     }
 
     public Task<OperationResult<OperationCommitState, ICommitResult>> CommitAsync(IExecuteResult result)
@@ -61,13 +70,13 @@ public class CreateUser : IMigrationOperation
     public async Task<OperationResult<OperationRollbackState, IRollbackResult>> RollbackAsync(IExecuteResult r)
     {
         var result = (CreateUserResult)r;
-        if (string.IsNullOrEmpty(result?.Id))
-        {
-            return OperationResults.RollbackFailed(result, $"Cannot roll back {typeof(CreateUser).FullName}, no User Id provided.");
-        }
-
         try
         {
+            if (string.IsNullOrEmpty(result?.Id))
+            {
+                return OperationResults.RollbackFailed(result, $"Cannot roll back {typeof(CreateUser).FullName}, no User Id provided.");
+            }
+
             await _context.Influx.GetUsersApi().DeleteUserAsync(result.Id);
             return OperationResults.RollbackSuccess(result);
         }

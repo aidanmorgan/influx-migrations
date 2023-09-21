@@ -5,5 +5,5 @@ namespace InfluxMigrations.Yaml;
 
 public interface IYamlOperationParser
 {
-    IMigrationOperationBuilder Parse(YamlMappingNode yamlNode);
+    IMigrationOperationBuilder Parse(YamlMappingNode node);
 }
