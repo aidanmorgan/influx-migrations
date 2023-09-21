@@ -3,8 +3,10 @@ using InfluxDB.Client;
 using InfluxDB.Client.Api.Domain;
 using InfluxMigrations.Commands.Auth;
 using InfluxMigrations.Commands.Bucket;
+using InfluxMigrations.Commands.Organisation;
 using InfluxMigrations.Commands.User;
 using InfluxMigrations.Core;
+using InfluxMigrations.Default.Integration;
 using InfluxMigrations.Impl;
 using InfluxMigrations.IntegrationCommon;
 using Microsoft.Extensions.Logging;
@@ -13,16 +15,19 @@ using Testcontainers.InfluxDb;
 
 namespace InfluxMigrations.IntegrationTests;
 
-public class AuthManagementTests
+public class AuthTests
 {
     private InfluxFixture _influxFixture;
     private IInfluxFactory _influx;
+    private Random _random;
 
     [SetUp]
     public async Task SetUp()
     {
         _influxFixture = new InfluxFixture();
         _influx = await _influxFixture.Setup();
+
+        _random = new Random();
     }
 
     [TearDown]
@@ -34,14 +39,17 @@ public class AuthManagementTests
     [Test]
     public async Task CreateUser()
     {
+        var userName = _random.RandomString();
+        var password = _random.RandomString();
+        
         var environment = new DefaultEnvironmentContext(_influx, new TextWriterMigrationLoggerFactory(Console.Out));
 
         CaptureResultBuilder createdUserResult = new CaptureResultBuilder();
 
         var migration = new Migration("0001");
         migration.AddUp("create-user", new CreateUserBuilder()
-                .WithUsername("testuser1")
-                .WithPassword("p@ssw0rd"))
+                .WithUsername(userName)
+                .WithPassword(password))
             .AddExecuteTask(createdUserResult);
 
         await migration.ExecuteAsync(environment, MigrationDirection.Up);
@@ -51,7 +59,7 @@ public class AuthManagementTests
             .FindUserByIdAsync(createdUserResult.As<CreateUserResult>().Id);
 
         Assert.That(user, Is.Not.Null);
-        Assert.That(user.Name, Is.EqualTo("testuser1"));
+        Assert.That(user.Name, Is.EqualTo(userName));
     }
 
     [Test]
@@ -78,11 +86,15 @@ public class AuthManagementTests
             .AddExecuteTask(createBucketResult);
 
         var environment = new DefaultEnvironmentContext(_influx, new TextWriterMigrationLoggerFactory(Console.Out));
-        await migration.ExecuteAsync(environment, MigrationDirection.Up);
+        var x = await migration.ExecuteAsync(environment, MigrationDirection.Up);
+
+        NunitExtensions.AssertMigrationSuccess(x);
 
         var result = (CreateBucketTokenResult?)createBucketResult.Result;
 
         Assert.That(result, Is.Not.Null);
         Assert.That(result.Token, Is.Not.Null);
     }
+
+    
 }

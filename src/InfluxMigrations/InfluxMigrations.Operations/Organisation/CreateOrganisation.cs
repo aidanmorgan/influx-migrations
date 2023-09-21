@@ -24,7 +24,7 @@ public class CreateOrganisation : IMigrationOperation
 
             if (string.IsNullOrEmpty(name))
             {
-                return OperationResults.ExecutionFailed("Cannot create organisation, name has not been specified.");
+                return OperationResults.ExecuteFailed("Cannot create organisation, name has not been specified.");
             }
 
             var result = await _context.Influx.GetOrganizationsApi().CreateOrganizationAsync(name);
@@ -40,7 +40,7 @@ public class CreateOrganisation : IMigrationOperation
         }
         catch (Exception x)
         {
-            return OperationResults.ExecutionFailed(x);
+            return OperationResults.ExecuteFailed(x);
         }
     }
 

@@ -4,15 +4,15 @@ using InfluxMigrations.Core.Resolvers;
 
 namespace InfluxMigrations.Commands.Bucket;
 
-public class AddUserToBucket : IMigrationOperation
+public class AddMemberToBucket : IMigrationOperation
 {
     private readonly IOperationExecutionContext _context;
 
-    public InfluxRuntimeIdResolver User { get; private set; }
-    public InfluxRuntimeIdResolver Bucket { get; private set; }
+    public IInfluxRuntimeResolver User { get; private set; }
+    public IInfluxRuntimeResolver Bucket { get; private set; }
 
 
-    public AddUserToBucket(IOperationExecutionContext context)
+    public AddMemberToBucket(IOperationExecutionContext context)
     {
         _context = context;
 
@@ -20,7 +20,7 @@ public class AddUserToBucket : IMigrationOperation
         Bucket = InfluxRuntimeIdResolver.CreateBucket();
     }
 
-    public AddUserToBucket Initialise(Action<AddUserToBucket> callback)
+    public AddMemberToBucket Initialise(Action<AddMemberToBucket> callback)
     {
         callback(this);
         return this;
@@ -35,11 +35,11 @@ public class AddUserToBucket : IMigrationOperation
 
             await _context.Influx.GetBucketsApi().AddMemberAsync(userId, bucketId);
 
-            return OperationResults.ExecuteSuccess(new AddMemberToBucketResult());
+            return OperationResults.ExecuteSuccess();
         }
-        catch (InfluxException x)
+        catch (Exception x)
         {
-            return OperationResults.ExecutionFailed(x);
+            return OperationResults.ExecuteFailed(x);
         }
     }
 
@@ -57,7 +57,7 @@ public class AddUserToBucket : IMigrationOperation
 
             await _context.Influx.GetBucketsApi().DeleteMemberAsync(userId, bucketId);
         }
-        catch (InfluxException x)
+        catch (Exception x)
         {
             return OperationResults.RollbackFailed(result, x);
         }
@@ -66,21 +66,17 @@ public class AddUserToBucket : IMigrationOperation
     }
 }
 
-public class AddMemberToBucketResult : IExecuteResult
-{
-}
-
 public class AddMemberToBucketBuilder : IMigrationOperationBuilder
 {
-    public string UserName { get; init; }
-    public string UserId { get; init; }
-    public string BucketName { get; init; }
-    public string BucketId { get; init; }
+    public string UserName { get; private set; }
+    public string UserId { get; private set; }
+    public string BucketName { get; private set; }
+    public string BucketId { get; private set; }
 
 
     public IMigrationOperation Build(IOperationExecutionContext context)
     {
-        return new AddUserToBucket(context).Initialise(x =>
+        return new AddMemberToBucket(context).Initialise(x =>
         {
             x.Bucket
                 .WithName(StringResolvable.Parse(BucketName))
@@ -89,5 +85,29 @@ public class AddMemberToBucketBuilder : IMigrationOperationBuilder
                 .WithName(StringResolvable.Parse(UserName))
                 .WithId(StringResolvable.Parse(UserId));
         });
+    }
+
+    public AddMemberToBucketBuilder WithBucketId(string s)
+    {
+        BucketId = s;
+        return this;
+    }
+
+    public AddMemberToBucketBuilder WithBucketName(string s)
+    {
+        BucketName = s;
+        return this;
+    }
+
+    public AddMemberToBucketBuilder WithUserId(string s)
+    {
+        UserId = s;
+        return this;
+    }
+
+    public AddMemberToBucketBuilder WithUserName(string s)
+    {
+        UserName = s;
+        return this;
     }
 }

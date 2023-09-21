@@ -16,7 +16,7 @@ public class EchoTaskParser : IYamlTaskParser
             var strVal = x.GetStringValue();
             if (!string.IsNullOrEmpty(strVal))
             {
-                builder.WithString(x.GetStringValue());
+                builder.WithString(strVal);
             }
         });
 

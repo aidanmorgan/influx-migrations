@@ -195,9 +195,9 @@ public class Migration : IMigration
 
                 if (operationResult.State is OperationExecutionState.Success or OperationExecutionState.Skipped)
                 {
-                    executionContext.ExecuteResult = operationResult.Result;
                     instanceOperations.Add(new MigrationOperationRuntimeState(op.Id, op, operation, operationResult,
                         executionContext));
+                    executionContext.ExecuteResult = operationResult.Result;
                     executeLog.Complete(operationResult);
 
                     foreach (var output in op.ExecuteTasks.Select(x => x.Build()))
@@ -213,7 +213,7 @@ public class Migration : IMigration
                         MigrationIssueSeverity.Fail, operationResult);
                     executeLog.Failed(operationResult);
 
-                    throw new MigrationExecutionException($"Execution of step {op.Id} failed.");
+                    throw new MigrationExecutionException($"Execution of Operation {op.Id} failed.");
                 }
             }
 

@@ -4,7 +4,26 @@ using InfluxMigrations.Core.Resolvers;
 
 namespace InfluxMigrations.Core;
 
-public abstract class InfluxRuntimeResolver
+public interface IInfluxRuntimeResolver
+{
+    Task<string?> GetAsync(IOperationExecutionContext ctx);
+    Task<string?> GetAsync(IMigrationExecutionContext ctx);
+
+    IInfluxRuntimeResolver WithId(IResolvable<string?> id);
+    IInfluxRuntimeResolver WithName(IResolvable<string?> name);
+
+    IInfluxRuntimeResolver WithId(string? id)
+    {
+        return string.IsNullOrEmpty(id) ? this : WithId(StringResolvable.Parse(id));
+    }
+
+    IInfluxRuntimeResolver WithName(string? name)
+    {
+        return string.IsNullOrEmpty(name) ? this : WithId(StringResolvable.Parse(name));
+    }
+}
+
+public abstract class InfluxRuntimeResolver : IInfluxRuntimeResolver
 {
     private IResolvable<string?> Id { get; set; }
     private IResolvable<string?> Name { get; set; }
@@ -16,28 +35,18 @@ public abstract class InfluxRuntimeResolver
         _lookup = lookup;
     }
 
-    public InfluxRuntimeResolver WithName(IResolvable<string?> name)
+    public IInfluxRuntimeResolver WithName(IResolvable<string?> name)
     {
         Name = name;
         return this;
     }
 
-    public InfluxRuntimeResolver WithName(string? name)
-    {
-        return !string.IsNullOrEmpty(name) ? WithName(StringResolvable.Parse(name)!) : this;
-    }
-
-    public InfluxRuntimeResolver WithId(IResolvable<string?> id)
+    public IInfluxRuntimeResolver WithId(IResolvable<string?> id)
     {
         Id = id;
         return this;
     }
-
-    public InfluxRuntimeResolver WithId(string? id)
-    {
-        return !string.IsNullOrEmpty(id) ? WithId(StringResolvable.Parse(id)!) : this;
-    }
-
+    
     public async Task<string?> GetAsync(IOperationExecutionContext ctx)
     {
         var nameValue = Name?.Resolve(ctx);
@@ -65,7 +74,7 @@ public class InfluxRuntimeIdResolver : InfluxRuntimeResolver
     {
     }
 
-    public static InfluxRuntimeIdResolver CreateOrganisation()
+    public static IInfluxRuntimeResolver CreateOrganisation()
     {
         return new InfluxRuntimeIdResolver(async (id, name, influx) =>
         {
@@ -88,7 +97,7 @@ public class InfluxRuntimeIdResolver : InfluxRuntimeResolver
         });
     }
 
-    public static InfluxRuntimeIdResolver CreateBucket()
+    public static IInfluxRuntimeResolver CreateBucket()
     {
         return new InfluxRuntimeIdResolver(async (id, name, influx) =>
         {
@@ -109,7 +118,7 @@ public class InfluxRuntimeIdResolver : InfluxRuntimeResolver
         });
     }
 
-    public static InfluxRuntimeIdResolver CreateUser()
+    public static IInfluxRuntimeResolver CreateUser()
     {
         return new InfluxRuntimeIdResolver(async (id, name, influx) =>
         {
@@ -139,7 +148,7 @@ public class InfluxRuntimeNameResolver : InfluxRuntimeResolver
     {
     }
 
-    public static InfluxRuntimeNameResolver CreateOrganisation()
+    public static IInfluxRuntimeResolver CreateOrganisation()
     {
         return new InfluxRuntimeNameResolver(async (id, name, influx) =>
         {
@@ -165,7 +174,7 @@ public class InfluxRuntimeNameResolver : InfluxRuntimeResolver
         });
     }
 
-    public static InfluxRuntimeNameResolver CreateBucket()
+    public static IInfluxRuntimeResolver CreateBucket()
     {
         return new InfluxRuntimeNameResolver(async (id, name, influx) =>
         {
@@ -191,7 +200,7 @@ public class InfluxRuntimeNameResolver : InfluxRuntimeResolver
         });
     }
 
-    public static InfluxRuntimeNameResolver CreateUser()
+    public static IInfluxRuntimeResolver CreateUser()
     {
         return new InfluxRuntimeNameResolver(async (id, name, influx) =>
         {

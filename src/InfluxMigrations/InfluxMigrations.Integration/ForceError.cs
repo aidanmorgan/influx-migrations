@@ -17,7 +17,7 @@ public class ForceError : IMigrationOperation
     public Task<OperationResult<OperationExecutionState, IExecuteResult>> ExecuteAsync()
     {
         return Task.FromResult(ErrorOnExecute
-            ? OperationResults.ExecutionFailed("Force thrown.")
+            ? OperationResults.ExecuteFailed("Force thrown.")
             : OperationResults.ExecuteSuccess(new ForceErrorResult()));
     }
 

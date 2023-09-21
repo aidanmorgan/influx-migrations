@@ -22,6 +22,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\InfluxMigrations.Default.Integration\InfluxMigrations.Default.Integration.csproj" />
         <ProjectReference Include="..\InfluxMigrations.Impl\InfluxMigrations.Impl.csproj"/>
         <ProjectReference Include="..\InfluxMigrations.IntegrationCommon\InfluxMigrations.IntegrationCommon.csproj"/>
     </ItemGroup>

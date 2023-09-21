@@ -9,8 +9,8 @@ namespace InfluxMigrations.Commands.Organisation;
 public class AddUserToOrganisation : IMigrationOperation
 {
     private IOperationExecutionContext _context;
-    public InfluxRuntimeIdResolver Organisation { get; private set; }
-    public InfluxRuntimeIdResolver User { get; private set; }
+    public IInfluxRuntimeResolver Organisation { get; private set; }
+    public IInfluxRuntimeResolver User { get; private set; }
 
 
     public AddUserToOrganisation(IOperationExecutionContext context)
@@ -34,14 +34,14 @@ public class AddUserToOrganisation : IMigrationOperation
             var organisationId = await Organisation.GetAsync(_context);
             if (string.IsNullOrEmpty(organisationId))
             {
-                return OperationResults.ExecutionFailed(
+                return OperationResults.ExecuteFailed(
                     $"Cannot add user to Organisation, cannot find Organisation id.");
             }
 
             var userId = await User.GetAsync(_context);
             if (string.IsNullOrEmpty(userId))
             {
-                return OperationResults.ExecutionFailed($"Cannot add user to Organisation, cannot find User id");
+                return OperationResults.ExecuteFailed($"Cannot add user to Organisation, cannot find User id");
             }
 
             var result = await _context.Influx.GetOrganizationsApi().AddMemberAsync(userId, organisationId);
@@ -56,7 +56,7 @@ public class AddUserToOrganisation : IMigrationOperation
         }
         catch (Exception x)
         {
-            return OperationResults.ExecutionFailed(x);
+            return OperationResults.ExecuteFailed(x);
         }
     }
 

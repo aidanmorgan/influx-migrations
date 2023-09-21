@@ -6,8 +6,8 @@ namespace InfluxMigrations.Commands.Organisation;
 public class RemoveUserFromOrganisation : IMigrationOperation
 {
     private readonly IOperationExecutionContext _context;
-    public InfluxRuntimeIdResolver Organisation { get; private set; }
-    public InfluxRuntimeIdResolver User { get; private set; }
+    public IInfluxRuntimeResolver Organisation { get; private set; }
+    public IInfluxRuntimeResolver User { get; private set; }
 
     public RemoveUserFromOrganisation(IOperationExecutionContext context)
     {
@@ -31,14 +31,14 @@ public class RemoveUserFromOrganisation : IMigrationOperation
             var organisationId = await Organisation.GetAsync(_context);
             if (string.IsNullOrEmpty(organisationId))
             {
-                return OperationResults.ExecutionFailed(
+                return OperationResults.ExecuteFailed(
                     $"Cannot remove User for Organisation, no Organisation id set.");
             }
 
             var userId = await User.GetAsync(_context);
             if (string.IsNullOrEmpty(userId))
             {
-                return OperationResults.ExecutionFailed($"Cannot remove User from Organisation, no User id set.");
+                return OperationResults.ExecuteFailed($"Cannot remove User from Organisation, no User id set.");
             }
 
             var result = await _context.Influx.GetOrganizationsApi().AddMemberAsync(userId, organisationId);
@@ -51,7 +51,7 @@ public class RemoveUserFromOrganisation : IMigrationOperation
         }
         catch (Exception x)
         {
-            return OperationResults.ExecutionFailed(x);
+            return OperationResults.ExecuteFailed(x);
         }
     }
 
@@ -90,44 +90,44 @@ public class RemoveUserFromOrganisationResult : IExecuteResult
 
 public class RemoveUserFromOrganisationBuilder : IMigrationOperationBuilder
 {
-    private string? _organisationId;
-    private string? _organisationName;
+    public string OrganisationId { get; private set; }
+    public string OrganisationName { get; private set; }
 
-    private string? _userId;
-    private string? _userName;
+    public string? UserId { get; private set; }
+    public string? UserName { get; private set; }
 
     public RemoveUserFromOrganisationBuilder WithOrganisationName(string name)
     {
-        _organisationName = name;
+        OrganisationName = name;
         return this;
     }
 
     public RemoveUserFromOrganisationBuilder WithOrganisationId(string id)
     {
-        _organisationId = id;
+        OrganisationId = id;
         return this;
     }
 
     public RemoveUserFromOrganisationBuilder WithUsername(string username)
     {
-        _userName = username;
+        UserName = username;
         return this;
     }
 
     public RemoveUserFromOrganisationBuilder WithUserId(string id)
     {
-        _userId = id;
+        UserId = id;
         return this;
     }
 
     public IMigrationOperation Build(IOperationExecutionContext context)
     {
-        if (string.IsNullOrEmpty(_organisationId) && string.IsNullOrEmpty(_organisationName))
+        if (string.IsNullOrEmpty(OrganisationId) && string.IsNullOrEmpty(OrganisationName))
         {
             throw new MigrationOperationBuildingException("No Organisation specified.");
         }
 
-        if (string.IsNullOrEmpty(_userId) && string.IsNullOrEmpty(_userName))
+        if (string.IsNullOrEmpty(UserId) && string.IsNullOrEmpty(UserName))
         {
             throw new MigrationOperationBuildingException("No User specified.");
         }
@@ -135,9 +135,9 @@ public class RemoveUserFromOrganisationBuilder : IMigrationOperationBuilder
         return new RemoveUserFromOrganisation(context)
             .Initialise(x =>
             {
-                x.Organisation.WithId(_organisationId)
-                    .WithName(_organisationName);
-                x.User.WithId(_userId).WithName(_userName);
+                x.Organisation.WithId(OrganisationId)
+                    .WithName(OrganisationName);
+                x.User.WithId(UserId).WithName(UserName);
             });
     }
 }

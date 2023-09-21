@@ -28,7 +28,7 @@ public class CreateUser : IMigrationOperation
 
             if (string.IsNullOrEmpty(username))
             {
-                return OperationResults.ExecutionFailed($"Cannot create user, cannot resolve Username.");
+                return OperationResults.ExecuteFailed($"Cannot create user, cannot resolve Username.");
             }
 
             var user = await _context.Influx.GetUsersApi().CreateUserAsync(username);
@@ -45,7 +45,7 @@ public class CreateUser : IMigrationOperation
 
                 if (response.StatusCode != 204)
                 {
-                    return OperationResults.ExecutionFailed(
+                    return OperationResults.ExecuteFailed(
                         $"Could not set initial user password for User with id {user.Id}.");
                 }
             }
@@ -58,7 +58,7 @@ public class CreateUser : IMigrationOperation
         }
         catch (Exception x)
         {
-            return OperationResults.ExecutionFailed(x);
+            return OperationResults.ExecuteFailed(x);
         }
     }
 

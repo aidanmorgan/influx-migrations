@@ -88,9 +88,9 @@ public static class OperationResults
             new ExceptionRollbackResult(result, x));
     }
 
-    public static OperationResult<OperationExecutionState, IExecuteResult> ExecutionFailed(string x)
+    public static OperationResult<OperationExecutionState, IExecuteResult> ExecuteFailed(string x)
     {
-        return ExecutionFailed(new MigrationExecutionException(x));
+        return ExecuteFailed(new MigrationExecutionException(x));
     }
 
     public static OperationResult<OperationCommitState, ICommitResult> CommitFailed(IExecuteResult result, string x)
@@ -110,7 +110,7 @@ public static class OperationResults
             new EmptyCommitResult(result));
     }
 
-    public static OperationResult<OperationExecutionState, IExecuteResult> ExecutionFailed(Exception x)
+    public static OperationResult<OperationExecutionState, IExecuteResult> ExecuteFailed(Exception x)
     {
         return new OperationResult<OperationExecutionState, IExecuteResult>(OperationExecutionState.Failed,
             new ExceptionExecuteResult(x));

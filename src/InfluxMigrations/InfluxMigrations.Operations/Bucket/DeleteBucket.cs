@@ -9,7 +9,7 @@ public class DeleteBucket : IMigrationOperation
     public const string DeletePrefix = "DEL_";
 
     private readonly IOperationExecutionContext _context;
-    public InfluxRuntimeIdResolver Bucket { get; private set; }
+    public IInfluxRuntimeResolver Bucket { get; private set; }
 
 
     public DeleteBucket(IOperationExecutionContext context)
@@ -32,7 +32,7 @@ public class DeleteBucket : IMigrationOperation
             var bucketId = await Bucket.GetAsync(_context);
             if (string.IsNullOrEmpty(bucketId))
             {
-                return OperationResults.ExecutionFailed($"Cannot delete Bucket, no Bucket id provided.");
+                return OperationResults.ExecuteFailed($"Cannot delete Bucket, no Bucket id provided.");
             }
 
             var bucket = await _context.Influx.GetBucketsApi().FindBucketByIdAsync(bucketId);
@@ -50,7 +50,7 @@ public class DeleteBucket : IMigrationOperation
         }
         catch (Exception x)
         {
-            return OperationResults.ExecutionFailed(x);
+            return OperationResults.ExecuteFailed(x);
         }
     }
 

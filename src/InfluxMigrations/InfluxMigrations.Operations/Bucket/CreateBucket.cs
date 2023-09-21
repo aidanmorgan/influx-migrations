@@ -11,7 +11,7 @@ namespace InfluxMigrations.Commands.Bucket;
 public class CreateBucket : IMigrationOperation
 {
     private readonly IOperationExecutionContext _context;
-    public InfluxRuntimeIdResolver Organisation { get; private set; }
+    public IInfluxRuntimeResolver Organisation { get; private set; }
     public IResolvable<string?> Bucket { get; set; }
     public IResolvable<string?>? RetentionPeriodSeconds { get; set; }
 
@@ -42,7 +42,7 @@ public class CreateBucket : IMigrationOperation
             var organisationId = await Organisation.GetAsync(_context);
             if (string.IsNullOrEmpty(organisationId))
             {
-                return OperationResults.ExecutionFailed($"Cannot create Bucket, cannot resolve Organisation id.");
+                return OperationResults.ExecuteFailed($"Cannot create Bucket, cannot resolve Organisation id.");
             }
 
             var bucketName = Bucket.Resolve(_context);
@@ -50,7 +50,7 @@ public class CreateBucket : IMigrationOperation
             var bucket = await _context.Influx.GetBucketsApi().FindBucketByNameAsync(bucketName);
             if (bucket != null)
             {
-                return OperationResults.ExecutionFailed(
+                return OperationResults.ExecuteFailed(
                     $"Cannot create Bucket with name {bucketName}, one already exists.");
             }
 
@@ -81,7 +81,7 @@ public class CreateBucket : IMigrationOperation
         }
         catch (Exception x)
         {
-            return OperationResults.ExecutionFailed(x);
+            return OperationResults.ExecuteFailed(x);
         }
     }
 

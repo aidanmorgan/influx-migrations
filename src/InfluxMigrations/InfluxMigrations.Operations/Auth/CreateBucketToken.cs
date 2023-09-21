@@ -17,8 +17,8 @@ public class CreateBucketToken : IMigrationOperation
         };
 
     private readonly IOperationExecutionContext _context;
-    public InfluxRuntimeIdResolver Bucket { get; set; }
-    public InfluxRuntimeIdResolver User { get; set; }
+    public IInfluxRuntimeResolver Bucket { get; set; }
+    public IInfluxRuntimeResolver User { get; set; }
 
     public IResolvable<string?>? TokenDescription { get; set; }
     public List<IResolvable<string?>> Permissions { get; set; } = new List<IResolvable<string?>>();
@@ -44,7 +44,7 @@ public class CreateBucketToken : IMigrationOperation
             var bucketId = await Bucket.GetAsync(_context);
             if (string.IsNullOrEmpty(bucketId))
             {
-                return OperationResults.ExecutionFailed($"Coult not resolve Bucket id.");
+                return OperationResults.ExecuteFailed($"Coult not resolve Bucket id.");
             }
 
             var description = TokenDescription?.Resolve(_context) ??
@@ -100,7 +100,7 @@ public class CreateBucketToken : IMigrationOperation
         }
         catch (Exception x)
         {
-            return OperationResults.ExecutionFailed(x);
+            return OperationResults.ExecuteFailed(x);
         }
     }
 

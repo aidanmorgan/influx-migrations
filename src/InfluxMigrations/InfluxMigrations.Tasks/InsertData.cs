@@ -23,9 +23,9 @@ public class Data
 
 public class InsertData : IMigrationTask
 {
-    public InfluxRuntimeNameResolver Bucket { get; private set; } = InfluxRuntimeNameResolver.CreateBucket();
+    public IInfluxRuntimeResolver  Bucket { get; private set; } = InfluxRuntimeNameResolver.CreateBucket();
 
-    public InfluxRuntimeNameResolver Organisation { get; private set; } =
+    public IInfluxRuntimeResolver Organisation { get; private set; } =
         InfluxRuntimeNameResolver.CreateOrganisation();
 
     public WritePrecision WritePrecision { get; set; } = WritePrecision.Ms;

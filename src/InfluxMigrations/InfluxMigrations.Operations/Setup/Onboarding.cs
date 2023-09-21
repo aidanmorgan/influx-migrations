@@ -27,7 +27,7 @@ public class Onboarding : IMigrationOperation
 
             if (!allowed)
             {
-                return OperationResults.ExecutionFailed("Cannot onboard Influx, it is not allowed.");
+                return OperationResults.ExecuteFailed("Cannot onboard Influx, it is not allowed.");
             }
 
             var adminToken = Token.Resolve(_context);
@@ -58,7 +58,7 @@ public class Onboarding : IMigrationOperation
         }
         catch (Exception x)
         {
-            return OperationResults.ExecutionFailed(x);
+            return OperationResults.ExecuteFailed(x);
         }
     }
 
