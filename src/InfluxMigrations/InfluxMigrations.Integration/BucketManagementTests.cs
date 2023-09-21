@@ -8,6 +8,7 @@ using InfluxMigrations.Core;
 using InfluxMigrations.Impl;
 using InfluxMigrations.IntegrationCommon;
 using Microsoft.Extensions.Logging;
+using NUnit.Framework;
 using Testcontainers.InfluxDb;
 
 namespace InfluxMigrations.IntegrationTests;
@@ -37,12 +38,12 @@ public class BucketManagementTests
     public async Task CreateBucket()
     {
         var bucketName = _random.RandomString(8);
-        
+
         var environment = new DefaultEnvironmentContext(_influx);
         var resultCapture = new CaptureResultBuilder();
-        
+
         var migration = new Migration("0001");
-        var step =migration.AddUp("create-bucket",
+        var step = migration.AddUp("create-bucket",
             new CreateBucketBuilder()
                 .WithBucketName(bucketName)
                 .WithOrganisation(InfluxConstants.Organisation));
@@ -51,19 +52,20 @@ public class BucketManagementTests
         await migration.ExecuteAsync(environment, MigrationDirection.Up);
 
         var result = resultCapture.As<CreateBucketResult>();
-        
+
         Assert.That(result, Is.Not.Null);
         var loaded = await _influx.Create().GetBucketsApi().FindBucketByIdAsync(result.Id);
         Assert.That(loaded, Is.Not.Null);
         Assert.That(loaded.Name, Is.EqualTo(bucketName));
     }
-    
+
     [Test]
     public async Task DeleteBucket_ByName()
     {
         var bucketName = _random.RandomString(8);
-        
-        var org = (await _influx.Create().GetOrganizationsApi().FindOrganizationsAsync()).FirstOrDefault(x =>  x.Name == InfluxConstants.Organisation);
+
+        var org = (await _influx.Create().GetOrganizationsApi().FindOrganizationsAsync())
+            .FirstOrDefault(x => x.Name == InfluxConstants.Organisation);
         var bucket = await _influx.Create().GetBucketsApi().CreateBucketAsync(bucketName, org);
 
         var environment = new DefaultEnvironmentContext(_influx);
@@ -77,13 +79,14 @@ public class BucketManagementTests
             await _influx.Create().GetBucketsApi().FindBucketByIdAsync(bucket.Id);
         });
     }
-    
+
     [Test]
     public async Task DeleteBucket_ById()
     {
         var bucketName = _random.RandomString(8);
-        
-        var org = (await _influx.Create().GetOrganizationsApi().FindOrganizationsAsync()).FirstOrDefault(x =>  x.Name == InfluxConstants.Organisation);
+
+        var org = (await _influx.Create().GetOrganizationsApi().FindOrganizationsAsync()).FirstOrDefault(x =>
+            x.Name == InfluxConstants.Organisation);
         var bucket = await _influx.Create().GetBucketsApi().CreateBucketAsync(bucketName, org);
 
         var environment = new DefaultEnvironmentContext(_influx);
@@ -102,8 +105,9 @@ public class BucketManagementTests
     public async Task DeleteBucket_ExecuteError_ForcesRollback()
     {
         var bucketName = _random.RandomString(8);
-        
-        var org = (await _influx.Create().GetOrganizationsApi().FindOrganizationsAsync()).FirstOrDefault(x =>  x.Name == InfluxConstants.Organisation);
+
+        var org = (await _influx.Create().GetOrganizationsApi().FindOrganizationsAsync()).FirstOrDefault(x =>
+            x.Name == InfluxConstants.Organisation);
         var bucket = await _influx.Create().GetBucketsApi().CreateBucketAsync(bucketName, org);
 
         var environment = new DefaultEnvironmentContext(_influx);

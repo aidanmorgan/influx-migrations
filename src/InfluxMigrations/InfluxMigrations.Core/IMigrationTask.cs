@@ -14,7 +14,7 @@ public class TaskResult
     public Exception? Exception { get; init; }
 }
 
-public static class TaskResults 
+public static class TaskResults
 {
     public static Task<TaskResult> TaskSuccessAsync()
     {
@@ -32,7 +32,7 @@ public static class TaskResults
             Exception = x
         });
     }
-    
+
     public static TaskResult TaskFailure(Exception? x)
     {
         return new TaskResult()
@@ -72,11 +72,7 @@ public interface IMigrationTask
     Task<TaskResult> ExecuteAsync(IMigrationExecutionContext ctx);
 }
 
-
 public interface IMigrationTaskBuilder
 {
     IMigrationTask Build();
 }
-
- 
-

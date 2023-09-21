@@ -7,15 +7,11 @@ namespace InfluxMigrations.Yaml.Tasks;
 [YamlTaskParser("set")]
 public class SetVariableTaskParser : IYamlTaskParser
 {
-    
     public IMigrationTaskBuilder Parse(YamlMappingNode node)
     {
         var builder = new SetVariableTaskBuilder();
 
-        node.Value("scope", (x) =>
-        {
-            builder.WithScope(x);
-        });
+        node.Value("scope", (x) => { builder.WithScope(x); });
 
         node.Value("expr", (x) =>
         {

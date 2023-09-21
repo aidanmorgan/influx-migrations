@@ -11,10 +11,7 @@ public class CreateOrganisationParser : IYamlOperationParser
     {
         var builder = new CreateOrganisationBuilder();
 
-        node.Value(CommonTags.OrganisationName, x =>
-        {
-            builder.WithName(x);
-        });
+        node.Value(CommonTags.OrganisationName, x => { builder.WithName(x); });
 
         return builder;
     }

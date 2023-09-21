@@ -7,14 +7,15 @@ public class MockMigration : IMigration
     public string Version { get; set; }
     private MigrationResult? _result;
 
-    public List<MigrationOperationInstance> UpOperations { get; private set; } = 
+    public List<MigrationOperationInstance> UpOperations { get; private set; } =
         new List<MigrationOperationInstance>();
 
     public List<MigrationOperationInstance> DownOperations { get; private set; } =
         new List<MigrationOperationInstance>();
-    public List<IMigrationTaskBuilder> Tasks { get; private set; } = 
+
+    public List<IMigrationTaskBuilder> Tasks { get; private set; } =
         new List<IMigrationTaskBuilder>();
-    
+
     public MigrationDirection Direction { get; private set; }
 
     public MockMigration(string ver)
@@ -32,7 +33,7 @@ public class MockMigration : IMigration
         res(_result);
         return this;
     }
-    
+
     public MigrationOperationInstance AddUp(string id, IMigrationOperationBuilder operation)
     {
         var entry = new MigrationOperationInstance(id, operation);
@@ -47,11 +48,12 @@ public class MockMigration : IMigration
         return entry;
     }
 
-    public Task<MigrationResult> ExecuteAsync(IMigrationEnvironmentContext env, MigrationDirection direction, MigrationOptions? opts = null)
+    public Task<MigrationResult> ExecuteAsync(IMigrationEnvironmentContext env, MigrationDirection direction,
+        MigrationOptions? opts = null)
     {
-        this._result ??= new MigrationResult() { Version = this.Version };
-        this.Direction = direction;
-        
+        _result ??= new MigrationResult() { Version = this.Version };
+        Direction = direction;
+
         return Task.FromResult(_result);
     }
 

@@ -11,7 +11,7 @@ public class DeleteBucketParserTests
     {
         var yamlParser = new YamlMigrationParser();
         var result = await yamlParser.ParseString(
-            @"migration:
+@"migration:
   version: 0001
   up:
     - operation: delete-bucket
@@ -19,14 +19,14 @@ public class DeleteBucketParserTests
       bucket_name: bucket-name
       bucket_id: bucket-id
 ", x => new MockMigration(x)) as MockMigration;
-        
+
         Assert.That(result, Is.Not.Null);
-        
+
         Assert.That(result.Version, Is.EqualTo("0001"));
         Assert.That(result.UpOperations.Count, Is.EqualTo(1));
 
         var operation = result.UpOperations[0].Operation as DeleteBucketBuilder;
-        
+
         Assert.That(operation, Is.Not.Null);
         Assert.That(operation.BucketName, Is.EqualTo("bucket-name"));
         Assert.That(operation.BucketId, Is.EqualTo("bucket-id"));

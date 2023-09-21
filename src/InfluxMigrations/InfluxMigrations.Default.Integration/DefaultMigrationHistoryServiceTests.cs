@@ -39,7 +39,7 @@ public class DefaultMigrationHistoryServiceTests
         Assert.That(result, Is.Not.Null);
         Assert.That(result.Count, Is.EqualTo(0));
     }
-    
+
     [Test]
     public async Task TestLoadEmptyHistory_BucketExists()
     {
@@ -49,24 +49,25 @@ public class DefaultMigrationHistoryServiceTests
             BucketName = InfluxConstants.HistoryBucket
         };
 
-        await DefaultMigrationHistoryService.CreateHistoryBucketIfNotExists(_influx.Create(), opts); 
+        await DefaultMigrationHistoryService.CreateHistoryBucketIfNotExists(_influx.Create(), opts);
         var loader = new DefaultMigrationHistoryService(_influx, opts);
 
         var result = await loader.LoadMigrationHistoryAsync();
         Assert.That(result, Is.Not.Null);
         Assert.That(result.Count, Is.EqualTo(0));
     }
-    
-    
+
+
     [Test]
     public async Task TestHistoryBucketCreatedIfNotExists()
     {
-        var historyBucket = await DefaultMigrationHistoryService.CreateHistoryBucketIfNotExists(_influx.Create(), new DefaultMigrationHistoryOptions()
-        {
-            BucketName = InfluxConstants.HistoryBucket,
-            OrganisationName = InfluxConstants.Organisation
-        });
-        
+        var historyBucket = await DefaultMigrationHistoryService.CreateHistoryBucketIfNotExists(_influx.Create(),
+            new DefaultMigrationHistoryOptions()
+            {
+                BucketName = InfluxConstants.HistoryBucket,
+                OrganisationName = InfluxConstants.Organisation
+            });
+
         Assert.That(historyBucket, Is.Not.Null);
     }
 

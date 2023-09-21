@@ -23,16 +23,16 @@ public class OnboardingParserTests
       user_name: user-name
       password: test-password
 ", x => new MockMigration(x)) as MockMigration;
-        
+
         Assert.That(result, Is.Not.Null);
-        
+
         Assert.That(result.Version, Is.EqualTo("0001"));
         Assert.That(result.UpOperations.Count, Is.EqualTo(1));
 
         var operation = result.UpOperations[0].Operation as OnboardingBuilder;
-        
+
         Assert.That(operation, Is.Not.Null);
-        
+
         Assert.That(operation.OrganisationName, Is.EqualTo("organisation-name"));
         Assert.That(operation.Token, Is.EqualTo("test-token"));
         Assert.That(operation.BucketName, Is.EqualTo("test-bucket"));

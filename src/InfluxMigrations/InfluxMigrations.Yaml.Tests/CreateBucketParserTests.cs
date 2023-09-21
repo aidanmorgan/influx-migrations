@@ -25,15 +25,15 @@ public class Tests
       organisation_id: organisation-id
       retention: 5d
 ", x => new MockMigration(x)) as MockMigration;
-        
-        
+
+
         Assert.That(result, Is.Not.Null);
-        
+
         Assert.That(result.Version, Is.EqualTo("0001"));
         Assert.That(result.UpOperations.Count, Is.EqualTo(1));
 
         var operation = result.UpOperations[0].Operation as CreateBucketBuilder;
-        
+
         Assert.That(operation, Is.Not.Null);
         Assert.That(operation.Retention, Is.EqualTo("5d"));
         Assert.That(operation.BucketName, Is.EqualTo("bucket-name"));

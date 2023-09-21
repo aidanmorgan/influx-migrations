@@ -22,7 +22,7 @@ public static class TimeSpanParser
 
         var timeSpanRegex = new Regex(
             string.Format(@"\s*(?<{0}>\d+)\s*(?<{1}>({2}|{3}|{4}|{5}|\Z))",
-                Quantity, Unit, Days, Hours, Minutes, Seconds), 
+                Quantity, Unit, Days, Hours, Minutes, Seconds),
             RegexOptions.IgnoreCase);
         var matches = timeSpanRegex.Matches(s);
 
@@ -51,7 +51,7 @@ public static class TimeSpanParser
                 ts = ts.Add(TimeSpan.FromHours(double.Parse(match.Groups[Quantity].Value)));
             }
         }
-        
+
         return ts;
     }
 }

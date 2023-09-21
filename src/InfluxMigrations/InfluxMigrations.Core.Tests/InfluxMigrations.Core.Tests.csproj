@@ -19,7 +19,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\InfluxMigrations.Impl\InfluxMigrations.Impl.csproj" />
+        <ProjectReference Include="..\InfluxMigrations.Impl\InfluxMigrations.Impl.csproj"/>
     </ItemGroup>
 
 </Project>

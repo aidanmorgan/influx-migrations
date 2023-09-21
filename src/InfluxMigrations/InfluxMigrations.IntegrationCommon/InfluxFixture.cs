@@ -1,7 +1,4 @@
-﻿using DotNet.Testcontainers;
-using InfluxDB.Client;
-using InfluxMigrations.Core;
-using Microsoft.Extensions.Logging;
+﻿using InfluxMigrations.Core;
 using Testcontainers.InfluxDb;
 
 namespace InfluxMigrations.IntegrationCommon;
@@ -9,12 +6,9 @@ namespace InfluxMigrations.IntegrationCommon;
 public class InfluxFixture
 {
     private InfluxDbContainer? _container;
-    private ILogger? _logger;
 
     public async Task<IInfluxFactory> Setup()
     {
-        _logger = ConsoleLogger.Instance;
-
         var builder = new InfluxDbBuilder()
             .WithBucket(InfluxConstants.Bucket)
             .WithOrganization(InfluxConstants.Organisation)
@@ -30,7 +24,9 @@ public class InfluxFixture
         _container = builder.Build();
         await _container.StartAsync();
 
-        return new InfluxFactory().WithHost(_container.GetAddress()).WithToken(InfluxConstants.AdminToken);
+        return new InfluxFactory()
+            .WithHost(_container.GetAddress())
+            .WithToken(InfluxConstants.AdminToken);
     }
 
     public async Task TearDown()
@@ -40,5 +36,4 @@ public class InfluxFixture
             await _container.StopAsync();
         }
     }
-    
 }

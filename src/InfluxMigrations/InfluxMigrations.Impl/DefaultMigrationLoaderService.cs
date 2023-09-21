@@ -68,7 +68,8 @@ public class DefaultMigrationLoaderService : IMigrationLoaderService
 
                         if (string.IsNullOrEmpty(migration.Version))
                         {
-                            throw new MigrationLoadingException($"Found migration file {file}, but cannot determine version.");
+                            throw new MigrationLoadingException(
+                                $"Found migration file {file}, but cannot determine version.");
                         }
 
                         logger.FoundMigration(file, migration);

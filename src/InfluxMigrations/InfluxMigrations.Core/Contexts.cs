@@ -17,11 +17,11 @@ public interface IContext
 /// </summary>
 public interface IOperationExecutionContext : IContext
 {
-    public string? Id { get;  } 
+    public string? Id { get; }
     public string? Get(string key);
     public void Set(string key, string? value);
     public IInfluxDBClient Influx => MigrationExecutionContext.Influx;
-    
+
     public IMigrationExecutionContext MigrationExecutionContext { get; }
 
     public object? ExecuteResult { get; set; }
@@ -36,16 +36,15 @@ public interface IMigrationExecutionContext : IContext
 {
     public string Version { get; }
     public IInfluxDBClient Influx => EnvironmentContext.Influx;
-    
+
     public void Set(string key, string? value);
     public string? Get(string name);
-    
+
     public IMigrationEnvironmentContext EnvironmentContext { get; }
-    
+
     public IOperationExecutionContext CreateExecutionContext(string commandId);
     IOperationExecutionContext? GetExecutionContext(string stepId);
 }
-
 
 public static class InfluxDbClientExtensions
 {
@@ -62,33 +61,33 @@ public static class InfluxDbClientExtensions
         {
             throw new MigrationException("Hack failed.");
         }
-        
+
         var apiClient = (ApiClient?)apiClientField.GetValue(client);
         if (apiClient == null)
         {
             throw new MigrationException("Hack failed.");
         }
 
-        var clientOptionsField = typeof(ApiClient).GetFields(BindingFlags.NonPublic | BindingFlags.Instance).FirstOrDefault(x => string.Equals(x?.Name, "_options"), null);
+        var clientOptionsField = typeof(ApiClient).GetFields(BindingFlags.NonPublic | BindingFlags.Instance)
+            .FirstOrDefault(x => string.Equals(x?.Name, "_options"), null);
         if (clientOptionsField == null)
         {
             throw new MigrationException("Hack failed.");
         }
-        
-        
+
+
         var clientOptions = (InfluxDBClientOptions?)clientOptionsField.GetValue(apiClient);
         if (clientOptions == null)
         {
             throw new MigrationException("Hack failed.");
         }
-        
+
         return clientOptions.Url
             .WithHeader("Authorization", $"Token {clientOptions.Token}")
             .WithHeader("Content-Type", "text/plain; charset=utf-8")
             .WithHeader("Accept", "application/json");
     }
 }
-
 
 /// <summary>
 /// Contains "global" scoped information
@@ -105,4 +104,3 @@ public interface IMigrationEnvironmentContext : IContext
 
     public IMigrationExecutionContext CreateMigrationContext(string version);
 }
-

@@ -5,6 +5,7 @@ using InfluxMigrations.Core;
 using InfluxMigrations.Impl;
 using InfluxMigrations.IntegrationCommon;
 using Microsoft.Extensions.Logging;
+using NUnit.Framework;
 using Testcontainers.InfluxDb;
 
 namespace InfluxMigrations.IntegrationTests;
@@ -26,45 +27,51 @@ public class InfluxApiValueTests
     {
         await _influxFixture.TearDown();
     }
-    
+
     [Test]
     public async Task OrganisationName()
     {
-        var o = (await _influx.Create().GetOrganizationsApi().FindOrganizationsAsync()).FirstOrDefault(x => string.Equals(x?.Name, InfluxConstants.Organisation, StringComparison.InvariantCultureIgnoreCase), null);
+        var o = (await _influx.Create().GetOrganizationsApi().FindOrganizationsAsync()).FirstOrDefault(
+            x => string.Equals(x?.Name, InfluxConstants.Organisation, StringComparison.InvariantCultureIgnoreCase),
+            null);
         Assert.That(o, Is.Not.Null);
-        
+
         var org = InfluxRuntimeIdResolver.CreateOrganisation().WithName(InfluxConstants.Organisation);
-        
+
         var environment = new DefaultEnvironmentContext(_influx);
         var migrationContext = environment.CreateMigrationContext("0001");
         var executionContext = migrationContext.CreateExecutionContext(nameof(BucketName));
 
         var orgId = await org.GetAsync(executionContext);
-        
+
         Assert.That(orgId, Is.Not.Null);
         Assert.That(orgId, Is.EqualTo(o!.Id));
     }
-    
+
     [Test]
     public async Task OrganisationId()
     {
-        var o = (await _influx.Create().GetOrganizationsApi().FindOrganizationsAsync()).FirstOrDefault(x => string.Equals(x?.Name, InfluxConstants.Organisation, StringComparison.InvariantCultureIgnoreCase), null);
+        var o = (await _influx.Create().GetOrganizationsApi().FindOrganizationsAsync()).FirstOrDefault(
+            x => string.Equals(x?.Name, InfluxConstants.Organisation, StringComparison.InvariantCultureIgnoreCase),
+            null);
         var org = InfluxRuntimeIdResolver.CreateOrganisation().WithId(o.Id);
-        
+
         var environment = new DefaultEnvironmentContext(_influx);
         var migrationContext = environment.CreateMigrationContext("0001");
         var executionContext = migrationContext.CreateExecutionContext(nameof(BucketName));
 
         var orgId = await org.GetAsync(executionContext);
-        
+
         Assert.That(orgId, Is.Not.Null);
         Assert.That(orgId, Is.EqualTo(o.Id));
-    }    
+    }
 
     [Test]
     public async Task BucketName()
     {
-        var o = (await _influx.Create().GetOrganizationsApi().FindOrganizationsAsync()).FirstOrDefault(x => string.Equals(x?.Name, InfluxConstants.Organisation, StringComparison.InvariantCultureIgnoreCase), null);
+        var o = (await _influx.Create().GetOrganizationsApi().FindOrganizationsAsync()).FirstOrDefault(
+            x => string.Equals(x?.Name, InfluxConstants.Organisation, StringComparison.InvariantCultureIgnoreCase),
+            null);
         var b = await _influx.Create().GetBucketsApi()
             .CreateBucketAsync(nameof(BucketName), o!.Id);
 
@@ -74,15 +81,17 @@ public class InfluxApiValueTests
         var migrationContext = environment.CreateMigrationContext("0001");
         var executionContext = migrationContext.CreateExecutionContext(nameof(BucketName));
         var bucketId = await bucket.GetAsync(executionContext);
-        
+
         Assert.That(bucketId, Is.Not.Null);
         Assert.That(bucketId, Is.EqualTo(b.Id));
     }
-    
+
     [Test]
     public async Task BucketId()
     {
-        var o = (await _influx.Create().GetOrganizationsApi().FindOrganizationsAsync()).FirstOrDefault(x => string.Equals(x?.Name, InfluxConstants.Organisation, StringComparison.InvariantCultureIgnoreCase), null);
+        var o = (await _influx.Create().GetOrganizationsApi().FindOrganizationsAsync()).FirstOrDefault(
+            x => string.Equals(x?.Name, InfluxConstants.Organisation, StringComparison.InvariantCultureIgnoreCase),
+            null);
         var b = await _influx.Create().GetBucketsApi()
             .CreateBucketAsync(nameof(BucketId), o!.Id);
 
@@ -93,7 +102,7 @@ public class InfluxApiValueTests
         var migrationContext = environment.CreateMigrationContext("0001");
         var executionContext = migrationContext.CreateExecutionContext(nameof(BucketId));
         var bucketId = await bucket.GetAsync(executionContext);
-        
+
         Assert.That(bucketId, Is.Not.Null);
         Assert.That(bucketId, Is.EqualTo(b.Id));
     }

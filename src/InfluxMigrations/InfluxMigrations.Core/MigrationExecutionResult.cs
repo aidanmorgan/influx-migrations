@@ -13,6 +13,6 @@ public class MigrationExecutionResult
     public ExecutionState ExecutionState { get; set; }
     public ExecutionState CommitState { get; set; }
     public ExecutionState RollbackState { get; set; }
-    
+
     public ExecutionState TaskState { get; set; }
 }

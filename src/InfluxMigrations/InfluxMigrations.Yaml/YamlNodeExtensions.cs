@@ -2,7 +2,6 @@ using YamlDotNet.RepresentationModel;
 
 namespace InfluxMigrations.Yaml;
 
-
 public static class YamlNodeExtensions
 {
     public static bool ContainsKey(this YamlNode node, string name)
@@ -28,17 +27,17 @@ public static class YamlNodeExtensions
 
         return null;
     }
-    
+
     public static string? GetStringValue(this YamlNode node)
     {
         return node is YamlScalarNode scalarNode ? scalarNode.Value : null;
-    }    
-    
+    }
+
     public static bool Value(this YamlNode node, string name, Action<string> callback)
     {
         if (node.ContainsKey(name))
         {
-            var value =node[name].GetStringValue();
+            var value = node[name].GetStringValue();
 
             if (!string.IsNullOrEmpty(value))
             {
@@ -49,7 +48,7 @@ public static class YamlNodeExtensions
 
         return false;
     }
-    
+
     public static bool ForEach(this YamlNode node, string name, Action<YamlNode> callback)
     {
         if (node.ContainsKey(name))
@@ -103,6 +102,5 @@ public static class YamlNodeExtensions
         {
             throw new YamlMigrationParsingException("Unexpected node type.");
         }
-        
     }
 }

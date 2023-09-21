@@ -8,9 +8,9 @@ namespace InfluxMigrations.Commands.Organisation;
 public class CreateOrganisation : IMigrationOperation
 {
     private readonly IOperationExecutionContext _context;
-    
-    public IResolvable<string> OrganisationName { get; set; } 
-    
+
+    public IResolvable<string> OrganisationName { get; set; }
+
     public CreateOrganisation(IOperationExecutionContext context)
     {
         _context = context;
@@ -29,7 +29,7 @@ public class CreateOrganisation : IMigrationOperation
 
             var result = await _context.Influx.GetOrganizationsApi().CreateOrganizationAsync(name);
             result.Status = Organization.StatusEnum.Active;
-            
+
             await _context.Influx.GetOrganizationsApi().UpdateOrganizationAsync(result);
 
             return OperationResults.ExecuteSuccess(new CreateOrganisationResult()
@@ -57,7 +57,8 @@ public class CreateOrganisation : IMigrationOperation
         {
             if (string.IsNullOrEmpty(result?.Id))
             {
-                return OperationResults.RollbackFailed(result, $"Cannot rollback {typeof(CreateOrganisation)}, no Organisation id was created.");
+                return OperationResults.RollbackFailed(result,
+                    $"Cannot rollback {typeof(CreateOrganisation)}, no Organisation id was created.");
             }
 
             await _context.Influx.GetOrganizationsApi().DeleteOrganizationAsync(result.Id);
@@ -85,14 +86,14 @@ public class CreateOrganisationBuilder : IMigrationOperationBuilder
         this._name = name;
         return this;
     }
-    
+
     public IMigrationOperation Build(IOperationExecutionContext context)
     {
         if (string.IsNullOrEmpty(_name))
         {
             throw new MigrationOperationBuildingException("No Organisation specified.");
         }
-        
+
         return new CreateOrganisation(context)
         {
             OrganisationName = StringResolvable.Parse(_name)

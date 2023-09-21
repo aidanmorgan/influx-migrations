@@ -21,7 +21,7 @@ public enum OperationRollbackState
 public enum OperationCommitState
 {
     NotExecuted,
-    Unnecessary,    
+    Unnecessary,
     Success,
     Skipped,
     Failed
@@ -29,38 +29,44 @@ public enum OperationCommitState
 
 public static class OperationResults
 {
-    public static Task<OperationResult<OperationRollbackState, IRollbackResult>> RollbackUnnecessary(IRollbackResult result)
+    public static Task<OperationResult<OperationRollbackState, IRollbackResult>> RollbackUnnecessary(
+        IRollbackResult result)
     {
-        return Task.FromResult(new OperationResult<OperationRollbackState, IRollbackResult>(OperationRollbackState.Unnecessary, result));
+        return Task.FromResult(
+            new OperationResult<OperationRollbackState, IRollbackResult>(OperationRollbackState.Unnecessary, result));
     }
-    
-    public static Task<OperationResult<OperationRollbackState, IRollbackResult>> RollbackUnnecessary(IExecuteResult result)
+
+    public static Task<OperationResult<OperationRollbackState, IRollbackResult>> RollbackUnnecessary(
+        IExecuteResult result)
     {
         return RollbackUnnecessary(new EmptyRollbackResult(result));
     }
 
     public static Task<OperationResult<OperationCommitState, ICommitResult>> CommitUnnecessary(ICommitResult result)
     {
-        return Task.FromResult(new OperationResult<OperationCommitState, ICommitResult>(OperationCommitState.Unnecessary, result));
-        
+        return Task.FromResult(
+            new OperationResult<OperationCommitState, ICommitResult>(OperationCommitState.Unnecessary, result));
     }
-    
+
     public static Task<OperationResult<OperationCommitState, ICommitResult>> CommitUnnecessary(IExecuteResult result)
     {
         return CommitUnnecessary(new EmptyCommitResult(result));
-    } 
-    
+    }
+
     public static OperationResult<OperationExecutionState, IExecuteResult> ExecuteSuccess(IExecuteResult result)
     {
         return new OperationResult<OperationExecutionState, IExecuteResult>(OperationExecutionState.Success, result);
     }
 
-    public static Task<OperationResult<OperationRollbackState, IRollbackResult>> RollbackImpossible(IRollbackResult result)
+    public static Task<OperationResult<OperationRollbackState, IRollbackResult>> RollbackImpossible(
+        IRollbackResult result)
     {
-        return Task.FromResult(new OperationResult<OperationRollbackState, IRollbackResult>(OperationRollbackState.Impossible, result));
+        return Task.FromResult(
+            new OperationResult<OperationRollbackState, IRollbackResult>(OperationRollbackState.Impossible, result));
     }
-    
-    public static Task<OperationResult<OperationRollbackState, IRollbackResult>> RollbackImpossible(IExecuteResult result)
+
+    public static Task<OperationResult<OperationRollbackState, IRollbackResult>> RollbackImpossible(
+        IExecuteResult result)
     {
         return RollbackImpossible(new EmptyRollbackResult(result));
     }
@@ -69,56 +75,62 @@ public static class OperationResults
     {
         return RollbackSuccess(new EmptyRollbackResult(result));
     }
-    
+
     public static OperationResult<OperationRollbackState, IRollbackResult> RollbackSuccess(IRollbackResult result)
     {
         return new OperationResult<OperationRollbackState, IRollbackResult>(OperationRollbackState.Success, result);
     }
 
-    public static OperationResult<OperationRollbackState, IRollbackResult> RollbackFailed(IExecuteResult result, Exception x)
+    public static OperationResult<OperationRollbackState, IRollbackResult> RollbackFailed(IExecuteResult result,
+        Exception x)
     {
-        return new OperationResult<OperationRollbackState, IRollbackResult>(OperationRollbackState.Failed, new ExceptionRollbackResult(result, x));
+        return new OperationResult<OperationRollbackState, IRollbackResult>(OperationRollbackState.Failed,
+            new ExceptionRollbackResult(result, x));
     }
 
-    public static OperationResult<OperationExecutionState,IExecuteResult> ExecutionFailed(string x)
+    public static OperationResult<OperationExecutionState, IExecuteResult> ExecutionFailed(string x)
     {
         return ExecutionFailed(new MigrationExecutionException(x));
     }
 
-    public static OperationResult<OperationCommitState,ICommitResult> CommitFailed(IExecuteResult result, string x)
+    public static OperationResult<OperationCommitState, ICommitResult> CommitFailed(IExecuteResult result, string x)
     {
         return CommitFailed(result, new MigrationExecutionException(x));
     }
 
-    public static OperationResult<OperationCommitState,ICommitResult> CommitFailed(IExecuteResult result, Exception x)
+    public static OperationResult<OperationCommitState, ICommitResult> CommitFailed(IExecuteResult result, Exception x)
     {
-        return new OperationResult<OperationCommitState, ICommitResult>(OperationCommitState.Failed, new ExceptionCommitResult(result, x));
+        return new OperationResult<OperationCommitState, ICommitResult>(OperationCommitState.Failed,
+            new ExceptionCommitResult(result, x));
     }
 
     public static OperationResult<OperationCommitState, ICommitResult> CommitSuccess(IExecuteResult result)
     {
-        return new OperationResult<OperationCommitState, ICommitResult>(OperationCommitState.Success, new EmptyCommitResult(result));
+        return new OperationResult<OperationCommitState, ICommitResult>(OperationCommitState.Success,
+            new EmptyCommitResult(result));
     }
 
-    public static OperationResult<OperationExecutionState,IExecuteResult> ExecutionFailed(Exception x)
+    public static OperationResult<OperationExecutionState, IExecuteResult> ExecutionFailed(Exception x)
     {
-        return new OperationResult<OperationExecutionState, IExecuteResult>(OperationExecutionState.Failed, new ExceptionExecuteResult(x));
+        return new OperationResult<OperationExecutionState, IExecuteResult>(OperationExecutionState.Failed,
+            new ExceptionExecuteResult(x));
     }
 
-    public static OperationResult<OperationRollbackState,IRollbackResult> RollbackFailed(IExecuteResult result, string x)
+    public static OperationResult<OperationRollbackState, IRollbackResult> RollbackFailed(IExecuteResult result,
+        string x)
     {
         return RollbackFailed(result, new MigrationExecutionException(x));
     }
 
-    public static OperationResult<OperationExecutionState,IExecuteResult> ExecuteSuccess()
+    public static OperationResult<OperationExecutionState, IExecuteResult> ExecuteSuccess()
     {
-        return new OperationResult<OperationExecutionState, IExecuteResult>(OperationExecutionState.Success, new EmptyExecuteResult());
+        return new OperationResult<OperationExecutionState, IExecuteResult>(OperationExecutionState.Success,
+            new EmptyExecuteResult());
     }
 }
 
 public class EmptyExecuteResult : IExecuteResult
 {
-    
 }
 
 public interface IExceptionResult
@@ -160,7 +172,7 @@ public class ExceptionCommitResult : ICommitResult, IExceptionResult
     }
 }
 
-public class OperationResult<S,R> where S : Enum
+public class OperationResult<S, R> where S : Enum
 {
     public S State { get; private set; }
     public R Result { get; private set; }
@@ -177,7 +189,6 @@ public class OperationResult<S,R> where S : Enum
 /// </summary>
 public interface IExecuteResult
 {
-    
 }
 
 public interface IRollbackResult
@@ -188,7 +199,7 @@ public interface IRollbackResult
 public class EmptyRollbackResult : IRollbackResult
 {
     public IExecuteResult ExecutionResult { get; }
-    
+
     public EmptyRollbackResult(IExecuteResult executionResult)
     {
         ExecutionResult = executionResult;
@@ -203,7 +214,7 @@ public interface ICommitResult
 public class EmptyCommitResult : ICommitResult
 {
     public IExecuteResult ExecuteResult { get; }
-    
+
     public EmptyCommitResult(IExecuteResult executeResult)
     {
         ExecuteResult = executeResult;

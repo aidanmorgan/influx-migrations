@@ -39,8 +39,7 @@ public class Program
 
     public static async Task<int> Main(string[] args)
     {
-        var result = Parser.Default.ParseArguments<Options>(args)
-            .MapResult<Options, Task<int>>(Do, Error);
+        var result = Parser.Default.ParseArguments<Options>(args).MapResult(Do, Error);
 
         return (await result);
     }
@@ -51,7 +50,7 @@ public class Program
         {
             Console.Error.WriteLine(error);
         }
-        
+
         return Task.FromResult(-1);
     }
 
@@ -88,9 +87,11 @@ public class Program
 
         try
         {
-
-            var results = await migrationRunner.ExecuteMigrationsAsync(influx, o.TargetVersion);
-            var unpacked = results.SelectMany(x => x.Issues).ToList();
+            var results = await migrationRunner
+                .ExecuteMigrationsAsync(influx, o.TargetVersion);
+            var unpacked = results
+                .SelectMany(x => x.Issues)
+                .ToList();
 
             if (unpacked.Count > 0)
             {

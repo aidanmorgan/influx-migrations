@@ -19,7 +19,7 @@ public class EchoTaskParser : IYamlTaskParser
                 builder.WithString(x.GetStringValue());
             }
         });
-        
+
         return builder;
     }
 }

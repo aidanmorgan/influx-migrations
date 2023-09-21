@@ -64,31 +64,21 @@ public class YamlMigrationParser
         }
 
         var version = string.Empty;
-        root.Value("version", (x) =>
-        {
-            version = x;
-        });
+        root.Value("version", (x) => { version = x; });
 
-        
-        var migration = migrationFactory != null ? migrationFactory(version) : new Migration()
-        {
-            Version = version
-        };
 
-        root.ForEach("up", (x) => { x.
-            ForEach((y) =>
+        var migration = migrationFactory != null
+            ? migrationFactory(version)
+            : new Migration()
             {
-                ParseOperation(y, (a, b) => migration.AddUp(a, b));
-            }); 
-        });
-        
-        root.ForEach("down", 
-            (x) => { x.ForEach((y) =>
-            {
-                ParseOperation(y, (a, b) => migration.AddDown(a, b));
-            }); 
-        });
-        
+                Version = version
+            };
+
+        root.ForEach("up", (x) => { x.ForEach((y) => { ParseOperation(y, (a, b) => migration.AddUp(a, b)); }); });
+
+        root.ForEach("down",
+            (x) => { x.ForEach((y) => { ParseOperation(y, (a, b) => migration.AddDown(a, b)); }); });
+
         root.ForEach("tasks", (x) =>
         {
             x.ForEach((y) =>
@@ -113,7 +103,8 @@ public class YamlMigrationParser
         return migration;
     }
 
-    private void ParseOperation(YamlNode operationNode, Func<string, IMigrationOperationBuilder, MigrationOperationInstance> addCallback)
+    private void ParseOperation(YamlNode operationNode,
+        Func<string, IMigrationOperationBuilder, MigrationOperationInstance> addCallback)
     {
         var operationKey = operationNode.GetStringValue("operation");
         if (!ParseableOperations.ContainsKey(operationKey))
@@ -122,10 +113,7 @@ public class YamlMigrationParser
         }
 
         var id = Guid.NewGuid().ToString();
-        operationNode.Value("id", (x) =>
-        {
-            id = x;
-        });
+        operationNode.Value("id", (x) => { id = x; });
 
         var commandParser = (IYamlOperationParser?)Activator.CreateInstance(ParseableOperations[operationKey]);
         var commandBuilder = commandParser?.Parse((YamlMappingNode)operationNode);

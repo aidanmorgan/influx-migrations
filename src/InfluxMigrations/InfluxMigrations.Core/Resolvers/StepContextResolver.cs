@@ -1,5 +1,7 @@
 ﻿namespace InfluxMigrations.Core.Resolvers;
+
 using static ResolverFunctionCommon;
+
 [ResolverFunction("step")]
 public class StepContextResolver : AbstractResolverFunction
 {
@@ -14,9 +16,8 @@ public class StepContextResolver : AbstractResolverFunction
 
         var keyValue = next(split[1]);
         return keyValue == null ? null : StepValue(split[0], keyValue, entry);
-        
     }
-    
+
     private static StringResolvable StepValue(string stepId, IResolvable<string?> key, string originalString)
     {
         /*
@@ -31,7 +32,8 @@ public class StepContextResolver : AbstractResolverFunction
                 var context = x.MigrationExecutionContext.GetExecutionContext(stepId);
                 if (context == null)
                 {
-                    throw new MigrationResolutionException($"Could not find Execution Context for Operation with id {stepId}");
+                    throw new MigrationResolutionException(
+                        $"Could not find Execution Context for Operation with id {stepId}");
                 }
 
                 var result = key.Resolve((IOperationExecutionContext)context);
@@ -42,7 +44,8 @@ public class StepContextResolver : AbstractResolverFunction
                 var context = x.GetExecutionContext(stepId);
                 if (context == null)
                 {
-                    throw new MigrationResolutionException($"Could not find Execution Context for Operation with id {stepId}");
+                    throw new MigrationResolutionException(
+                        $"Could not find Execution Context for Operation with id {stepId}");
                 }
 
                 var result = key.Resolve((IOperationExecutionContext)context);

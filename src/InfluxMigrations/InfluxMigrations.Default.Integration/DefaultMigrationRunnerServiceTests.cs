@@ -40,7 +40,7 @@ public class DefaultMigrationRunnerServiceTests
         Assert.That(result, Is.Not.Null);
         Assert.That(result.Count, Is.EqualTo(0));
     }
-    
+
     [Test]
     public async Task NoMigrations_AppliesAll()
     {
@@ -50,7 +50,7 @@ public class DefaultMigrationRunnerServiceTests
             new MockMigration("0002"),
             new MockMigration("0003"),
         };
-            
+
         var runner = new DefaultMigrationRunnerService(new DefaultMigrationRunnerOptions()
             {
                 History = new MockMigrationHistoryService(),
@@ -62,7 +62,7 @@ public class DefaultMigrationRunnerServiceTests
         Assert.That(result, Is.Not.Null);
         Assert.That(result.Count, Is.EqualTo(3));
     }
-    
+
     [Test]
     public async Task SomeHistory_AppliesNew()
     {
@@ -72,7 +72,7 @@ public class DefaultMigrationRunnerServiceTests
             new MockMigration("0002"),
             new MockMigration("0003")
         };
-            
+
         var runner = new DefaultMigrationRunnerService(new DefaultMigrationRunnerOptions()
             {
                 History = new MockMigrationHistoryService().AddHistory("0001").AddHistory("0002"),
@@ -85,7 +85,7 @@ public class DefaultMigrationRunnerServiceTests
         Assert.That(result.Count, Is.EqualTo(1));
         Assert.That(result[0].Version, Is.EqualTo("0003"));
     }
-    
+
     [Test]
     public async Task MoreMigrationsThanEntries()
     {
@@ -95,10 +95,11 @@ public class DefaultMigrationRunnerServiceTests
             new MockMigration("0002"),
             new MockMigration("0003")
         };
-            
+
         var runner = new DefaultMigrationRunnerService(new DefaultMigrationRunnerOptions()
             {
-                History = new MockMigrationHistoryService().AddHistory("0001").AddHistory("0002").AddHistory("0003").AddHistory("0004").AddHistory("0005"),
+                History = new MockMigrationHistoryService().AddHistory("0001").AddHistory("0002").AddHistory("0003")
+                    .AddHistory("0004").AddHistory("0005"),
                 Loader = new MockMigrationLoaderService().AddMigrations(migrations.OfType<IMigration>().ToList())
             }
         );
@@ -107,7 +108,7 @@ public class DefaultMigrationRunnerServiceTests
         Assert.That(result, Is.Not.Null);
         Assert.That(result.Count, Is.EqualTo(0));
     }
-    
+
     [Test]
     public async Task TargetVersion_RollForward()
     {
@@ -123,10 +124,11 @@ public class DefaultMigrationRunnerServiceTests
             new MockMigration("0008"),
             new MockMigration("0009")
         };
-            
+
         var runner = new DefaultMigrationRunnerService(new DefaultMigrationRunnerOptions()
             {
-                History = new MockMigrationHistoryService().AddHistory("0001").AddHistory("0002").AddHistory("0003").AddHistory("0004"),
+                History = new MockMigrationHistoryService().AddHistory("0001").AddHistory("0002").AddHistory("0003")
+                    .AddHistory("0004"),
                 Loader = new MockMigrationLoaderService().AddMigrations(migrations.OfType<IMigration>().ToList())
             }
         );
@@ -137,8 +139,8 @@ public class DefaultMigrationRunnerServiceTests
         Assert.That(result[0].Version, Is.EqualTo("0005"));
         Assert.That(result[1].Version, Is.EqualTo("0006"));
         Assert.That(result[2].Version, Is.EqualTo("0007"));
-    }        
-    
+    }
+
     [Test]
     public async Task TargetVersion_RollBackwards()
     {
@@ -158,7 +160,7 @@ public class DefaultMigrationRunnerServiceTests
                     .AddHistory("0002")
                     .AddHistory("0003")
                     .AddHistory("0004")
-                    .AddHistory("0005"), 
+                    .AddHistory("0005"),
                 Loader = new MockMigrationLoaderService().AddMigrations(migrations.OfType<IMigration>().ToList())
             }
         );
@@ -168,7 +170,5 @@ public class DefaultMigrationRunnerServiceTests
         Assert.That(result.Count, Is.EqualTo(2));
         Assert.That(result[0].Version, Is.EqualTo("0005"));
         Assert.That(result[1].Version, Is.EqualTo("0004"));
-    }        
-    
-    
+    }
 }

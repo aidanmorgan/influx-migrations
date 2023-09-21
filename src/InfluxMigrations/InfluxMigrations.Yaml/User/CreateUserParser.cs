@@ -11,15 +11,9 @@ public class CreateUserParser : IYamlOperationParser
     {
         var builder = new CreateUserBuilder();
 
-        yamlNode.Value(CommonTags.UserName, x =>
-        {
-            builder.WithUsername(x);
-        });
+        yamlNode.Value(CommonTags.UserName, x => { builder.WithUsername(x); });
 
-        yamlNode.Value("password", x =>
-        {
-            builder.WithPassword(x);
-        });
+        yamlNode.Value("password", x => { builder.WithPassword(x); });
 
         return builder;
     }

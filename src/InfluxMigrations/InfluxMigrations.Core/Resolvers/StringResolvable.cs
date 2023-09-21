@@ -5,7 +5,8 @@ public class StringResolvable : IResolvable<string?>, IEquatable<StringResolvabl
     public const string KeyOpening = "${";
     public const string KeyClosing = "}";
 
-    private static readonly Dictionary<Tuple<string,string>, IResolverFunction> ResolverFunctions = new Dictionary<Tuple<string,string>, IResolverFunction>();
+    private static readonly Dictionary<Tuple<string, string>, IResolverFunction> ResolverFunctions =
+        new Dictionary<Tuple<string, string>, IResolverFunction>();
 
     static StringResolvable()
     {
@@ -38,7 +39,7 @@ public class StringResolvable : IResolvable<string?>, IEquatable<StringResolvabl
                 }
             });
     }
-    
+
     /// <summary>
     /// A convenience method that breaks the provided string down into corresponding tokens based on the ${} language that
     /// has been implemented.
@@ -54,7 +55,7 @@ public class StringResolvable : IResolvable<string?>, IEquatable<StringResolvabl
         //
         // There are unit tests, i recommend looking at those.
         var tokens = new List<string>();
-        
+
         if (!input.StartsWith(KeyOpening))
         {
             if (!input.Contains(KeyOpening))
@@ -87,9 +88,9 @@ public class StringResolvable : IResolvable<string?>, IEquatable<StringResolvabl
             {
                 if (open == 1)
                 {
-                    tokens.Add(input.Substring(0, i+1).Trim());
+                    tokens.Add(input.Substring(0, i + 1).Trim());
                     tokens.AddNonEmptyRange(Tokenize(input.Substring(i + 1)));
-                    return tokens; 
+                    return tokens;
                 }
                 else
                 {
@@ -107,7 +108,7 @@ public class StringResolvable : IResolvable<string?>, IEquatable<StringResolvabl
         {
             return null;
         }
-        
+
         var tokenized = Tokenize(entry);
 
         if (tokenized.Count > 1)
@@ -119,7 +120,7 @@ public class StringResolvable : IResolvable<string?>, IEquatable<StringResolvabl
 
         return _Parse(tokenized[0]);
     }
-    
+
     /// <summary>
     /// Performs the parse operation for a token from the Tokenize method.
     /// </summary>
@@ -138,16 +139,19 @@ public class StringResolvable : IResolvable<string?>, IEquatable<StringResolvabl
         if (entry.StartsWith(KeyOpening) && entry.EndsWith(KeyClosing))
         {
             var key = _Parse(ResolverFunctionCommon.Unwrap(entry, KeyOpening));
-            return key == null ? null : new StringResolvable(ResolutionType.Local, entry, (x) =>
-            {
-                var keyVal = key.Resolve(x);
-                return string.IsNullOrEmpty(keyVal) ? null : x.Get(keyVal);
-            }, x=>
-            {
-                // TODO : decide if this is correct - does a 'local' make sense in a migration context?
-                var keyVal = key.Resolve(x);
-                return string.IsNullOrEmpty(keyVal) ? null : x.Get(keyVal);
-            });;        
+            return key == null
+                ? null
+                : new StringResolvable(ResolutionType.Local, entry, (x) =>
+                {
+                    var keyVal = key.Resolve(x);
+                    return string.IsNullOrEmpty(keyVal) ? null : x.Get(keyVal);
+                }, x =>
+                {
+                    // TODO : decide if this is correct - does a 'local' make sense in a migration context?
+                    var keyVal = key.Resolve(x);
+                    return string.IsNullOrEmpty(keyVal) ? null : x.Get(keyVal);
+                });
+            ;
         }
 
         // This isn't recognised as a variable for resolution, so just return a fixed string value
@@ -155,12 +159,14 @@ public class StringResolvable : IResolvable<string?>, IEquatable<StringResolvabl
     }
 
     private readonly Func<IOperationExecutionContext, string?> _operationFunc;
-    private readonly Func<IMigrationExecutionContext,string?> _migrationFunc;
+    private readonly Func<IMigrationExecutionContext, string?> _migrationFunc;
     private readonly string _id = Guid.NewGuid().ToString();
     public ResolutionType Scope { get; private init; }
     private readonly string _expression;
 
-    public StringResolvable(ResolutionType resolutionType, string expression, Func<IOperationExecutionContext, string?> operationFunc, Func<IMigrationExecutionContext, string?> migrationFunc)
+    public StringResolvable(ResolutionType resolutionType, string expression,
+        Func<IOperationExecutionContext, string?> operationFunc,
+        Func<IMigrationExecutionContext, string?> migrationFunc)
     {
         this.Scope = resolutionType;
         this._operationFunc = operationFunc;
@@ -182,7 +188,7 @@ public class StringResolvable : IResolvable<string?>, IEquatable<StringResolvabl
     {
         return _migrationFunc(executionContext);
     }
-    
+
     public bool Equals(StringResolvable? other)
     {
         if (ReferenceEquals(null, other)) return false;
@@ -211,7 +217,7 @@ public class StringResolvable : IResolvable<string?>, IEquatable<StringResolvabl
     public static bool operator !=(StringResolvable? left, StringResolvable? right)
     {
         return !Equals(left, right);
-    }    
+    }
 }
 
 public static class StringExtensions
@@ -246,4 +252,4 @@ public static class ListExtensions
             list.AddRange(pruned);
         }
     }
-} 
+}

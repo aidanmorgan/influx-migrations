@@ -10,16 +10,16 @@ namespace InfluxMigrations.Commands.User;
 public class CreateUser : IMigrationOperation
 {
     private readonly IOperationExecutionContext _context;
-   
+
     public IResolvable<string?> Username { get; set; }
     public IResolvable<string?> Password { get; set; }
-    
+
 
     public CreateUser(IOperationExecutionContext ctx)
     {
         this._context = ctx;
     }
-    
+
     public async Task<OperationResult<OperationExecutionState, IExecuteResult>> ExecuteAsync()
     {
         try
@@ -74,7 +74,8 @@ public class CreateUser : IMigrationOperation
         {
             if (string.IsNullOrEmpty(result?.Id))
             {
-                return OperationResults.RollbackFailed(result, $"Cannot roll back {typeof(CreateUser).FullName}, no User Id provided.");
+                return OperationResults.RollbackFailed(result,
+                    $"Cannot roll back {typeof(CreateUser).FullName}, no User Id provided.");
             }
 
             await _context.Influx.GetUsersApi().DeleteUserAsync(result.Id);
@@ -99,14 +100,14 @@ public class CreateUserBuilder : IMigrationOperationBuilder
     public string Password { get; private set; }
 
     private readonly List<IMigrationTaskBuilder> _output = new List<IMigrationTaskBuilder>();
-    
+
     public IMigrationOperation Build(IOperationExecutionContext context)
     {
         if (string.IsNullOrEmpty(UserName))
         {
             throw new MigrationOperationBuildingException("No Username specified.");
         }
-        
+
         return new CreateUser(context)
         {
             Username = StringResolvable.Parse(UserName),

@@ -11,15 +11,9 @@ public class DeleteBucketParser : IYamlOperationParser
     {
         var builder = new DeleteBucketBuilder();
 
-        yamlNode.Value(CommonTags.BucketName, (x) =>
-        {
-            builder.WithBucketName(x);
-        });
+        yamlNode.Value(CommonTags.BucketName, (x) => { builder.WithBucketName(x); });
 
-        yamlNode.Value(CommonTags.BucketId, (x) =>
-        {
-            builder.WithBucketId(x);
-        });
+        yamlNode.Value(CommonTags.BucketId, (x) => { builder.WithBucketId(x); });
 
         return builder;
     }

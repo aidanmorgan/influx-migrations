@@ -7,21 +7,22 @@ namespace InfluxMigrations.Outputs;
 
 public enum VariableScope
 {
-    [EnumMember(Value = "local")]Local,
-    [EnumMember(Value = "migration")]Migration,
-    [EnumMember(Value = "global")]Global
+    [EnumMember(Value = "local")] Local,
+    [EnumMember(Value = "migration")] Migration,
+    [EnumMember(Value = "global")] Global
 }
 
 public class SetVariableTask : IMigrationTask
 {
-    private static readonly IDictionary<string, VariableScope> VariableScopeLookup = new Dictionary<string, VariableScope>()
-    {
-        { "local", VariableScope.Local },
-        { "migration", VariableScope.Migration },
-        { "global", VariableScope.Global }
-    };
-    
-    public  IResolvable<string> Key { get; set; }
+    private static readonly IDictionary<string, VariableScope> VariableScopeLookup =
+        new Dictionary<string, VariableScope>()
+        {
+            { "local", VariableScope.Local },
+            { "migration", VariableScope.Migration },
+            { "global", VariableScope.Global }
+        };
+
+    public IResolvable<string> Key { get; set; }
     public IResolvable<string> Value { get; set; }
     public IResolvable<string> Scope { get; set; } = StringResolvable.Parse("local");
 
@@ -35,7 +36,7 @@ public class SetVariableTask : IMigrationTask
         var value = Value.Resolve(context);
 
         var scope = VariableScopeLookup[Scope.Resolve(context)];
-        
+
         switch (scope)
         {
             case VariableScope.Local:
@@ -56,10 +57,10 @@ public class SetVariableTask : IMigrationTask
                 break;
             }
         }
-        
+
         return TaskResults.TaskSuccessAsync();
     }
-    
+
     public Task<TaskResult> ExecuteAsync(IMigrationExecutionContext executionContext)
     {
         var key = Key.Resolve(executionContext);
@@ -86,17 +87,17 @@ public class SetVariableTask : IMigrationTask
                 break;
             }
         }
-        
+
         return TaskResults.TaskSuccessAsync();
-    }    
+    }
 }
 
 public class SetVariableTaskBuilder : IMigrationTaskBuilder
 {
-    public string Key { get;  private set; }
+    public string Key { get; private set; }
     public string Value { get; private set; }
     public string Scope { get; private set; } = "local";
-    
+
     public SetVariableTaskBuilder WithKey(string key)
     {
         this.Key = key;

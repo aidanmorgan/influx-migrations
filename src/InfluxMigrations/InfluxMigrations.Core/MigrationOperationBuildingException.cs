@@ -8,7 +8,8 @@ public class MigrationOperationBuildingException : MigrationException
     {
     }
 
-    protected MigrationOperationBuildingException(SerializationInfo info, StreamingContext context) : base(info, context)
+    protected MigrationOperationBuildingException(SerializationInfo info, StreamingContext context) : base(info,
+        context)
     {
     }
 
@@ -16,7 +17,8 @@ public class MigrationOperationBuildingException : MigrationException
     {
     }
 
-    public MigrationOperationBuildingException(string? message, Exception? innerException) : base(message, innerException)
+    public MigrationOperationBuildingException(string? message, Exception? innerException) : base(message,
+        innerException)
     {
     }
 }

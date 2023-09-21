@@ -12,17 +12,17 @@ public class RemoveUserFromOrganisation : IMigrationOperation
     public RemoveUserFromOrganisation(IOperationExecutionContext context)
     {
         _context = context;
-        
+
         Organisation = InfluxRuntimeIdResolver.CreateOrganisation();
         User = InfluxRuntimeIdResolver.CreateUser();
     }
-    
+
     public IMigrationOperation Initialise(Action<RemoveUserFromOrganisation> action)
     {
         action(this);
         return this;
     }
-    
+
 
     public async Task<OperationResult<OperationExecutionState, IExecuteResult>> ExecuteAsync()
     {
@@ -42,7 +42,7 @@ public class RemoveUserFromOrganisation : IMigrationOperation
             }
 
             var result = await _context.Influx.GetOrganizationsApi().AddMemberAsync(userId, organisationId);
-            
+
             return OperationResults.ExecuteSuccess(new RemoveUserFromOrganisationResult()
             {
                 OrganisationId = organisationId,
@@ -61,7 +61,7 @@ public class RemoveUserFromOrganisation : IMigrationOperation
 
         if (string.IsNullOrEmpty(result.OrganisationId) || string.IsNullOrEmpty(result.UserId))
         {
-            return OperationResults.CommitFailed(result, 
+            return OperationResults.CommitFailed(result,
                 $"Cannot commit {typeof(RemoveUserFromOrganisationResult).FullName}, Organisation and User Id's are required.");
         }
 
@@ -80,7 +80,6 @@ public class RemoveUserFromOrganisation : IMigrationOperation
     {
         return OperationResults.RollbackUnnecessary(r);
     }
-
 }
 
 public class RemoveUserFromOrganisationResult : IExecuteResult
@@ -103,18 +102,18 @@ public class RemoveUserFromOrganisationBuilder : IMigrationOperationBuilder
         return this;
     }
 
-    public RemoveUserFromOrganisationBuilder WithOrganisationId  (string id)
+    public RemoveUserFromOrganisationBuilder WithOrganisationId(string id)
     {
         _organisationId = id;
         return this;
     }
-    
+
     public RemoveUserFromOrganisationBuilder WithUsername(string username)
     {
         _userName = username;
         return this;
     }
-    
+
     public RemoveUserFromOrganisationBuilder WithUserId(string id)
     {
         _userId = id;
@@ -132,7 +131,7 @@ public class RemoveUserFromOrganisationBuilder : IMigrationOperationBuilder
         {
             throw new MigrationOperationBuildingException("No User specified.");
         }
-        
+
         return new RemoveUserFromOrganisation(context)
             .Initialise(x =>
             {

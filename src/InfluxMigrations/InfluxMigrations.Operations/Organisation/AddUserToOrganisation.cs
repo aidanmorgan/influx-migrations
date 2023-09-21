@@ -12,15 +12,15 @@ public class AddUserToOrganisation : IMigrationOperation
     public InfluxRuntimeIdResolver Organisation { get; private set; }
     public InfluxRuntimeIdResolver User { get; private set; }
 
-    
+
     public AddUserToOrganisation(IOperationExecutionContext context)
     {
         _context = context;
-        
+
         Organisation = InfluxRuntimeIdResolver.CreateOrganisation();
         User = InfluxRuntimeIdResolver.CreateUser();
     }
-    
+
     public IMigrationOperation Initialise(Action<AddUserToOrganisation> callback)
     {
         callback(this);
@@ -29,18 +29,20 @@ public class AddUserToOrganisation : IMigrationOperation
 
     public async Task<OperationResult<OperationExecutionState, IExecuteResult>> ExecuteAsync()
     {
-        try {
-        var organisationId = await Organisation.GetAsync(_context);
-        if (string.IsNullOrEmpty(organisationId))
+        try
         {
-            return OperationResults.ExecutionFailed($"Cannot add user to Organisation, cannot find Organisation id.");
-        }
+            var organisationId = await Organisation.GetAsync(_context);
+            if (string.IsNullOrEmpty(organisationId))
+            {
+                return OperationResults.ExecutionFailed(
+                    $"Cannot add user to Organisation, cannot find Organisation id.");
+            }
 
-        var userId = await User.GetAsync(_context);
-        if (string.IsNullOrEmpty(userId))
-        {
-            return OperationResults.ExecutionFailed($"Cannot add user to Organisation, cannot find User id");
-        }
+            var userId = await User.GetAsync(_context);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return OperationResults.ExecutionFailed($"Cannot add user to Organisation, cannot find User id");
+            }
 
             var result = await _context.Influx.GetOrganizationsApi().AddMemberAsync(userId, organisationId);
 
@@ -71,7 +73,8 @@ public class AddUserToOrganisation : IMigrationOperation
         {
             if (string.IsNullOrEmpty(result?.ResourceMemberId))
             {
-                return OperationResults.RollbackFailed(result, $"Cannot rollback {typeof(AddUserToOrganisation)}, resource member id not provided.");
+                return OperationResults.RollbackFailed(result,
+                    $"Cannot rollback {typeof(AddUserToOrganisation)}, resource member id not provided.");
             }
 
             await _context.Influx.GetOrganizationsApi().DeleteMemberAsync(result.UserId, result.OrganisationId);
@@ -135,10 +138,11 @@ public class AddUserToOrganisationBuilder : IMigrationOperationBuilder
         {
             throw new MigrationOperationBuildingException("No User specified.");
         }
-        
+
         return new AddUserToOrganisation(context).Initialise((x) =>
         {
-            x.Organisation.WithName(StringResolvable.Parse(_organisationName)).WithId(StringResolvable.Parse(_organisationId));
+            x.Organisation.WithName(StringResolvable.Parse(_organisationName))
+                .WithId(StringResolvable.Parse(_organisationId));
             x.User.WithName(StringResolvable.Parse(_userName)).WithId(StringResolvable.Parse(_userId));
         });
     }

@@ -14,7 +14,7 @@ public class YamlOperationParserAttribute : Attribute
             throw new MigrationParsingException(
                 $"Cannot use a {nameof(YamlOperationParserAttribute)} with no keyword.");
         }
-        
+
         Keyword = keyword;
         Fields = fields?.ToList() ?? new List<string>();
     }

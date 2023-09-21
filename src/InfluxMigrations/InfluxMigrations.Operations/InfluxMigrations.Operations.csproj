@@ -8,17 +8,14 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\InfluxMigrations.Core\InfluxMigrations.Core.csproj" />
+        <ProjectReference Include="..\InfluxMigrations.Core\InfluxMigrations.Core.csproj"/>
     </ItemGroup>
 
 
     <ItemGroup>
-      <PackageReference Include="Flurl" Version="3.0.7" />
-      <PackageReference Include="Flurl.Http" Version="4.0.0-pre3" />
+        <PackageReference Include="Flurl" Version="3.0.7"/>
+        <PackageReference Include="Flurl.Http" Version="4.0.0-pre3"/>
     </ItemGroup>
-
-
-
 
 
 </Project>

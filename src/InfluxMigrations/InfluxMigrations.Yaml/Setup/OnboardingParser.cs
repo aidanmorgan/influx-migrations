@@ -11,30 +11,15 @@ public class OnboardingParser : IYamlOperationParser
     {
         var builder = new OnboardingBuilder();
 
-        node.Value(CommonTags.OrganisationName, (x) =>
-        {
-            builder.WithOrganisation(x);
-        });
+        node.Value(CommonTags.OrganisationName, (x) => { builder.WithOrganisation(x); });
 
-        node.Value("token", (x) =>
-        {
-            builder.WithAdminToken(x);
-        });
+        node.Value("token", (x) => { builder.WithAdminToken(x); });
 
-        node.Value(CommonTags.BucketName, (x) =>
-        {
-            builder.WithBucket(x);
-        });
+        node.Value(CommonTags.BucketName, (x) => { builder.WithBucket(x); });
 
-        node.Value(CommonTags.UserName, (x) =>
-        {
-            builder.WithUsername(x);
-        });
-        
-        node.Value("password", (x) =>
-        {
-            builder.WithPassword(x);
-        });
+        node.Value(CommonTags.UserName, (x) => { builder.WithUsername(x); });
+
+        node.Value("password", (x) => { builder.WithPassword(x); });
 
         return builder;
     }

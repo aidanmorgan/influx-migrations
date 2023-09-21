@@ -4,6 +4,7 @@ public interface InfluxConstants
 {
     const string Username = "test-admin";
     const string Password = "test-password";
+
     const string Bucket = "test-bucket";
     const string Organisation = "test-organisation";
     const string AdminToken = "test-admin-token";

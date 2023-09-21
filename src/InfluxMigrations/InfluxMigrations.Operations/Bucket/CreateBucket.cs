@@ -13,13 +13,13 @@ public class CreateBucket : IMigrationOperation
     private readonly IOperationExecutionContext _context;
     public InfluxRuntimeIdResolver Organisation { get; private set; }
     public IResolvable<string?> Bucket { get; set; }
-    public IResolvable<string?>? RetentionPeriodSeconds { get;  set; }
+    public IResolvable<string?>? RetentionPeriodSeconds { get; set; }
 
 
     public CreateBucket(IOperationExecutionContext context)
     {
         _context = context;
-        
+
         Organisation = InfluxRuntimeIdResolver.CreateOrganisation();
     }
 
@@ -50,7 +50,8 @@ public class CreateBucket : IMigrationOperation
             var bucket = await _context.Influx.GetBucketsApi().FindBucketByNameAsync(bucketName);
             if (bucket != null)
             {
-                return OperationResults.ExecutionFailed($"Cannot create Bucket with name {bucketName}, one already exists.");
+                return OperationResults.ExecutionFailed(
+                    $"Cannot create Bucket with name {bucketName}, one already exists.");
             }
 
             if (RetentionPeriodSeconds != null)
@@ -93,8 +94,8 @@ public class CreateBucket : IMigrationOperation
     {
         var createBucketResult = (CreateBucketResult)r;
 
-        var bucket = await _context.Influx.GetBucketsApi().FindBucketByIdAsync(createBucketResult.Id);
-        
+        await _context.Influx.GetBucketsApi().FindBucketByIdAsync(createBucketResult.Id);
+
         try
         {
             await _context.Influx.GetBucketsApi().DeleteBucketAsync(createBucketResult.Id);
@@ -125,10 +126,9 @@ public class CreateBucketBuilder : IMigrationOperationBuilder
     public string OrganisationId { get; private set; }
     public string BucketName { get; private set; }
     public string Retention { get; private set; }
-    
+
     public CreateBucketBuilder()
     {
-        
     }
 
     public CreateBucketBuilder WithOrganisation(string orgName)
@@ -148,13 +148,13 @@ public class CreateBucketBuilder : IMigrationOperationBuilder
         this.BucketName = bucketName;
         return this;
     }
-    
+
     public CreateBucketBuilder WithRetention(string retention)
     {
         this.Retention = retention;
         return this;
     }
-    
+
     public IMigrationOperation Build(IOperationExecutionContext context)
     {
         if (string.IsNullOrEmpty(OrganisationId) && string.IsNullOrEmpty(OrganisationName))
@@ -166,7 +166,7 @@ public class CreateBucketBuilder : IMigrationOperationBuilder
         {
             throw new MigrationOperationBuildingException("No Bucket specified.");
         }
-        
+
         var cmd = new CreateBucket(context)
         {
             RetentionPeriodSeconds = string.IsNullOrEmpty(Retention) ? null : StringResolvable.Parse(Retention)
@@ -176,9 +176,9 @@ public class CreateBucketBuilder : IMigrationOperationBuilder
                 .WithId(StringResolvable.Parse(OrganisationId))
                 .WithName(StringResolvable.Parse(OrganisationName));
 
-            x.Bucket= StringResolvable.Parse(BucketName);
+            x.Bucket = StringResolvable.Parse(BucketName);
         });
-        
+
         return cmd;
     }
 }

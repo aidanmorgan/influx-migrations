@@ -6,19 +6,19 @@ namespace InfluxMigrations.Core;
 
 public abstract class InfluxRuntimeResolver
 {
-    public IResolvable<string> Id { get; private set; }
-    public IResolvable<string> Name { get; private set; }
+    private IResolvable<string?> Id { get; set; }
+    private IResolvable<string?> Name { get; set; }
 
     private readonly Func<string?, string?, IInfluxDBClient, Task<string?>> _lookup;
 
     protected InfluxRuntimeResolver(Func<string?, string?, IInfluxDBClient, Task<string?>> lookup)
     {
-        this._lookup = lookup;
+        _lookup = lookup;
     }
 
     public InfluxRuntimeResolver WithName(IResolvable<string?> name)
     {
-        this.Name = name!;
+        Name = name;
         return this;
     }
 
@@ -29,7 +29,7 @@ public abstract class InfluxRuntimeResolver
 
     public InfluxRuntimeResolver WithId(IResolvable<string?> id)
     {
-        this.Id = id!;
+        Id = id;
         return this;
     }
 
@@ -37,22 +37,22 @@ public abstract class InfluxRuntimeResolver
     {
         return !string.IsNullOrEmpty(id) ? WithId(StringResolvable.Parse(id)!) : this;
     }
-    
+
     public async Task<string?> GetAsync(IOperationExecutionContext ctx)
     {
         var nameValue = Name?.Resolve(ctx);
         var idValue = Id?.Resolve(ctx);
-        
-        return await _lookup(idValue, nameValue, ctx.Influx);    
+
+        return await _lookup(idValue, nameValue, ctx.Influx);
     }
-    
+
     public async Task<string?> GetAsync(IMigrationExecutionContext ctx)
     {
         var nameValue = Name?.Resolve(ctx);
         var idValue = Id?.Resolve(ctx);
-        
+
         return await _lookup(idValue, nameValue, ctx.Influx);
-    }    
+    }
 }
 
 /// <summary>
@@ -61,7 +61,7 @@ public abstract class InfluxRuntimeResolver
 /// </summary>
 public class InfluxRuntimeIdResolver : InfluxRuntimeResolver
 {
-    public InfluxRuntimeIdResolver(Func<string?, string?, IInfluxDBClient, Task<string?>> lookup) : base(lookup)
+    private InfluxRuntimeIdResolver(Func<string?, string?, IInfluxDBClient, Task<string?>> lookup) : base(lookup)
     {
     }
 
@@ -80,10 +80,10 @@ public class InfluxRuntimeIdResolver : InfluxRuntimeResolver
             {
                 throw new MigrationResolutionException($"Cannot get Organisation details given no Id or Name value.");
             }
-            
+
             var result =
                 (await influx.GetOrganizationsApi().FindOrganizationsAsync()).FirstOrDefault(
-                    z => string.Equals(z.Name, name, StringComparison.InvariantCultureIgnoreCase), null);
+                    z => string.Equals(z?.Name, name, StringComparison.InvariantCultureIgnoreCase), null);
             return result?.Id;
         });
     }
@@ -103,7 +103,7 @@ public class InfluxRuntimeIdResolver : InfluxRuntimeResolver
             {
                 throw new MigrationResolutionException($"Cannot get Bucket details given no Id or Name value.");
             }
-            
+
             var result = await influx.GetBucketsApi().FindBucketByNameAsync(name);
             return result?.Id;
         });
@@ -126,9 +126,8 @@ public class InfluxRuntimeIdResolver : InfluxRuntimeResolver
             }
 
             var result =
-                (await influx.GetUsersApi().FindUsersAsync()).FirstOrDefault(x => string.Equals(x.Name, name),
-                    null);
-            
+                (await influx.GetUsersApi().FindUsersAsync()).FirstOrDefault(x => string.Equals(x?.Name, name), null);
+
             return result?.Id;
         });
     }
@@ -136,7 +135,7 @@ public class InfluxRuntimeIdResolver : InfluxRuntimeResolver
 
 public class InfluxRuntimeNameResolver : InfluxRuntimeResolver
 {
-    public InfluxRuntimeNameResolver(Func<string?, string?, IInfluxDBClient, Task<string?>> lookup) : base(lookup)
+    private InfluxRuntimeNameResolver(Func<string?, string?, IInfluxDBClient, Task<string?>> lookup) : base(lookup)
     {
     }
 
@@ -151,7 +150,7 @@ public class InfluxRuntimeNameResolver : InfluxRuntimeResolver
 
             if (string.IsNullOrEmpty(id))
             {
-                throw new MigrationResolutionException("No Name of Id for Organisation.");
+                throw new MigrationResolutionException("No Name or Id for Organisation.");
             }
 
             try
@@ -165,7 +164,7 @@ public class InfluxRuntimeNameResolver : InfluxRuntimeResolver
             }
         });
     }
-    
+
     public static InfluxRuntimeNameResolver CreateBucket()
     {
         return new InfluxRuntimeNameResolver(async (id, name, influx) =>
@@ -177,7 +176,7 @@ public class InfluxRuntimeNameResolver : InfluxRuntimeResolver
 
             if (string.IsNullOrEmpty(id))
             {
-                throw new MigrationResolutionException("No Name of Id specified.");
+                throw new MigrationResolutionException("No Name or Id specified.");
             }
 
             try
@@ -191,7 +190,7 @@ public class InfluxRuntimeNameResolver : InfluxRuntimeResolver
             }
         });
     }
-    
+
     public static InfluxRuntimeNameResolver CreateUser()
     {
         return new InfluxRuntimeNameResolver(async (id, name, influx) =>
@@ -216,6 +215,5 @@ public class InfluxRuntimeNameResolver : InfluxRuntimeResolver
                 return null;
             }
         });
-    }    
+    }
 }
-

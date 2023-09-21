@@ -18,15 +18,15 @@ public class CodeFirstMigrationLoaderService : IMigrationLoaderService
                 if (attributed.Length > 0 && x.GetInterfaces().Contains(typeof(ICodeFirstMigration)))
                 {
                     var attr = (InfluxMigrationAttribute)attributed.First();
-                    return new Tuple<string,Type>(attr.Version, x);
+                    return new Tuple<string, Type>(attr.Version, x);
                 }
 
                 return null;
             })
             .Where(x => x != null)
             .ToList()!;
-        
     }
+
     public async Task<List<IMigration>> LoadMigrationsAsync()
     {
         var migrations = new List<IMigration>();
@@ -37,9 +37,10 @@ public class CodeFirstMigrationLoaderService : IMigrationLoaderService
 
             if (instance == null)
             {
-                throw new MigrationLoadingException($"Could not create instance of ICodeFirstMigration {codeFirstMigration.Item2} for version {codeFirstMigration.Item1}");
+                throw new MigrationLoadingException(
+                    $"Could not create instance of {typeof(ICodeFirstMigration).FullName}:{codeFirstMigration.Item2.FullName} for version {codeFirstMigration.Item1}");
             }
-            
+
             await instance.AddUp(migration);
             await instance.AddDown(migration);
             await instance.AddTask(migration);

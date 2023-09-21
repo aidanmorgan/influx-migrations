@@ -21,7 +21,7 @@ public class TextWriterMigrationLoaderLogger : IMigrationLoaderLogger
 
     public void FoundMigration(string file, IMigration x)
     {
-       _stream.WriteLine($"Found migration: {x.Version} in {file}");
+        _stream.WriteLine($"Found migration: {x.Version} in {file}");
     }
 
     public void ParsingFailed(string file, MigrationParsingException x)

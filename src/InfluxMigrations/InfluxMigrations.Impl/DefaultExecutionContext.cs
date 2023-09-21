@@ -27,14 +27,14 @@ public class DefaultOperationExecutionContext : IOperationExecutionContext
         MigrationExecutionContext = migrationExecutionContext;
         ExecuteResult = null;
     }
-    
+
     public string? Get(string key)
     {
         if (string.IsNullOrEmpty(key))
         {
             throw new MigrationResolutionException($"Cannot retrieve the value of a null key.");
         }
-        
+
         return _variables.TryGetValue(key, out var variable) ? variable : null;
     }
 
@@ -55,5 +55,4 @@ public class DefaultOperationExecutionContext : IOperationExecutionContext
             _variables[key] = value;
         }
     }
-
 }

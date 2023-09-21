@@ -11,25 +11,13 @@ public class RemoveUserFromOrganisationParser : IYamlOperationParser
     {
         var builder = new RemoveUserFromOrganisationBuilder();
 
-        node.Value(CommonTags.OrganisationName, x =>
-        {
-            builder.WithOrganisationName(x);
-        });
+        node.Value(CommonTags.OrganisationName, x => { builder.WithOrganisationName(x); });
 
-        node.Value(CommonTags.OrganisationId, x =>
-        {
-            builder.WithOrganisationId(x);
-        });
+        node.Value(CommonTags.OrganisationId, x => { builder.WithOrganisationId(x); });
 
-        node.Value(CommonTags.UserName, x =>
-        {
-            builder.WithUsername(x);
-        });
+        node.Value(CommonTags.UserName, x => { builder.WithUsername(x); });
 
-        node.Value(CommonTags.UserId, x =>
-        {
-            builder.WithUserId(x);
-        });
+        node.Value(CommonTags.UserId, x => { builder.WithUserId(x); });
 
 
         return builder;

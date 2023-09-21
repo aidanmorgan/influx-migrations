@@ -11,26 +11,14 @@ public class CreateBucketYamlParser : IYamlOperationParser
     {
         CreateBucketBuilder builder = new CreateBucketBuilder();
 
-        yamlNode.Value(CommonTags.BucketName, (x) =>
-        {
-            builder.WithBucketName(x);
-        });
+        yamlNode.Value(CommonTags.BucketName, (x) => { builder.WithBucketName(x); });
 
-        yamlNode.Value("retention", (x) =>
-        {
-            builder.WithRetention(x);
-        });
+        yamlNode.Value("retention", (x) => { builder.WithRetention(x); });
 
-        yamlNode.Value(CommonTags.OrganisationName, (x) =>
-        {
-            builder.WithOrganisation(x);
-        });
+        yamlNode.Value(CommonTags.OrganisationName, (x) => { builder.WithOrganisation(x); });
 
-        yamlNode.Value(CommonTags.OrganisationId, (x) =>
-        {
-            builder.WithOrganisationId(x);
-        });
-        
+        yamlNode.Value(CommonTags.OrganisationId, (x) => { builder.WithOrganisationId(x); });
+
         return builder;
     }
 }

@@ -25,9 +25,9 @@ public class InsertDataTaskParserTests
         - line 2
         - line 3
 ", x => new MockMigration(x)) as MockMigration;
-        
+
         Assert.That(result, Is.Not.Null);
-        
+
         Assert.That(result.Version, Is.EqualTo("0001"));
         Assert.That(result.Tasks.Count, Is.EqualTo(1));
 
@@ -43,13 +43,13 @@ public class InsertDataTaskParserTests
         Assert.That(task.Lines[1], Is.EqualTo("line 2"));
         Assert.That(task.Lines[2], Is.EqualTo("line 3"));
     }
-    
+
     [Test]
     public async Task ParseInsertData_MigrationLevelSingleLine()
     {
         var yamlParser = new YamlMigrationParser();
         var result = await yamlParser.ParseString(
-            @"migration:
+@"migration:
   version: 0001
   tasks:
     - task: insert-data
@@ -59,9 +59,9 @@ public class InsertDataTaskParserTests
       bucket_id: bucket-id
       line: line 1
 ", x => new MockMigration(x)) as MockMigration;
-        
+
         Assert.That(result, Is.Not.Null);
-        
+
         Assert.That(result.Version, Is.EqualTo("0001"));
         Assert.That(result.Tasks.Count, Is.EqualTo(1));
 
@@ -75,7 +75,7 @@ public class InsertDataTaskParserTests
         Assert.That(task.Lines.Count, Is.EqualTo(1));
         Assert.That(task.Lines[0], Is.EqualTo("line 1"));
     }
-    
+
     [Test]
     public async Task ParseInsertData_OperationLevelWithMultiplePhases()
     {
@@ -98,9 +98,9 @@ public class InsertDataTaskParserTests
             - commit
             - rollback 
 ", x => new MockMigration(x)) as MockMigration;
-        
+
         Assert.That(result, Is.Not.Null);
-        
+
         Assert.That(result.Version, Is.EqualTo("0001"));
 
         var operation = result.UpOperations[0];
@@ -110,21 +110,21 @@ public class InsertDataTaskParserTests
         Assert.That(operation.CommitTasks[0], Is.InstanceOf<InsertDataBuilder>());
         Assert.That(((InsertDataBuilder)operation.CommitTasks[0]).Lines.Count, Is.EqualTo(1));
         Assert.That(((InsertDataBuilder)operation.CommitTasks[0]).Lines[0], Is.EqualTo("line 1"));
-        
+
         Assert.That(operation.RollbackTasks.Count, Is.EqualTo(1));
         Assert.That(operation.RollbackTasks[0], Is.InstanceOf<InsertDataBuilder>());
         Assert.That(((InsertDataBuilder)operation.RollbackTasks[0]).Lines.Count, Is.EqualTo(1));
         Assert.That(((InsertDataBuilder)operation.RollbackTasks[0]).Lines[0], Is.EqualTo("line 1"));
-        
+
         Assert.That(operation.ExecuteTasks.Count, Is.EqualTo(0));
     }
-    
+
     [Test]
     public async Task ParseInsertData_OperationLevelWithOnePhase()
     {
         var yamlParser = new YamlMigrationParser();
         var result = await yamlParser.ParseString(
-            @"migration:
+@"migration:
   version: 0001
   up:
     - operation: create-bucket
@@ -139,9 +139,9 @@ public class InsertDataTaskParserTests
           line: line 1
           phases: commit
 ", x => new MockMigration(x)) as MockMigration;
-        
+
         Assert.That(result, Is.Not.Null);
-        
+
         Assert.That(result.Version, Is.EqualTo("0001"));
 
         var operation = result.UpOperations[0];
@@ -151,8 +151,8 @@ public class InsertDataTaskParserTests
         Assert.That(operation.CommitTasks[0], Is.InstanceOf<InsertDataBuilder>());
         Assert.That(((InsertDataBuilder)operation.CommitTasks[0]).Lines.Count, Is.EqualTo(1));
         Assert.That(((InsertDataBuilder)operation.CommitTasks[0]).Lines[0], Is.EqualTo("line 1"));
-        
+
         Assert.That(operation.RollbackTasks.Count, Is.EqualTo(0));
         Assert.That(operation.ExecuteTasks.Count, Is.EqualTo(0));
-    }    
+    }
 }

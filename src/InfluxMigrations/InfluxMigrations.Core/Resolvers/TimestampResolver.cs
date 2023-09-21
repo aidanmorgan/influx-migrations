@@ -1,5 +1,7 @@
 ﻿namespace InfluxMigrations.Core.Resolvers;
+
 using static ResolverFunctionCommon;
+
 [ResolverFunction("now")]
 public class TimestampResolver : AbstractResolverFunction
 {
@@ -17,7 +19,6 @@ public class TimestampResolver : AbstractResolverFunction
         {
             throw new MigrationResolutionException("Unsupported now format.");
         }
-        
     }
 
     public TimestampResolver(string prefix, string suffix) : base(prefix, suffix)

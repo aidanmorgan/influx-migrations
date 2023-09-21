@@ -7,7 +7,7 @@ namespace InfluxMigrations.Commands.Setup;
 public class Onboarding : IMigrationOperation
 {
     private readonly IOperationExecutionContext _context;
-    
+
     public IResolvable<string> Username { get; init; }
     public IResolvable<string> Password { get; init; }
     public IResolvable<string> Organisation { get; init; }
@@ -120,7 +120,7 @@ public class OnboardingBuilder : IMigrationOperationBuilder
         this.Token = token;
         return this;
     }
-    
+
     public IMigrationOperation Build(IOperationExecutionContext context)
     {
         return new Onboarding(context)
@@ -145,7 +145,7 @@ public class ChangeAdminTokenVisitor : IContextVisitor
     {
         _token = token;
     }
-    
+
     public void Visit(IOperationExecutionContext ctx)
     {
         ctx.MigrationExecutionContext.Accept(this);

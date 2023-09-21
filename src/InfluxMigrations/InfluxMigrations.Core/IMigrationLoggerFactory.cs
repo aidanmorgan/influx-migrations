@@ -36,7 +36,7 @@ public interface IMigrationLogger
     void Failed(Exception x);
 }
 
-public interface IMigrationOperationLogger<S,R> where S : Enum
+public interface IMigrationOperationLogger<S, R> where S : Enum
 {
     void Complete(OperationResult<S, R?> result);
     IMigrationTaskLogger TaskStart(IMigrationTask task);

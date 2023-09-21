@@ -20,20 +20,20 @@ public class SetVariableTaskParserTests
       value: test-value
       scope: global
 ", x => new MockMigration(x)) as MockMigration;
-        
+
         Assert.That(result, Is.Not.Null);
-        
+
         Assert.That(result.Version, Is.EqualTo("0001"));
         Assert.That(result.Tasks.Count, Is.EqualTo(1));
 
         var task = result.Tasks[0] as SetVariableTaskBuilder;
-        
+
         Assert.That(task, Is.Not.Null);
         Assert.That(task.Key, Is.EqualTo("test-key"));
         Assert.That(task.Value, Is.EqualTo("test-value"));
         Assert.That(task.Scope, Is.EqualTo("global"));
     }
-    
+
     [Test]
     public async Task SetVariable_ExprValueMigrationLevel_Success()
     {
@@ -46,14 +46,14 @@ public class SetVariableTaskParserTests
       expr: test-key = test-value
       scope: global
 ", x => new MockMigration(x)) as MockMigration;
-        
+
         Assert.That(result, Is.Not.Null);
-        
+
         Assert.That(result.Version, Is.EqualTo("0001"));
         Assert.That(result.Tasks.Count, Is.EqualTo(1));
 
         var task = result.Tasks[0] as SetVariableTaskBuilder;
-        
+
         Assert.That(task, Is.Not.Null);
         Assert.That(task.Key, Is.EqualTo("test-key"));
         Assert.That(task.Value, Is.EqualTo("test-value"));
@@ -80,14 +80,14 @@ public class SetVariableTaskParserTests
             - commit
             - rollback
 ", x => new MockMigration(x)) as MockMigration;
-        
+
         Assert.That(result, Is.Not.Null);
-        
+
         Assert.That(result.Version, Is.EqualTo("0001"));
         Assert.That(result.UpOperations.Count, Is.EqualTo(1));
 
         var operation = result.UpOperations[0];
-        
+
         Assert.That(operation.Operation, Is.InstanceOf<CreateBucketBuilder>());
         Assert.That(operation.ExecuteTasks.Count, Is.EqualTo(0));
         Assert.That(operation.CommitTasks.Count, Is.EqualTo(1));
@@ -95,20 +95,20 @@ public class SetVariableTaskParserTests
         Assert.That(((SetVariableTaskBuilder)operation.CommitTasks[0]).Key, Is.EqualTo("test-key"));
         Assert.That(((SetVariableTaskBuilder)operation.CommitTasks[0]).Value, Is.EqualTo("test-value"));
         Assert.That(((SetVariableTaskBuilder)operation.CommitTasks[0]).Scope, Is.EqualTo("global"));
-        
+
         Assert.That(operation.RollbackTasks.Count, Is.EqualTo(1));
         Assert.That(operation.RollbackTasks[0], Is.InstanceOf<SetVariableTaskBuilder>());
         Assert.That(((SetVariableTaskBuilder)operation.RollbackTasks[0]).Key, Is.EqualTo("test-key"));
         Assert.That(((SetVariableTaskBuilder)operation.RollbackTasks[0]).Value, Is.EqualTo("test-value"));
         Assert.That(((SetVariableTaskBuilder)operation.RollbackTasks[0]).Scope, Is.EqualTo("global"));
     }
-    
+
     [Test]
     public async Task SetVariable_SeparateKeyValueTaskLevelWithSinglePhase_Success()
     {
-      var yamlParser = new YamlMigrationParser();
-      var result = await yamlParser.ParseString(
-  @"migration:
+        var yamlParser = new YamlMigrationParser();
+        var result = await yamlParser.ParseString(
+@"migration:
   version: 0001
   up:
     - operation: create-bucket
@@ -121,24 +121,22 @@ public class SetVariableTaskParserTests
           scope: global
           phases: rollback
 ", x => new MockMigration(x)) as MockMigration;
-        
-      Assert.That(result, Is.Not.Null);
-        
-      Assert.That(result.Version, Is.EqualTo("0001"));
-      Assert.That(result.UpOperations.Count, Is.EqualTo(1));
 
-      var operation = result.UpOperations[0];
-        
-      Assert.That(operation.Operation, Is.InstanceOf<CreateBucketBuilder>());
-      Assert.That(operation.ExecuteTasks.Count, Is.EqualTo(0));
-      Assert.That(operation.CommitTasks.Count, Is.EqualTo(0));
+        Assert.That(result, Is.Not.Null);
 
-      Assert.That(operation.RollbackTasks.Count, Is.EqualTo(1));
-      Assert.That(operation.RollbackTasks[0], Is.InstanceOf<SetVariableTaskBuilder>());
-      Assert.That(((SetVariableTaskBuilder)operation.RollbackTasks[0]).Key, Is.EqualTo("test-key"));
-      Assert.That(((SetVariableTaskBuilder)operation.RollbackTasks[0]).Value, Is.EqualTo("test-value"));
-      Assert.That(((SetVariableTaskBuilder)operation.RollbackTasks[0]).Scope, Is.EqualTo("global"));
+        Assert.That(result.Version, Is.EqualTo("0001"));
+        Assert.That(result.UpOperations.Count, Is.EqualTo(1));
+
+        var operation = result.UpOperations[0];
+
+        Assert.That(operation.Operation, Is.InstanceOf<CreateBucketBuilder>());
+        Assert.That(operation.ExecuteTasks.Count, Is.EqualTo(0));
+        Assert.That(operation.CommitTasks.Count, Is.EqualTo(0));
+
+        Assert.That(operation.RollbackTasks.Count, Is.EqualTo(1));
+        Assert.That(operation.RollbackTasks[0], Is.InstanceOf<SetVariableTaskBuilder>());
+        Assert.That(((SetVariableTaskBuilder)operation.RollbackTasks[0]).Key, Is.EqualTo("test-key"));
+        Assert.That(((SetVariableTaskBuilder)operation.RollbackTasks[0]).Value, Is.EqualTo("test-value"));
+        Assert.That(((SetVariableTaskBuilder)operation.RollbackTasks[0]).Scope, Is.EqualTo("global"));
     }
-    
-    
 }

@@ -9,20 +9,21 @@ public class DefaultEnvironmentContext : IMigrationEnvironmentContext
     public IInfluxFactory InfluxFactory { get; init; }
     public IMigrationLoggerFactory LoggerFactory { get; set; }
 
-    private readonly IList<IMigrationExecutionContext> _migrationExecutionContexts = new List<IMigrationExecutionContext>();
-    
-    
+    private readonly IList<IMigrationExecutionContext> _migrationExecutionContexts =
+        new List<IMigrationExecutionContext>();
+
+
     public DefaultEnvironmentContext(IMigrationLoggerFactory? logger = null)
     {
         LoggerFactory = logger ?? new NoOpMigrationLoggerFactory();
     }
-    
+
     public DefaultEnvironmentContext(IInfluxFactory client, IMigrationLoggerFactory? logger = null)
     {
         InfluxFactory = client;
         LoggerFactory = logger ?? new NoOpMigrationLoggerFactory();
     }
-    
+
     public string? Get(string key)
     {
         if (_variables.TryGetValue(key, out var variable))
@@ -56,7 +57,7 @@ public class DefaultEnvironmentContext : IMigrationEnvironmentContext
 
     public IMigrationExecutionContext CreateMigrationContext(string version)
     {
-        var ctx =  new DefaultMigrationExecutionContext(this, version);
+        var ctx = new DefaultMigrationExecutionContext(this, version);
         _migrationExecutionContexts.Add(ctx);
         return ctx;
     }

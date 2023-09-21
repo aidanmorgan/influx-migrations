@@ -4,205 +4,208 @@ using Pastel;
 
 namespace InfluxMigrations.Impl;
 
-    public class TextWriterMigrationLoggerFactory : IMigrationLoggerFactory
+public class TextWriterMigrationLoggerFactory : IMigrationLoggerFactory
+{
+    private readonly TextWriter _stream;
+
+    public TextWriterMigrationLoggerFactory(TextWriter stream)
     {
-        private readonly TextWriter _stream;
+        _stream = stream;
+    }
 
-        public TextWriterMigrationLoggerFactory(TextWriter stream)
-        {
-            _stream = stream;
-        }
+    public IMigrationLogger MigrationStart(string version, MigrationDirection dir)
+    {
+        _stream.WriteLine($"Starting Migration {version} - {dir}".Pastel(ConsoleColor.Magenta));
+        return new TextWriterMigrationLogger(_stream, version, dir);
+    }
 
-        public IMigrationLogger MigrationStart(string version, MigrationDirection dir)
-        {
-            _stream.WriteLine($"Starting Migration {version} - {dir}".Pastel(ConsoleColor.Magenta));
-            return new TextWriterMigrationLogger(_stream, version, dir);
-        }
+    public IMigrationRunnerLogger MigrationRunnerStart()
+    {
+        return new TextWriterRunnerLogger(_stream);
+    }
+}
 
-        public IMigrationRunnerLogger MigrationRunnerStart()
+public class TextWriterRunnerLogger : IMigrationRunnerLogger
+{
+    private readonly TextWriter _writer;
+
+    public TextWriterRunnerLogger(TextWriter writer)
+    {
+        _writer = writer;
+    }
+
+    public void ExecutionPlan(List<IMigration> toExecute, MigrationDirection down)
+    {
+        _writer.WriteLine($"Executing migrations:");
+
+        foreach (var migration in toExecute)
         {
-            return new TextWriterRunnerLogger(_stream);
+            _writer.WriteLine($"{migration.Version} - {down}");
         }
     }
 
-    public class TextWriterRunnerLogger : IMigrationRunnerLogger
+    public void FoundHistory(List<MigrationHistory> history)
     {
-        private readonly TextWriter _writer;
-
-        public TextWriterRunnerLogger(TextWriter writer)
-        {
-            _writer = writer;
-        }
-        
-        public void ExecutionPlan(List<IMigration> toExecute, MigrationDirection down)
-        {
-            _writer.WriteLine($"Executing migrations:");
-
-            foreach (var migration in toExecute)
-            {
-                _writer.WriteLine($"{migration.Version} - {down}");
-            }
-        }
-
-        public void FoundHistory(List<MigrationHistory> history)
-        {
-            _writer.WriteLine($"Loaded {history.Count} previous migrations.");
-        }
-
-        public void FoundMigrations(List<IMigration> loaded)
-        {
-            _writer.WriteLine($"Loaded {loaded.Count} potential migrations.");
-        }
-
-        public void NoMigrations()
-        {
-            _writer.WriteLine($"No suitable migrations found.");
-        }
-
-        public void MigrationSaved(MigrationHistory entry)
-        {
-        }
-
-        public void MigrationSaveFailed(MigrationHistory entry)
-        {
-            _writer.WriteLine($"Migration {entry.Version} was not saved.".Pastel(ConsoleColor.Red));
-        }
+        _writer.WriteLine($"Loaded {history.Count} previous migrations.");
     }
 
-    public class TextWriterMigrationLogger : IMigrationLogger
+    public void FoundMigrations(List<IMigration> loaded)
     {
-        private readonly TextWriter _stream;
-        private readonly string _version;
-        private readonly MigrationDirection _direction;
-
-        public TextWriterMigrationLogger(TextWriter stream, string version, MigrationDirection dir)
-        {
-            _stream = stream;
-            _version = version;
-            _direction = dir;
-        }
-
-        public IMigrationOperationLogger<OperationExecutionState, IExecuteResult> ExecuteStart(MigrationOperationInstance op)
-        {
-            return new TextWriterMigrationOperationLogger<OperationExecutionState, IExecuteResult>(_stream, op, "execute");
-        }
-
-        public IMigrationOperationLogger<OperationCommitState, ICommitResult> CommitStart(MigrationOperationInstance op)
-        {
-            return new TextWriterMigrationOperationLogger<OperationCommitState, ICommitResult>(_stream, op,
-                "commit");
-        }
-
-        public IMigrationOperationLogger<OperationRollbackState, IRollbackResult> RollbackStart(
-            MigrationOperationInstance op)
-        {
-            return new TextWriterMigrationOperationLogger<OperationRollbackState, IRollbackResult>(_stream, op,"rollback");
-        }
-
-        public IMigrationTaskLogger TaskStart(IMigrationTask task)
-        {
-            return new TextWriterTaskLogger(_stream, null, task, "migration");
-        }
-
-        public void Complete()
-        {
-            _stream.Write($"Finished Migration".Pastel(ConsoleColor.Magenta));
-            _stream.WriteLine($"   COMPLETE".Pastel(ConsoleColor.Green));
-        }
-
-        public void Failed(Exception ex)
-        {
-            _stream.Write($"Finished Migration".Pastel(ConsoleColor.Magenta));
-            
-            _stream.WriteLine($"   ERROR".Pastel(ConsoleColor.Red));
-            _stream.WriteLine($"{ex.Message}".Pastel(ConsoleColor.Red));
-            _stream.WriteLine($"{ex.StackTrace}".Pastel(ConsoleColor.Red));
-        }
+        _writer.WriteLine($"Loaded {loaded.Count} potential migrations.");
     }
 
-    public class TextWriterMigrationOperationLogger<TStateEnum, TResult> : IMigrationOperationLogger<TStateEnum, TResult> where TStateEnum : Enum
+    public void NoMigrations()
     {
-        private readonly TextWriter _textWriter;
-        private readonly MigrationOperationInstance _operationInstance;
-        private readonly string _prefix;
+        _writer.WriteLine($"No suitable migrations found.");
+    }
 
-        public TextWriterMigrationOperationLogger(TextWriter textWriter, MigrationOperationInstance operationInstance, string prefix)
-        {
-            _textWriter = textWriter;
-            _operationInstance = operationInstance;
-            _prefix = prefix;
-        }
+    public void MigrationSaved(MigrationHistory entry)
+    {
+    }
 
-        public void Complete(OperationResult<TStateEnum, TResult?> result)
+    public void MigrationSaveFailed(MigrationHistory entry)
+    {
+        _writer.WriteLine($"Migration {entry.Version} was not saved.".Pastel(ConsoleColor.Red));
+    }
+}
+
+public class TextWriterMigrationLogger : IMigrationLogger
+{
+    private readonly TextWriter _stream;
+    private readonly string _version;
+    private readonly MigrationDirection _direction;
+
+    public TextWriterMigrationLogger(TextWriter stream, string version, MigrationDirection dir)
+    {
+        _stream = stream;
+        _version = version;
+        _direction = dir;
+    }
+
+    public IMigrationOperationLogger<OperationExecutionState, IExecuteResult> ExecuteStart(
+        MigrationOperationInstance op)
+    {
+        return new TextWriterMigrationOperationLogger<OperationExecutionState, IExecuteResult>(_stream, op, "execute");
+    }
+
+    public IMigrationOperationLogger<OperationCommitState, ICommitResult> CommitStart(MigrationOperationInstance op)
+    {
+        return new TextWriterMigrationOperationLogger<OperationCommitState, ICommitResult>(_stream, op,
+            "commit");
+    }
+
+    public IMigrationOperationLogger<OperationRollbackState, IRollbackResult> RollbackStart(
+        MigrationOperationInstance op)
+    {
+        return new TextWriterMigrationOperationLogger<OperationRollbackState, IRollbackResult>(_stream, op, "rollback");
+    }
+
+    public IMigrationTaskLogger TaskStart(IMigrationTask task)
+    {
+        return new TextWriterTaskLogger(_stream, null, task, "migration");
+    }
+
+    public void Complete()
+    {
+        _stream.Write($"Finished Migration".Pastel(ConsoleColor.Magenta));
+        _stream.WriteLine($"   COMPLETE".Pastel(ConsoleColor.Green));
+    }
+
+    public void Failed(Exception ex)
+    {
+        _stream.Write($"Finished Migration".Pastel(ConsoleColor.Magenta));
+
+        _stream.WriteLine($"   ERROR".Pastel(ConsoleColor.Red));
+        _stream.WriteLine($"{ex.Message}".Pastel(ConsoleColor.Red));
+        _stream.WriteLine($"{ex.StackTrace}".Pastel(ConsoleColor.Red));
+    }
+}
+
+public class TextWriterMigrationOperationLogger<TStateEnum, TResult> : IMigrationOperationLogger<TStateEnum, TResult>
+    where TStateEnum : Enum
+{
+    private readonly TextWriter _textWriter;
+    private readonly MigrationOperationInstance _operationInstance;
+    private readonly string _prefix;
+
+    public TextWriterMigrationOperationLogger(TextWriter textWriter, MigrationOperationInstance operationInstance,
+        string prefix)
+    {
+        _textWriter = textWriter;
+        _operationInstance = operationInstance;
+        _prefix = prefix;
+    }
+
+    public void Complete(OperationResult<TStateEnum, TResult?> result)
+    {
+        _textWriter.WriteLine(
+            $"{_operationInstance.Id.Pastel(ConsoleColor.White)}#{$"{_operationInstance.Operation.GetType().FullName}".Pastel(Color.Beige)}  {$"{_prefix}".Pastel(ConsoleColor.Cyan)} {"[COMPLETE]".Pastel(ConsoleColor.Green)}");
+    }
+
+    public IMigrationTaskLogger TaskStart(IMigrationTask task)
+    {
+        return new TextWriterTaskLogger(_textWriter, _operationInstance, task, "migration");
+    }
+
+    public void Failed(OperationResult<TStateEnum, TResult?> result)
+    {
+        _textWriter.WriteLine(
+            $"{_operationInstance.Id.Pastel(ConsoleColor.White)}#{$"{_operationInstance.Operation.GetType().FullName}".Pastel(Color.Beige)} {$"{_prefix}".Pastel(ConsoleColor.Cyan)} {"[FAILED]".Pastel(ConsoleColor.Red)}");
+    }
+
+    public void Failed(Exception result)
+    {
+        _textWriter.WriteLine(
+            $"{_operationInstance.Id.Pastel(ConsoleColor.White)}#({$"{_operationInstance.Operation.GetType().FullName}]".Pastel(Color.Beige)}  {$"{_prefix}".Pastel(ConsoleColor.Cyan)} {"[EXCEPTION]".Pastel(ConsoleColor.Red)}");
+        _textWriter.WriteLine($"{result.Message}".Pastel(ConsoleColor.Red));
+        _textWriter.WriteLine($"{result.StackTrace}".Pastel(ConsoleColor.Red));
+    }
+}
+
+public class TextWriterTaskLogger : IMigrationTaskLogger
+{
+    private readonly TextWriter _textWriter;
+    private readonly MigrationOperationInstance? _operationInstance;
+    private readonly IMigrationTask _task;
+    private readonly string _prefix;
+
+    public TextWriterTaskLogger(TextWriter textWriter, MigrationOperationInstance? operationInstance,
+        IMigrationTask task, string prefix)
+    {
+        _textWriter = textWriter;
+        _operationInstance = operationInstance;
+        _task = task;
+        _prefix = prefix;
+    }
+
+    public void Complete()
+    {
+        if (_operationInstance == null)
         {
             _textWriter.WriteLine(
-                $"{_operationInstance.Id.Pastel(ConsoleColor.White)}#{$"{_operationInstance.Operation.GetType().FullName}".Pastel(Color.Beige)}  {$"{_prefix}".Pastel(ConsoleColor.Cyan)} {"[COMPLETE]".Pastel(ConsoleColor.Green)}");
+                $"Output#{_task.GetType().FullName.Pastel(Color.Beige)} {$"{_prefix}]".Pastel(ConsoleColor.Cyan)} {"COMPLETE".Pastel(ConsoleColor.Green)}");
         }
-
-        public IMigrationTaskLogger TaskStart(IMigrationTask task)
-        {
-            return new TextWriterTaskLogger(_textWriter, _operationInstance, task,"migration");
-        }
-
-        public void Failed(OperationResult<TStateEnum, TResult?> result)
+        else
         {
             _textWriter.WriteLine(
-                $"{_operationInstance.Id.Pastel(ConsoleColor.White)}#{$"{_operationInstance.Operation.GetType().FullName}".Pastel(Color.Beige)} {$"{_prefix}".Pastel(ConsoleColor.Cyan)} {"[FAILED]".Pastel(ConsoleColor.Red)}");
-        }
-
-        public void Failed(Exception result)
-        {
-            _textWriter.WriteLine(
-                $"{_operationInstance.Id.Pastel(ConsoleColor.White)}#({$"{_operationInstance.Operation.GetType().FullName}]".Pastel(Color.Beige)}  {$"{_prefix}".Pastel(ConsoleColor.Cyan)} {"[EXCEPTION]".Pastel(ConsoleColor.Red)}");
-            _textWriter.WriteLine($"{result.Message}".Pastel(ConsoleColor.Red));
-            _textWriter.WriteLine($"{result.StackTrace}".Pastel(ConsoleColor.Red));
+                $" Output#{_task.GetType().FullName.Pastel(Color.Beige)} {_operationInstance.Id.Pastel(ConsoleColor.White)} {$"{_prefix}".Pastel(ConsoleColor.Cyan)} {"COMPLETE".Pastel(ConsoleColor.Green)}");
         }
     }
 
-    public class TextWriterTaskLogger : IMigrationTaskLogger
+    public void Failed(Exception x)
     {
-        private readonly TextWriter _textWriter;
-        private readonly MigrationOperationInstance? _operationInstance;
-        private readonly IMigrationTask _task;
-        private readonly string _prefix;
-
-        public TextWriterTaskLogger(TextWriter textWriter, MigrationOperationInstance? operationInstance, IMigrationTask task, string prefix)
+        if (_operationInstance == null)
         {
-            _textWriter = textWriter;
-            _operationInstance = operationInstance;
-            _task = task;
-            _prefix = prefix;
+            _textWriter.WriteLine(
+                $"Output#{_task.GetType().FullName.Pastel(Color.Beige)} Migration {$"{_prefix}".Pastel(ConsoleColor.Cyan)} {"FAILED".Pastel(ConsoleColor.Red)}");
+        }
+        else
+        {
+            _textWriter.WriteLine(
+                $"Output#{_task.GetType().FullName.Pastel(Color.Beige)} {_operationInstance.Id.Pastel(ConsoleColor.White)} {$"{_prefix}".Pastel(ConsoleColor.Cyan)} {"FAILED".Pastel(ConsoleColor.Red)}");
         }
 
-        public void Complete()
-        {
-            if (_operationInstance == null)
-            {
-                _textWriter.WriteLine(
-                    $"Output#{_task.GetType().FullName.Pastel(Color.Beige)} {$"{_prefix}]".Pastel(ConsoleColor.Cyan)} {"COMPLETE".Pastel(ConsoleColor.Green)}");
-            }
-            else
-            {
-                _textWriter.WriteLine(
-                    $" Output#{_task.GetType().FullName.Pastel(Color.Beige)} {_operationInstance.Id.Pastel(ConsoleColor.White)} {$"{_prefix}".Pastel(ConsoleColor.Cyan)} {"COMPLETE".Pastel(ConsoleColor.Green)}");
-            }
-        }
-
-        public void Failed(Exception x)
-        {
-            if (_operationInstance == null)
-            {
-                _textWriter.WriteLine(
-                    $"Output#{_task.GetType().FullName.Pastel(Color.Beige)} Migration {$"{_prefix}".Pastel(ConsoleColor.Cyan)} {"FAILED".Pastel(ConsoleColor.Red)}");
-            }
-            else
-            {
-                _textWriter.WriteLine(
-                    $"Output#{_task.GetType().FullName.Pastel(Color.Beige)} {_operationInstance.Id.Pastel(ConsoleColor.White)} {$"{_prefix}".Pastel(ConsoleColor.Cyan)} {"FAILED".Pastel(ConsoleColor.Red)}");
-            }
-
-            _textWriter.WriteLine($"{x.Message}".Pastel(ConsoleColor.Red));
-            _textWriter.WriteLine($"{x.StackTrace}".Pastel(ConsoleColor.Red));
-        }
+        _textWriter.WriteLine($"{x.Message}".Pastel(ConsoleColor.Red));
+        _textWriter.WriteLine($"{x.StackTrace}".Pastel(ConsoleColor.Red));
     }
-
+}

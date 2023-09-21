@@ -1,13 +1,12 @@
 using Ductus.FluentDocker.Builders;
-using Ductus.FluentDocker.Extensions;
 using Ductus.FluentDocker.Services;
 using Ductus.FluentDocker.Services.Extensions;
-using InfluxDB.Client;
 using InfluxMigrations.Commands.Bucket;
 using InfluxMigrations.Commands.Setup;
 using InfluxMigrations.Core;
 using InfluxMigrations.Impl;
 using InfluxMigrations.Outputs;
+using NUnit.Framework;
 
 namespace InfluxMigrations.IntegrationTests;
 
@@ -27,9 +26,10 @@ public class OnboardingTests
                 .ExposePort(8086, 8086)
                 .Build()
                 .Start();
-        
-        _container.WaitForMessageInLogs("service=tcp-listener transport=http addr=:8086 port=8086", (long)TimeSpan.FromSeconds(30).TotalMilliseconds);
-        
+
+        _container.WaitForMessageInLogs("service=tcp-listener transport=http addr=:8086 port=8086",
+            (long)TimeSpan.FromSeconds(30).TotalMilliseconds);
+
         _random = new Random();
 
         _influx = new InfluxFactory().WithHost("http://localhost:8086");
@@ -37,7 +37,7 @@ public class OnboardingTests
 
     [TearDown]
     public void TearDown()
-    { 
+    {
         _container.Stop();
         _container.Remove(force: true);
         _container.Dispose();
@@ -51,8 +51,8 @@ public class OnboardingTests
         var pass = _random.RandomString(8);
         var bucket = _random.RandomString(8);
         var token = _random.RandomString(32);
-        
-        
+
+
         var migration = new Migration("0001");
         var add = migration.AddUp("onboarding",
             new OnboardingBuilder()
@@ -62,8 +62,9 @@ public class OnboardingTests
                 .WithBucket(bucket)
                 .WithAdminToken("${env:admin_token}"));
 
-        var result = await migration.ExecuteAsync(new DefaultEnvironmentContext(_influx).Set("admin_token", token), MigrationDirection.Up);
-        
+        var result = await migration.ExecuteAsync(new DefaultEnvironmentContext(_influx).Set("admin_token", token),
+            MigrationDirection.Up);
+
         Assert.That(result, Is.Not.Null);
         Assert.That(result.Success, Is.EqualTo(true));
         Assert.That(result.Inconsistent, Is.EqualTo(false));
@@ -77,8 +78,8 @@ public class OnboardingTests
         var pass = _random.RandomString(8);
         var bucket = _random.RandomString(8);
         var token = _random.RandomString(32);
-        
-        
+
+
         var migration = new Migration("0001");
         var add = migration.AddUp("onboarding",
             new OnboardingBuilder()
@@ -93,12 +94,11 @@ public class OnboardingTests
                 .WithOrganisation(org));
         migration.AddTask(new EchoTaskBuilder().WithString("Admin token: ${env:admin_token}"));
 
-        var result = await migration.ExecuteAsync(new DefaultEnvironmentContext(_influx).Set("admin_token", token), MigrationDirection.Up);
-        
+        var result = await migration.ExecuteAsync(new DefaultEnvironmentContext(_influx).Set("admin_token", token),
+            MigrationDirection.Up);
+
         Assert.That(result, Is.Not.Null);
         Assert.That(result.Success, Is.EqualTo(true));
         Assert.That(result.Inconsistent, Is.EqualTo(false));
     }
-    
-    
 }

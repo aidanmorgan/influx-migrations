@@ -1,6 +1,5 @@
 ﻿namespace InfluxMigrations.Core;
 
-
 public class NoOpMigrationHistoryLogger : IMigrationHistoryLogger
 {
     public void LoadException(Exception x)
@@ -52,12 +51,12 @@ public class NoOpMigrationLoggerFactory : IMigrationLoggerFactory
     {
         return new NoOpMigrationLogger();
     }
-    
 }
 
 public class NoOpMigrationLogger : IMigrationLogger
 {
-    public IMigrationOperationLogger<OperationExecutionState, IExecuteResult> ExecuteStart(MigrationOperationInstance op)
+    public IMigrationOperationLogger<OperationExecutionState, IExecuteResult> ExecuteStart(
+        MigrationOperationInstance op)
     {
         return new NoOpMigrationOperationLogger<OperationExecutionState, IExecuteResult>();
     }
@@ -67,7 +66,8 @@ public class NoOpMigrationLogger : IMigrationLogger
         return new NoOpMigrationOperationLogger<OperationCommitState, ICommitResult>();
     }
 
-    public IMigrationOperationLogger<OperationRollbackState, IRollbackResult> RollbackStart(MigrationOperationInstance op)
+    public IMigrationOperationLogger<OperationRollbackState, IRollbackResult> RollbackStart(
+        MigrationOperationInstance op)
     {
         return new NoOpMigrationOperationLogger<OperationRollbackState, IRollbackResult>();
     }
@@ -76,19 +76,17 @@ public class NoOpMigrationLogger : IMigrationLogger
     {
         return new NoOpTaskLogger();
     }
-    
+
     public void Complete()
     {
-            
     }
 
     public void Failed(Exception ex)
     {
-        
-    }    
+    }
 }
 
-public class NoOpMigrationOperationLogger<A,B> : IMigrationOperationLogger<A, B> where A : Enum
+public class NoOpMigrationOperationLogger<A, B> : IMigrationOperationLogger<A, B> where A : Enum
 {
     public NoOpMigrationOperationLogger()
     {
@@ -96,7 +94,6 @@ public class NoOpMigrationOperationLogger<A,B> : IMigrationOperationLogger<A, B>
 
     public void Complete(OperationResult<A, B?> result)
     {
-        
     }
 
     public IMigrationTaskLogger TaskStart(IMigrationTask migrationTask)

@@ -15,14 +15,14 @@ public class CreateBucketToken : IMigrationOperation
             { "read", Permission.ActionEnum.Read },
             { "write", Permission.ActionEnum.Write }
         };
-    
+
     private readonly IOperationExecutionContext _context;
-    public InfluxRuntimeIdResolver Bucket { get;  set; }
-    public InfluxRuntimeIdResolver User { get;  set; }
-    
+    public InfluxRuntimeIdResolver Bucket { get; set; }
+    public InfluxRuntimeIdResolver User { get; set; }
+
     public IResolvable<string?>? TokenDescription { get; set; }
     public List<IResolvable<string?>> Permissions { get; set; } = new List<IResolvable<string?>>();
-    
+
     public CreateBucketToken(IOperationExecutionContext context)
     {
         _context = context;
@@ -62,7 +62,6 @@ public class CreateBucketToken : IMigrationOperation
             // is created with the Auth token as the owner.
             if (userId != null)
             {
-
                 auth = await _context.Influx.GetAuthorizationsApi().CreateAuthorizationAsync(
                     new AuthorizationPostRequest(
                         bucket.OrgID,
@@ -104,7 +103,7 @@ public class CreateBucketToken : IMigrationOperation
             return OperationResults.ExecutionFailed(x);
         }
     }
-    
+
     public Task<OperationResult<OperationCommitState, ICommitResult>> CommitAsync(IExecuteResult result)
     {
         return OperationResults.CommitUnnecessary(result);
@@ -114,7 +113,6 @@ public class CreateBucketToken : IMigrationOperation
     {
         return OperationResults.RollbackImpossible(result);
     }
-    
 }
 
 public class CreateBucketTokenResult : IExecuteResult
@@ -129,15 +127,14 @@ public class CreateBucketTokenResult : IExecuteResult
     }
 }
 
-
 public class CreateBucketTokenBuilder : IMigrationOperationBuilder
 {
     public string TokenName { get; private set; }
-    public string BucketName  { get; private set; }
-    public string BucketId  { get; private set; }
-    public string UserName  { get; private set; }
-    public string UserId  { get; private set; }
-    
+    public string BucketName { get; private set; }
+    public string BucketId { get; private set; }
+    public string UserName { get; private set; }
+    public string UserId { get; private set; }
+
     public List<string> Permissions { get; private set; } = new List<string>();
 
     public CreateBucketTokenBuilder WithTokenName(string name)
@@ -146,7 +143,7 @@ public class CreateBucketTokenBuilder : IMigrationOperationBuilder
         {
             throw new MigrationConfigurationException($"Cannot set a null write token name.");
         }
-        
+
         TokenName = name;
         return this;
     }
@@ -178,7 +175,7 @@ public class CreateBucketTokenBuilder : IMigrationOperationBuilder
         Permissions.Add(name);
         return this;
     }
-    
+
     public CreateBucketTokenBuilder WithUserName(string username)
     {
         UserName = username;
@@ -208,7 +205,7 @@ public class CreateBucketTokenBuilder : IMigrationOperationBuilder
         {
             throw new MigrationOperationBuildingException("No User specified.");
         }
-        
+
         return new CreateBucketToken(context)
         {
             Permissions = permissions!,

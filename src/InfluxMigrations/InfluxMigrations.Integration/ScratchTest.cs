@@ -1,4 +1,4 @@
-﻿using InfluxDB.Client;
+﻿using System.Data.SqlTypes;
 using InfluxMigrations.Commands.Auth;
 using InfluxMigrations.Commands.Bucket;
 using InfluxMigrations.Commands.Organisation;
@@ -7,6 +7,7 @@ using InfluxMigrations.Core;
 using InfluxMigrations.Impl;
 using InfluxMigrations.IntegrationCommon;
 using InfluxMigrations.Outputs;
+using NUnit.Framework;
 
 namespace InfluxMigrations.IntegrationTests;
 
@@ -21,7 +22,7 @@ public class ScratchTest
     {
         _influxFixture = new InfluxFixture();
         _influx = await _influxFixture.Setup();
-        
+
         _random = new Random();
     }
 
@@ -49,10 +50,8 @@ public class ScratchTest
             _random.RandomString(16),
             _random.RandomString(16)
         };
-        
-        var environment = new DefaultEnvironmentContext(_influx, new TextWriterMigrationLoggerFactory(Console.Out));
 
-        CaptureResultBuilder createdUserResult = new CaptureResultBuilder();
+        var environment = new DefaultEnvironmentContext(_influx, new TextWriterMigrationLoggerFactory(Console.Out));
 
         var migration = new Migration("0001");
         migration.AddUp("create-organisation", new CreateOrganisationBuilder().WithName(organisationName));
@@ -69,7 +68,7 @@ public class ScratchTest
             .WithBucketId("${step:create-bucket-1:${result:id}}")
             .WithUserId("${step:create-user1:${result:id}}")
             .WithPermission("read"));
-        
+
         migration.AddUp("create-bucket-2", new CreateBucketBuilder()
             .WithOrganisation(organisationName)
             .WithBucketName(randomBucketNames[1]));
@@ -84,7 +83,7 @@ public class ScratchTest
             .WithUserId("${step:create-user2:${result:id}}")
             .WithPermission("read"));
 
-        
+
         migration.AddUp("create-bucket-3", new CreateBucketBuilder()
             .WithOrganisation(organisationName)
             .WithBucketName(randomBucketNames[2]));
@@ -99,9 +98,8 @@ public class ScratchTest
             .WithUserId("${step:create-user3:${result:id}}")
             .WithPermission("read"));
 
-//        migration.AddUp("force-fail", new ForceErrorBuilder().ErrorExecute());
-
-        var echoTask = new EchoTaskBuilder();
+        var stringWriter = new StringWriter();
+        var echoTask = new EchoTaskBuilder().WithWriter(stringWriter);
         migration.AddTask(echoTask
             .WithString(
                 "Username: ${step:create-user1:${result:name}} Bucket: ${step:create-bucket-1:${result:name}} Token: ${step:assign-testuser1-test-bucket-1:${result:token}}")
@@ -109,13 +107,28 @@ public class ScratchTest
                 "Username: ${step:create-user2:${result:name}} Bucket: ${step:create-bucket-2:${result:name}} Token: ${step:assign-testuser2-test-bucket-2:${result:token}}")
             .WithString(
                 "Username: ${step:create-user3:${result:name}} Bucket: ${step:create-bucket-3:${result:name}} Token: ${step:assign-testuser3-test-bucket-3:${result:token}}"));
-        
+
 
         var result = await migration.ExecuteAsync(environment, MigrationDirection.Up);
-        
+
         Assert.That(result.Success, Is.EqualTo(true));
         Assert.That(result.Inconsistent, Is.EqualTo(false));
         Assert.That(result.Issues.Count, Is.EqualTo(0));
+
+        Console.WriteLine(stringWriter);
+        var writer = stringWriter.ToString()
+            .Split("\n")
+            .Where(x => !string.IsNullOrEmpty(x))
+            .ToList();
         
+        Assert.That(writer.Count, Is.EqualTo(3));
+        Assert.That(writer[0], Does.Contain(randomUserNames[0]));
+        Assert.That(writer[1], Does.Contain(randomUserNames[1]));
+        Assert.That(writer[2], Does.Contain(randomUserNames[2]));
+        
+        Assert.That(writer[0], Does.Contain(randomBucketNames[0]));
+        Assert.That(writer[1], Does.Contain(randomBucketNames[1]));
+        Assert.That(writer[2], Does.Contain(randomBucketNames[2]));
     }
 }
+

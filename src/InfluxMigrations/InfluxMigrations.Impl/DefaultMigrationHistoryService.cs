@@ -24,7 +24,7 @@ public class DefaultMigrationHistoryOptions : IMigrationHistoryServiceOptions
 public class DefaultMigrationHistoryService : IMigrationHistoryService
 {
     public DefaultMigrationHistoryOptions Options { get; init; }
-    
+
     // an arbitrary timestamp to calculate range queries from so we don't aggregate everything
     private static readonly DateTimeOffset HistoryEpoch = DateTimeOffset.Parse("2023/01/01T00:00:00.000Z");
     private readonly IInfluxFactory _client;
@@ -34,7 +34,7 @@ public class DefaultMigrationHistoryService : IMigrationHistoryService
         _client = client;
         Options = options ?? new DefaultMigrationHistoryOptions();
     }
-    
+
     public async Task<List<MigrationHistory>> LoadMigrationHistoryAsync()
     {
         try
@@ -79,9 +79,8 @@ public class DefaultMigrationHistoryService : IMigrationHistoryService
             result = await influx.GetWriteApiAsync(new MigrationHistoryMapper(Options))
                 .WriteMeasurementsAsyncWithIRestResponse(list,
                     WritePrecision.Ms,
-                    Options.BucketName, 
+                    Options.BucketName,
                     Options.OrganisationName);
-
         }
         catch (Exception x)
         {
@@ -91,11 +90,13 @@ public class DefaultMigrationHistoryService : IMigrationHistoryService
 
         if (result == null || result?.StatusCode != HttpStatusCode.NoContent)
         {
-            throw new MigrationRunnerException($"Could not save history. Result: {result?.StatusCode} - {result?.Content}");
+            throw new MigrationRunnerException(
+                $"Could not save history. Result: {result?.StatusCode} - {result?.Content}");
         }
     }
 
-    public static async Task<Bucket?> CreateHistoryBucketIfNotExists(IInfluxDBClient client, DefaultMigrationHistoryOptions opts)
+    public static async Task<Bucket?> CreateHistoryBucketIfNotExists(IInfluxDBClient client,
+        DefaultMigrationHistoryOptions opts)
     {
         Bucket historyBucket = null;
         try
@@ -127,7 +128,6 @@ public class DefaultMigrationHistoryService : IMigrationHistoryService
         }
 
         return historyBucket;
-
     }
 }
 
@@ -139,14 +139,14 @@ public class MigrationHistoryMapper : IDomainObjectMapper
     {
         this._opts = opts;
     }
-    
+
     public T ConvertToEntity<T>(FluxRecord fluxRecord)
     {
         if (typeof(T) != typeof(MigrationHistory))
         {
             throw new NotSupportedException();
         }
-        
+
         var values = fluxRecord.Values;
         var history = new MigrationHistory((string)values["version"],
             Enum.Parse<MigrationDirection>((string)values["direction"]),
@@ -162,7 +162,7 @@ public class MigrationHistoryMapper : IDomainObjectMapper
         {
             throw new NotSupportedException();
         }
-        
+
         var values = fluxRecord.Values;
         var history = new MigrationHistory((string)values["version"],
             Enum.Parse<MigrationDirection>((string)values["direction"]),

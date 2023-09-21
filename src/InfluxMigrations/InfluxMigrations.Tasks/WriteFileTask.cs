@@ -10,7 +10,6 @@ public class WriteFileTask : IMigrationTask
 
     public WriteFileTask()
     {
-        
     }
 
     public Task<TaskResult> ExecuteAsync(IOperationExecutionContext context)
@@ -30,7 +29,7 @@ public class WriteFileTask : IMigrationTask
             return TaskResults.TaskFailureAsync(x);
         }
     }
-    
+
     public Task<TaskResult> ExecuteAsync(IMigrationExecutionContext executionContext)
     {
         var outputFile = File.Resolve(executionContext);
@@ -47,7 +46,7 @@ public class WriteFileTask : IMigrationTask
         {
             return TaskResults.TaskFailureAsync(x);
         }
-    }    
+    }
 }
 
 public class WriteFileTaskBuilder : IMigrationTaskBuilder
@@ -72,8 +71,8 @@ public class WriteFileTaskBuilder : IMigrationTaskBuilder
         Content.AddRange(content);
         return this;
     }
-    
-    
+
+
     public IMigrationTask Build()
     {
         return new WriteFileTask()

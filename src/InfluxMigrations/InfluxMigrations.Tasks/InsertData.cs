@@ -14,21 +14,25 @@ public class Data
     public IResolvable<string?> Measurement { get; init; }
     public IResolvable<string?> Timestamp { get; init; }
 
-    public Dictionary<IResolvable<string?>, IResolvable<string?>> Tags { get; } = new Dictionary<IResolvable<string?>, IResolvable<string?>>();
-    public Dictionary<IResolvable<string?>, IResolvable<string?>> Fields { get; } = new Dictionary<IResolvable<string?>, IResolvable<string?>>();
+    public Dictionary<IResolvable<string?>, IResolvable<string?>> Tags { get; } =
+        new Dictionary<IResolvable<string?>, IResolvable<string?>>();
 
+    public Dictionary<IResolvable<string?>, IResolvable<string?>> Fields { get; } =
+        new Dictionary<IResolvable<string?>, IResolvable<string?>>();
 }
 
 public class InsertData : IMigrationTask
 {
     public InfluxRuntimeNameResolver Bucket { get; private set; } = InfluxRuntimeNameResolver.CreateBucket();
-    public InfluxRuntimeNameResolver Organisation { get; private set; } = InfluxRuntimeNameResolver.CreateOrganisation();
+
+    public InfluxRuntimeNameResolver Organisation { get; private set; } =
+        InfluxRuntimeNameResolver.CreateOrganisation();
+
     public WritePrecision WritePrecision { get; set; } = WritePrecision.Ms;
     public List<IResolvable<string?>> Data { get; init; } = new List<IResolvable<string?>>();
 
     public InsertData()
     {
-        
     }
 
     public InsertData Initialise(Action<InsertData> data)
@@ -36,12 +40,12 @@ public class InsertData : IMigrationTask
         data(this);
         return this;
     }
-    
+
     public async Task<TaskResult> ExecuteAsync(IOperationExecutionContext ctx)
     {
         var bucket = await Bucket.GetAsync(ctx);
         var organisation = await Organisation.GetAsync(ctx);
-        
+
         var pointData = Data.Select(x =>
         {
             var line = x.Resolve(ctx);
@@ -72,7 +76,7 @@ public class InsertData : IMigrationTask
     {
         var bucket = await Bucket.GetAsync(ctx);
         var organisation = await Organisation.GetAsync(ctx);
-        
+
         var pointData = Data.Select(x =>
         {
             var line = x.Resolve(ctx);
@@ -95,7 +99,7 @@ public class InsertData : IMigrationTask
         {
             return TaskResults.TaskFailure(x);
         }
-        
+
         return TaskResults.TaskSuccess();
     }
 }
@@ -143,7 +147,7 @@ public class InsertDataBuilder : IMigrationTaskBuilder
         this.Lines.AddRange(lines);
         return this;
     }
-    
+
     public IMigrationTask Build()
     {
         return new InsertData()

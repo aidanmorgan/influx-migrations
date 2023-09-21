@@ -16,7 +16,7 @@ public class DefaultMigrationExecutionContext : IMigrationExecutionContext
         this.EnvironmentContext = env;
         this.Version = version;
     }
-    
+
     public void Set(string key, string? value)
     {
         if (string.IsNullOrEmpty(value))
@@ -41,19 +41,19 @@ public class DefaultMigrationExecutionContext : IMigrationExecutionContext
 
     private Dictionary<string, IOperationExecutionContext> _executionContexts =
         new Dictionary<string, IOperationExecutionContext>();
-    
+
     public IOperationExecutionContext CreateExecutionContext(string id)
     {
         var context = new DefaultOperationExecutionContext(this, id);
         _executionContexts[id] = context;
         return context;
     }
-    
+
     public IOperationExecutionContext? GetExecutionContext(string id)
     {
         return _executionContexts.TryGetValue(id, out var context) ? context : null;
     }
-    
+
     public void Accept(IContextVisitor visitor)
     {
         visitor.Visit(this);

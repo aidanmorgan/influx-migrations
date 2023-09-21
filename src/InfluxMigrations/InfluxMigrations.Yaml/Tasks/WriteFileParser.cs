@@ -11,11 +11,8 @@ public class WriteFileParser : IYamlTaskParser
     {
         var builder = new WriteFileTaskBuilder();
 
-        node.Value("file", (x) =>
-        {
-            builder.WithFile(x);
-        });
-        
+        node.Value("file", (x) => { builder.WithFile(x); });
+
         node.ForEach("content", (x) =>
         {
             var value = x.GetStringValue();
@@ -24,7 +21,7 @@ public class WriteFileParser : IYamlTaskParser
                 builder.WithContent(value);
             }
         });
-        
+
         return builder;
     }
 }

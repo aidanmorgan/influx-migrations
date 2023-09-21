@@ -4,7 +4,7 @@ namespace InfluxMigrations.Default.Integration;
 
 public class MockMigrationLoaderService : IMigrationLoaderService
 {
-    private List<IMigration> _migrations = new List<IMigration>();
+    private readonly List<IMigration> _migrations = new List<IMigration>();
 
     public MockMigrationLoaderService AddMigration(IMigration m)
     {
@@ -17,7 +17,7 @@ public class MockMigrationLoaderService : IMigrationLoaderService
         _migrations.AddRange(m);
         return this;
     }
-    
+
     public Task<List<IMigration>> LoadMigrationsAsync()
     {
         return Task.FromResult(_migrations);

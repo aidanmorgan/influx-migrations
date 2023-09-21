@@ -7,10 +7,10 @@ namespace InfluxMigrations.Commands.Bucket;
 public class AddUserToBucket : IMigrationOperation
 {
     private readonly IOperationExecutionContext _context;
-    
+
     public InfluxRuntimeIdResolver User { get; private set; }
     public InfluxRuntimeIdResolver Bucket { get; private set; }
-    
+
 
     public AddUserToBucket(IOperationExecutionContext context)
     {
@@ -66,9 +66,8 @@ public class AddUserToBucket : IMigrationOperation
     }
 }
 
-public class AddMemberToBucketResult :IExecuteResult
+public class AddMemberToBucketResult : IExecuteResult
 {
-    
 }
 
 public class AddMemberToBucketBuilder : IMigrationOperationBuilder
@@ -77,8 +76,8 @@ public class AddMemberToBucketBuilder : IMigrationOperationBuilder
     public string UserId { get; init; }
     public string BucketName { get; init; }
     public string BucketId { get; init; }
-    
-    
+
+
     public IMigrationOperation Build(IOperationExecutionContext context)
     {
         return new AddUserToBucket(context).Initialise(x =>

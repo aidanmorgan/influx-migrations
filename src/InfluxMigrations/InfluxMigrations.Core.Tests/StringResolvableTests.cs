@@ -5,7 +5,6 @@ using NUnit.Framework;
 
 namespace InfluxMigrations.Abstractions.Tests;
 
-
 public class StringResolvableTests
 {
     [Test]
@@ -13,10 +12,10 @@ public class StringResolvableTests
     {
         var result = StringResolvable.Tokenize("${token}");
         Assert.That(result.Count, Is.EqualTo(1));
-        
+
         Assert.That(result[0], Is.EqualTo("${token}"));
     }
-    
+
     [Test]
     public void TokenizeComplexString()
     {
@@ -56,7 +55,6 @@ public class StringResolvableTests
         }
         catch (MigrationResolutionException)
         {
-            
         }
     }
 
@@ -70,17 +68,17 @@ public class StringResolvableTests
         {
             Step1Result = "abcd"
         };
-        
+
         var step2 = migration.CreateExecutionContext("step2");
         step2.ExecuteResult = new
         {
             Step2Result = "wxyz"
         };
-        
+
         var step3 = migration.CreateExecutionContext("step3");
         var parsed = StringResolvable.Parse("${step:step1:${result:step1result}}");
         var result = parsed.Resolve(step3);
-        
+
         Assert.That(result, Is.Not.Null);
         Assert.That(result, Is.EqualTo("abcd"));
     }
@@ -92,17 +90,17 @@ public class StringResolvableTests
         var migration = environment.CreateMigrationContext("0001");
         var step1 = migration.CreateExecutionContext("step1");
         step1.Set("secret_key", "hidden");
-        
+
         var step2 = migration.CreateExecutionContext("step2");
         var step3 = migration.CreateExecutionContext("step3");
 
         var parsed = StringResolvable.Parse("${step:step1:${secret_key}}");
         var result = parsed.Resolve(step3);
-        
+
         Assert.That(result, Is.Not.Null);
-        Assert.That(result, Is.EqualTo("hidden"));        
+        Assert.That(result, Is.EqualTo("hidden"));
     }
-    
+
     [Test]
     public void ResolveVariableOfPreviousStepUsingVariableFromPreviousStep()
     {
@@ -110,18 +108,18 @@ public class StringResolvableTests
         var migration = environment.CreateMigrationContext("0001");
         var step1 = migration.CreateExecutionContext("step1");
         step1.Set("secret_key", "hidden");
-        
+
         var step2 = migration.CreateExecutionContext("step2");
         step2.Set("key_name", "secret_key");
         var step3 = migration.CreateExecutionContext("step3");
 
         var parsed = StringResolvable.Parse("${step:step1:${${step:step2:${key_name}}}}");
         var result = parsed.Resolve(step3);
-        
+
         Assert.That(result, Is.Not.Null);
-        Assert.That(result, Is.EqualTo("hidden"));        
+        Assert.That(result, Is.EqualTo("hidden"));
     }
-    
+
     [Test]
     public void ResolveResultOfFirstStepUsingKeyDefinedInSecondStep()
     {
@@ -132,16 +130,16 @@ public class StringResolvableTests
         {
             SecretKey = "hidden"
         };
-        
+
         var step2 = migration.CreateExecutionContext("step2");
         step2.Set("key_name", "secretkey");
         var step3 = migration.CreateExecutionContext("step3");
 
         var parsed = StringResolvable.Parse("${step:step1:${result:${step:step2:${key_name}}}}");
         var result = parsed.Resolve(step3);
-        
+
         Assert.That(result, Is.Not.Null);
-        Assert.That(result, Is.EqualTo("hidden"));        
+        Assert.That(result, Is.EqualTo("hidden"));
     }
 
     [Test]
@@ -152,7 +150,7 @@ public class StringResolvableTests
         migration.Set("migrationvariablename", "secret");
         var step1 = migration.CreateExecutionContext("step1");
         step1.Set("variablename", "migrationvariablename");
-        
+
         var parsed = StringResolvable.Parse("${migration:${step:step1:${variablename}}}");
         Assert.That(parsed, Is.Not.Null);
 
@@ -169,14 +167,12 @@ public class StringResolvableTests
 
         var step1 = migration.CreateExecutionContext("step1");
         step1.Set("stepvariablename", "secret");
-        
+
         var parsed = StringResolvable.Parse("${step:step1:${${env:environmentvariablename}}}");
         Assert.That(parsed, Is.Not.Null);
 
         var result = parsed.Resolve(step1);
         Assert.That(result, Is.Not.Null);
         Assert.That(result, Is.EqualTo("secret"));
-        
     }
-    
 }

@@ -8,9 +8,10 @@ public class MockMigrationHistoryService : IMigrationHistoryService
 
     public MockMigrationHistoryService AddHistory(string version, MigrationDirection? dir = null, DateTimeOffset? time = null, bool success = true)
     {
-        return AddHistory(new MigrationHistory(version, dir ?? MigrationDirection.Up, time ?? DateTimeOffset.UtcNow, success));
+        return AddHistory(new MigrationHistory(version, dir ?? MigrationDirection.Up, time ?? DateTimeOffset.UtcNow,
+            success));
     }
-    
+
     public MockMigrationHistoryService AddHistory(MigrationHistory hist)
     {
         _histories.Add(hist);
@@ -22,7 +23,7 @@ public class MockMigrationHistoryService : IMigrationHistoryService
         _histories.AddRange(h);
         return this;
     }
-    
+
     public Task<List<MigrationHistory>> LoadMigrationHistoryAsync()
     {
         return Task.FromResult(_histories);

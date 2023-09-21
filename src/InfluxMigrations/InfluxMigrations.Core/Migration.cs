@@ -1,6 +1,6 @@
 namespace InfluxMigrations.Core;
 
-public enum MigrationIssueSeverity 
+public enum MigrationIssueSeverity
 {
     Fail,
     Warning
@@ -30,20 +30,21 @@ public class MigrationIssue
     public Exception? Exception { get; init; }
 }
 
-public class MigrationResult 
+public class MigrationResult
 {
     public string Version { get; init; }
-    
+
     private readonly List<MigrationIssue> _issues = new List<MigrationIssue>();
     public List<MigrationIssue> Issues => new List<MigrationIssue>(_issues);
-    
+
     public MigrationIssue AddIssue(MigrationIssue issue)
     {
         _issues.Add(issue);
         return issue;
     }
 
-    public MigrationIssue AddIssue<TS,TR>(string id, MigrationIssueCategory category, MigrationPhase phase, MigrationIssueSeverity severity, OperationResult<TS, TR> result = null) where TS : Enum
+    public MigrationIssue AddIssue<TS, TR>(string id, MigrationIssueCategory category, MigrationPhase phase,
+        MigrationIssueSeverity severity, OperationResult<TS, TR> result = null) where TS : Enum
     {
         var issue = new MigrationIssue()
         {
@@ -53,7 +54,7 @@ public class MigrationResult
             Severity = severity,
             Exception = result.Result is IExceptionResult exceptionResult ? exceptionResult.Exception : null
         };
-        
+
         _issues.Add(issue);
         return issue;
     }
@@ -72,7 +73,6 @@ public class MigrationResult
     public MigrationOptions Options { get; set; }
 }
 
-
 /// <summary>
 /// This pulls together all of the bits into a something that has a chance of being executed. We need to be able to assemble
 /// an operation (and it's corresponding tasks) together with a run-time identifier.
@@ -84,8 +84,8 @@ public class MigrationOperationInstance
     public List<IMigrationTaskBuilder> ExecuteTasks { get; private set; } = new List<IMigrationTaskBuilder>();
     public List<IMigrationTaskBuilder> CommitTasks { get; private set; } = new List<IMigrationTaskBuilder>();
     public List<IMigrationTaskBuilder> RollbackTasks { get; private set; } = new List<IMigrationTaskBuilder>();
-    
-   
+
+
     public MigrationOperationInstance(string id, IMigrationOperationBuilder operation)
     {
         Id = id;
@@ -112,14 +112,18 @@ public class MigrationOperationInstance
 }
 
 record MigrationOperationRuntimeState(string Id, MigrationOperationInstance Instance, IMigrationOperation Operation,
-    OperationResult<OperationExecutionState, IExecuteResult> ExecuteResult, IOperationExecutionContext ExecutionContext);
+    OperationResult<OperationExecutionState, IExecuteResult> ExecuteResult,
+    IOperationExecutionContext ExecutionContext);
 
 public interface IMigration
 {
     string Version { get; set; }
     MigrationOperationInstance AddUp(string id, IMigrationOperationBuilder operation);
     MigrationOperationInstance AddDown(string id, IMigrationOperationBuilder operation);
-    Task<MigrationResult> ExecuteAsync(IMigrationEnvironmentContext env, MigrationDirection direction, MigrationOptions? opts = null);
+
+    Task<MigrationResult> ExecuteAsync(IMigrationEnvironmentContext env, MigrationDirection direction,
+        MigrationOptions? opts = null);
+
     IMigration AddTask(IMigrationTaskBuilder task);
 }
 
@@ -142,7 +146,7 @@ public class Migration : IMigration
     public Migration()
     {
     }
-    
+
     public Migration(string version)
     {
         Version = version;
@@ -162,7 +166,8 @@ public class Migration : IMigration
         return entry;
     }
 
-    public async Task<MigrationResult> ExecuteAsync(IMigrationEnvironmentContext env, MigrationDirection direction, MigrationOptions? o = null)
+    public async Task<MigrationResult> ExecuteAsync(IMigrationEnvironmentContext env, MigrationDirection direction,
+        MigrationOptions? o = null)
     {
         // TODO : refactor this method, it's long and doing too many things
         var options = o ?? new MigrationOptions();
@@ -172,7 +177,7 @@ public class Migration : IMigration
             Direction = direction,
             Options = options
         };
-        
+
         var logger = env.LoggerFactory.MigrationStart(Version, direction);
         var context = env.CreateMigrationContext(Version);
 
@@ -191,7 +196,8 @@ public class Migration : IMigration
                 if (operationResult.State is OperationExecutionState.Success or OperationExecutionState.Skipped)
                 {
                     executionContext.ExecuteResult = operationResult.Result;
-                    instanceOperations.Add(new MigrationOperationRuntimeState(op.Id, op, operation, operationResult, executionContext));
+                    instanceOperations.Add(new MigrationOperationRuntimeState(op.Id, op, operation, operationResult,
+                        executionContext));
                     executeLog.Complete(operationResult);
 
                     foreach (var output in op.ExecuteTasks.Select(x => x.Build()))
@@ -203,9 +209,10 @@ public class Migration : IMigration
                 }
                 else
                 {
-                    migrationResult.AddIssue(op.Id, MigrationIssueCategory.Operation, MigrationPhase.Execute, MigrationIssueSeverity.Fail, operationResult);
+                    migrationResult.AddIssue(op.Id, MigrationIssueCategory.Operation, MigrationPhase.Execute,
+                        MigrationIssueSeverity.Fail, operationResult);
                     executeLog.Failed(operationResult);
-                    
+
                     throw new MigrationExecutionException($"Execution of step {op.Id} failed.");
                 }
             }
@@ -219,7 +226,8 @@ public class Migration : IMigration
 
                 if (commitResult?.State == OperationCommitState.Failed)
                 {
-                    migrationResult.AddIssue(state.Id, MigrationIssueCategory.Operation, MigrationPhase.Commit, MigrationIssueSeverity.Fail, commitResult);
+                    migrationResult.AddIssue(state.Id, MigrationIssueCategory.Operation, MigrationPhase.Commit,
+                        MigrationIssueSeverity.Fail, commitResult);
                     commitLog.Failed(commitResult!);
                 }
                 else
@@ -247,13 +255,14 @@ public class Migration : IMigration
                 if (state.ExecuteResult.State == OperationExecutionState.Success)
                 {
                     var rollbackLog = logger.RollbackStart(state.Instance);
-                    
+
                     var rollbackResult = await state.Operation.RollbackAsync(state.ExecuteResult.Result);
                     state.ExecutionContext.RollbackResult = rollbackResult?.Result;
 
                     if (rollbackResult?.State == OperationRollbackState.Failed)
                     {
-                        migrationResult.AddIssue(state.Id, MigrationIssueCategory.Operation, MigrationPhase.Rollback, MigrationIssueSeverity.Fail, rollbackResult);                            
+                        migrationResult.AddIssue(state.Id, MigrationIssueCategory.Operation, MigrationPhase.Rollback,
+                            MigrationIssueSeverity.Fail, rollbackResult);
                         rollbackLog.Failed(rollbackResult);
                     }
                     else
@@ -270,7 +279,7 @@ public class Migration : IMigration
                     }
                 }
             }
-            
+
             logger.Failed(ex);
         }
         finally

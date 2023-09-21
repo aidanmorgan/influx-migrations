@@ -26,12 +26,14 @@ public class TextWriterMigrationRunnerLogger : IMigrationRunnerLogger
         var successful = history.Where(x => x.Success.HasValue && x.Success.Value).ToList();
         var failed = history.Where(x => !x.Success.HasValue || !x.Success.Value).ToList();
 
-        _writer.WriteLine($"Found {successful.Count} successful Migrations :: [{string.Join(",", successful.Select(x => x.Version))}]");
+        _writer.WriteLine(
+            $"Found {successful.Count} successful Migrations :: [{string.Join(",", successful.Select(x => x.Version))}]");
     }
 
     public void FoundMigrations(List<IMigration> loaded)
     {
-        _writer.WriteLine($"Found {loaded.Count} potential Migrations :: [{string.Join(",", loaded.Select(x => x.Version))}]");
+        _writer.WriteLine(
+            $"Found {loaded.Count} potential Migrations :: [{string.Join(",", loaded.Select(x => x.Version))}]");
     }
 
     public void NoMigrations()

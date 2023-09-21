@@ -24,13 +24,13 @@ public interface IResolverFunction
 /// </summary>
 public enum ResolutionType
 {
-    [EnumMember(Value = "fixed")]Fixed,
-    [EnumMember(Value = "environment")]Environment,
-    [EnumMember(Value = "result")]Result,
-    [EnumMember(Value = "migration")]Migration,
-    [EnumMember(Value = "step")]Step,
-    [EnumMember(Value = "block")]Block,
-    [EnumMember(Value = "local")]Local
+    [EnumMember(Value = "fixed")] Fixed,
+    [EnumMember(Value = "environment")] Environment,
+    [EnumMember(Value = "result")] Result,
+    [EnumMember(Value = "migration")] Migration,
+    [EnumMember(Value = "step")] Step,
+    [EnumMember(Value = "block")] Block,
+    [EnumMember(Value = "local")] Local
 }
 
 /// <summary>
@@ -46,7 +46,7 @@ public class SequentialResolvable : IResolvable<string?>
         _sequence.Add(resolvable);
         return this;
     }
-    
+
     public string Resolve(IOperationExecutionContext context)
     {
         return string.Join("", _sequence.Select(x => x.Resolve(context)));
@@ -57,4 +57,3 @@ public class SequentialResolvable : IResolvable<string?>
         return string.Join("", _sequence.Select(x => x.Resolve(executionContext)));
     }
 }
-

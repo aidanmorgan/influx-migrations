@@ -12,9 +12,7 @@ public interface IMigrationOperation
     public Task<OperationResult<OperationRollbackState, IRollbackResult>> RollbackAsync(IExecuteResult result);
 }
 
-
 public interface IMigrationOperationBuilder
 {
     IMigrationOperation Build(IOperationExecutionContext context);
-    
 }
