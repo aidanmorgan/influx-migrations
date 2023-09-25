@@ -100,7 +100,7 @@ public class ScratchTest
 
         var stringWriter = new StringWriter();
         var echoTask = new EchoTaskBuilder().WithWriter(stringWriter);
-        migration.AddTask(echoTask
+        migration.AddAfterTask(echoTask
             .WithString(
                 "Username: ${step:create-user1:${result:name}} Bucket: ${step:create-bucket-1:${result:name}} Token: ${step:assign-testuser1-test-bucket-1:${result:token}}")
             .WithString(

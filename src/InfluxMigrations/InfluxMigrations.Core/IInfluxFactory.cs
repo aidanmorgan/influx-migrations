@@ -2,6 +2,7 @@ using InfluxDB.Client;
 
 namespace InfluxMigrations.Core;
 
+// Used to wrap access to getting a IInfluxDBClient instance
 public interface IInfluxFactory
 {
     IInfluxDBClient Create();

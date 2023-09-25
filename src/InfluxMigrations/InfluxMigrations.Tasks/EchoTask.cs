@@ -7,7 +7,7 @@ public class EchoTask : IMigrationTask
 {
     public List<IResolvable<string>> Values { get; set; } = new List<IResolvable<string>>();
 
-    public TextWriter Writer { get; init; } = Console.Out;
+    public TextWriter Writer { get; init; }
 
     public EchoTask()
     {
@@ -61,7 +61,7 @@ public class EchoTaskBuilder : IMigrationTaskBuilder
         return new EchoTask()
         {
             Values = Lines.Select(StringResolvable.Parse).ToList(),
-            Writer = this.Writer
+            Writer = this.Writer ?? Console.Out
         };
     }
 }

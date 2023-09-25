@@ -16,23 +16,17 @@
     </ItemGroup>
 
 
+
     <ItemGroup>
-        <Content Include="..\..\migrations\0001.yml">
-            <Link>migrations\0001.yml</Link>
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </Content>
-        <Content Include="..\..\migrations\0002.yml">
-            <Link>migrations\0002.yml</Link>
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </Content>
-        <Content Include="..\..\migrations\0003.yml">
-            <Link>migrations\0003.yml</Link>
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </Content>
-        <Content Include="..\..\migrations\0004.yml">
-            <Link>migrations\0004.yml</Link>
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </Content>
+      <Content Include="..\..\migrations\0001.yml">
+        <Link>migrations\0001.yml</Link>
+      </Content>
+      <Content Include="..\..\migrations\0002.yml">
+        <Link>migrations\0002.yml</Link>
+      </Content>
+      <Content Include="..\..\migrations\0003.yml">
+        <Link>migrations\0003.yml</Link>
+      </Content>
     </ItemGroup>
 
 </Project>

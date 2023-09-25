@@ -2,6 +2,7 @@ using InfluxMigrations.Commands.Auth;
 using InfluxMigrations.Commands.Bucket;
 using InfluxMigrations.Default.Integration;
 using InfluxMigrations.Outputs;
+using InfluxMigrations.Yaml.Parsers;
 using NUnit.Framework;
 
 namespace InfluxMigrations.Yaml.Tests;
@@ -26,9 +27,9 @@ public class EchoTaskParserTests
         Assert.That(result, Is.Not.Null);
 
         Assert.That(result.Version, Is.EqualTo("0001"));
-        Assert.That(result.Tasks.Count, Is.EqualTo(1));
+        Assert.That(result.AfterTasks.Count, Is.EqualTo(1));
 
-        var task = result.Tasks[0] as EchoTaskBuilder;
+        var task = result.AfterTasks[0] as EchoTaskBuilder;
 
         Assert.That(task, Is.Not.Null);
         Assert.That(task.Lines.Count, Is.EqualTo(3));
@@ -52,9 +53,9 @@ public class EchoTaskParserTests
         Assert.That(result, Is.Not.Null);
 
         Assert.That(result.Version, Is.EqualTo("0001"));
-        Assert.That(result.Tasks.Count, Is.EqualTo(1));
+        Assert.That(result.AfterTasks.Count, Is.EqualTo(1));
 
-        var task = result.Tasks[0] as EchoTaskBuilder;
+        var task = result.AfterTasks[0] as EchoTaskBuilder;
 
         Assert.That(task, Is.Not.Null);
         Assert.That(task.Lines.Count, Is.EqualTo(1));
@@ -88,16 +89,16 @@ public class EchoTaskParserTests
 
         Assert.That(instance.Operation, Is.InstanceOf<CreateBucketBuilder>());
 
-        Assert.That(instance.CommitTasks.Count, Is.EqualTo(1));
-        Assert.That(instance.CommitTasks[0], Is.InstanceOf<EchoTaskBuilder>());
-        Assert.That(((EchoTaskBuilder)instance.CommitTasks[0]).Lines[0], Is.EqualTo("This is a single line"));
+        Assert.That(instance.AfterCommitTasks.Count, Is.EqualTo(1));
+        Assert.That(instance.AfterCommitTasks[0], Is.InstanceOf<EchoTaskBuilder>());
+        Assert.That(((EchoTaskBuilder)instance.AfterCommitTasks[0]).Lines[0], Is.EqualTo("This is a single line"));
 
-        Assert.That(instance.RollbackTasks.Count, Is.EqualTo(1));
-        Assert.That(instance.RollbackTasks[0], Is.InstanceOf<EchoTaskBuilder>());
-        Assert.That(((EchoTaskBuilder)instance.RollbackTasks[0]).Lines[0], Is.EqualTo("This is a single line"));
+        Assert.That(instance.AfterRollbackTasks.Count, Is.EqualTo(1));
+        Assert.That(instance.AfterRollbackTasks[0], Is.InstanceOf<EchoTaskBuilder>());
+        Assert.That(((EchoTaskBuilder)instance.AfterRollbackTasks[0]).Lines[0], Is.EqualTo("This is a single line"));
 
 
-        Assert.That(instance.ExecuteTasks.Count, Is.EqualTo(0));
+        Assert.That(instance.AfterExecuteTasks.Count, Is.EqualTo(0));
     }
 
     [Test]
@@ -125,11 +126,11 @@ public class EchoTaskParserTests
 
         Assert.That(instance.Operation, Is.InstanceOf<CreateBucketBuilder>());
 
-        Assert.That(instance.CommitTasks.Count, Is.EqualTo(1));
-        Assert.That(instance.CommitTasks[0], Is.InstanceOf<EchoTaskBuilder>());
-        Assert.That(((EchoTaskBuilder)instance.CommitTasks[0]).Lines[0], Is.EqualTo("This is a single line"));
+        Assert.That(instance.AfterCommitTasks.Count, Is.EqualTo(1));
+        Assert.That(instance.AfterCommitTasks[0], Is.InstanceOf<EchoTaskBuilder>());
+        Assert.That(((EchoTaskBuilder)instance.AfterCommitTasks[0]).Lines[0], Is.EqualTo("This is a single line"));
 
-        Assert.That(instance.RollbackTasks.Count, Is.EqualTo(0));
-        Assert.That(instance.ExecuteTasks.Count, Is.EqualTo(0));
+        Assert.That(instance.AfterRollbackTasks.Count, Is.EqualTo(0));
+        Assert.That(instance.AfterExecuteTasks.Count, Is.EqualTo(0));
     }
 }

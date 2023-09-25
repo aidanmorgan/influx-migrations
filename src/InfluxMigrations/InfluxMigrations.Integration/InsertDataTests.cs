@@ -36,7 +36,7 @@ public class InsertDataTests
         var migration = new Migration("0001");
         var add = migration.AddUp("create-bucket",
             new CreateBucketBuilder().WithBucketName(bucketName).WithOrganisation(InfluxConstants.Organisation));
-        add.AddCommitTask(new InsertDataBuilder()
+        add.AddCommitTask(TaskPrecedence.After, new InsertDataBuilder()
             .WithBucketName("${step:create-bucket:${result:name}}")
             .WithOrganisationName(InfluxConstants.Organisation)
             .AddLine("weather,location=us-midwest temperature=82 ${now}"));

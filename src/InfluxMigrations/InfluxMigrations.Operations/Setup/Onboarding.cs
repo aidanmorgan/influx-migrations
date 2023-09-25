@@ -8,11 +8,11 @@ public class Onboarding : IMigrationOperation
 {
     private readonly IOperationExecutionContext _context;
 
-    public IResolvable<string> Username { get; init; }
-    public IResolvable<string> Password { get; init; }
-    public IResolvable<string> Organisation { get; init; }
-    public IResolvable<string> Bucket { get; init; }
-    public IResolvable<string> Token { get; init; }
+    public IResolvable<string?> Username { get; init; }
+    public IResolvable<string?> Password { get; init; }
+    public IResolvable<string?> Organisation { get; init; }
+    public IResolvable<string?> Bucket { get; init; }
+    public IResolvable<string?> Token { get; init; }
 
     public Onboarding(IOperationExecutionContext context)
     {

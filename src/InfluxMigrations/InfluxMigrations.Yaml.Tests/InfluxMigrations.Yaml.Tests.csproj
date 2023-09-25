@@ -21,7 +21,7 @@
         <ProjectReference Include="..\InfluxMigrations.Default.Integration\InfluxMigrations.Default.Integration.csproj"/>
         <ProjectReference Include="..\InfluxMigrations.Impl\InfluxMigrations.Impl.csproj"/>
         <ProjectReference Include="..\InfluxMigrations.IntegrationCommon\InfluxMigrations.IntegrationCommon.csproj"/>
-        <ProjectReference Include="..\InfluxMigrations.Yaml\InfluxMigrations.Yaml.csproj"/>
+        <ProjectReference Include="..\InfluxMigrations.Yaml.Parsers\InfluxMigrations.Yaml.Parsers.csproj" />
     </ItemGroup>
 
 

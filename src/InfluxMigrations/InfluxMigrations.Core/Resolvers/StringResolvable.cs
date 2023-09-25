@@ -5,39 +5,56 @@ public class StringResolvable : IResolvable<string?>, IEquatable<StringResolvabl
     public const string KeyOpening = "${";
     public const string KeyClosing = "}";
 
-    private static readonly Dictionary<Tuple<string, string>, IResolverFunction> ResolverFunctions =
-        new Dictionary<Tuple<string, string>, IResolverFunction>();
+    private static readonly Dictionary<Tuple<string, string>, IResolverFunction> ResolverFunctions = new Dictionary<Tuple<string, string>, IResolverFunction>();
 
     static StringResolvable()
     {
-        AppDomain.CurrentDomain
+        // register the shared types from this assembly with the extensions context before attempting to load
+        // extensions.
+        AppDomain.CurrentDomain.GetExtensionService()?.AddSharedTypes(typeof(IResolverFunction).Assembly);
+
+        var coreTypes = AppDomain.CurrentDomain
             .GetAssemblies()
-            .AsParallel()
             .SelectMany(x => x.GetTypes())
             .ToList()
-            .ForEach(x =>
+            .WithAttributeAndInterface(typeof(ResolverFunctionAttribute), typeof(IResolverFunction));
+            
+        var extensionTypes = AppDomain.CurrentDomain
+            .GetExtensionService()?
+            .GetExtensionTypes()
+            .WithAttributeAndInterface(typeof(ResolverFunctionAttribute), typeof(IResolverFunction));
+
+        var allTypes = new List<Tuple<Attribute, Type>>().Concat(coreTypes).Concat(extensionTypes);
+        
+        foreach (var x in allTypes)
+        {
+            var attr = (ResolverFunctionAttribute)x.Item1;
+
+            var keys = new List<string>()
             {
-                var attributed = x.GetCustomAttributes(typeof(ResolverFunctionAttribute), true);
-                if (attributed.Length > 0 && x.GetInterfaces().Contains(typeof(IResolverFunction)))
+                attr.Key
+            };
+            keys.AddRange(attr.Aliases);
+
+            foreach (var key in keys)
+            {
+                var prefix = KeyOpening + key;
+                var suffix = KeyClosing;
+
+                try
                 {
-                    var attr = (ResolverFunctionAttribute)attributed.First();
-
-                    var keys = new List<string>()
+                    var instance = (IResolverFunction?)Activator.CreateInstance(x.Item2, prefix, suffix);
+                    if (instance != null)
                     {
-                        attr.Key
-                    };
-                    keys.AddRange(attr.Aliases);
-
-                    foreach (var key in keys)
-                    {
-                        var prefix = KeyOpening + key;
-                        var suffix = KeyClosing;
-
-                        var instance = (IResolverFunction)Activator.CreateInstance(x, prefix, suffix);
                         ResolverFunctions[new Tuple<string, string>(prefix, suffix)] = instance;
                     }
                 }
-            });
+                catch (Exception)
+                {
+                    // ignored
+                }
+            }
+        }             
     }
 
     /// <summary>

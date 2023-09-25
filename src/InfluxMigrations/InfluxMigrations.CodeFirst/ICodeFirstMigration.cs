@@ -4,7 +4,7 @@ namespace InfluxMigrations.CodeFirst;
 
 public interface ICodeFirstMigration
 {
-    Task AddUp(Migration migration);
-    Task AddDown(Migration migration);
-    Task AddTask(Migration migration);
+    Task AddUp(IMigration migration);
+    Task AddDown(IMigration migration);
+    Task AddTask(IMigration migration);
 }

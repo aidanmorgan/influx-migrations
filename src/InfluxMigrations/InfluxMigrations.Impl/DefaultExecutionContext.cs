@@ -11,6 +11,8 @@ public class DefaultOperationExecutionContext : IOperationExecutionContext
     public IInfluxDBClient Influx => MigrationExecutionContext.Influx;
 
     public IMigrationExecutionContext MigrationExecutionContext { get; }
+    
+    
     public object? ExecuteResult { get; set; }
     public object? CommitResult { get; set; }
     public object? RollbackResult { get; set; }

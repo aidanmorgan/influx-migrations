@@ -19,7 +19,7 @@ public interface IInfluxRuntimeResolver
 
     IInfluxRuntimeResolver WithName(string? name)
     {
-        return string.IsNullOrEmpty(name) ? this : WithId(StringResolvable.Parse(name));
+        return string.IsNullOrEmpty(name) ? this : WithName(StringResolvable.Parse(name));
     }
 }
 

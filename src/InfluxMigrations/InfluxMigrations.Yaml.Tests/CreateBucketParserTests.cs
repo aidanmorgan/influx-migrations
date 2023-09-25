@@ -4,6 +4,7 @@ using InfluxMigrations.Core;
 using InfluxMigrations.Default.Integration;
 using InfluxMigrations.Impl;
 using InfluxMigrations.IntegrationCommon;
+using InfluxMigrations.Yaml.Parsers;
 using NUnit.Framework;
 
 namespace InfluxMigrations.Yaml.Tests;

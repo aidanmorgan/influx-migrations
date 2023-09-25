@@ -1,10 +1,12 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
 using System.Diagnostics;
+using System.Reflection;
 using CommandLine;
 using InfluxDB.Client;
 using InfluxMigrations.Core;
 using InfluxMigrations.Impl;
+using InfluxMigrations.Yaml;
 using Pastel;
 
 namespace InfluxMigrate;
@@ -35,6 +37,9 @@ public class Program
 
         [Option(shortName: 't', longName: "target", Required = false, HelpText = "Specific version to migrate to.")]
         public string? TargetVersion { get; set; } = null;
+
+        [Option(shortName: 'e', longName: "extensions", Required = false, HelpText = "Directory to load additional assemblies from.", Default = "Extensions")]
+        public string ExtensionsDirectory { get; set; } = null;
     }
 
     public static async Task<int> Main(string[] args)
@@ -56,6 +61,16 @@ public class Program
 
     private static async Task<int> Do(Options o)
     {
+        var extensionsLoader = string.IsNullOrEmpty(o.ExtensionsDirectory) ? null : new ExtensionsService(o.ExtensionsDirectory);
+        if (extensionsLoader != null)
+        {
+            extensionsLoader.AddSharedTypes(typeof(IMigration).Assembly);
+            extensionsLoader.AddSharedTypes(typeof(IYamlMigrationParser).Assembly);
+            extensionsLoader.AddSharedTypes(typeof(IResolverFunction).Assembly);
+            
+            AppDomain.CurrentDomain.RegisterExtensionService(extensionsLoader);
+        }
+
         Console.WriteLine($"Starting Migrations.".Pastel(ConsoleColor.Cyan));
         Console.WriteLine($"Migration Directory: {o.MigrationsDirectory}");
 
@@ -63,7 +78,7 @@ public class Program
         Console.WriteLine($"Target Version: {target}");
 
         var influx = new InfluxFactory(o.InfluxHost, o.InfluxAdminToken);
-
+       
         var migrationRunner = new DefaultMigrationRunnerService(new DefaultMigrationRunnerOptions()
         {
             Logger = new TextWriterRunnerLogger(Console.Out),

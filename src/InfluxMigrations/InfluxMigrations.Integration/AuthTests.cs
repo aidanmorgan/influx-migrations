@@ -50,7 +50,7 @@ public class AuthTests
         migration.AddUp("create-user", new CreateUserBuilder()
                 .WithUsername(userName)
                 .WithPassword(password))
-            .AddExecuteTask(createdUserResult);
+            .AddExecuteTask(TaskPrecedence.After, createdUserResult);
 
         await migration.ExecuteAsync(environment, MigrationDirection.Up);
 
@@ -83,7 +83,7 @@ public class AuthTests
                     .WithPermission("write")
                     .WithTokenName("new-user-token")
                     .WithUserName("username"))
-            .AddExecuteTask(createBucketResult);
+            .AddExecuteTask(TaskPrecedence.After, createBucketResult);
 
         var environment = new DefaultEnvironmentContext(_influx, new TextWriterMigrationLoggerFactory(Console.Out));
         var x = await migration.ExecuteAsync(environment, MigrationDirection.Up);

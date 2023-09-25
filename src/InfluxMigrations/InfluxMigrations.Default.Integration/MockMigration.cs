@@ -13,8 +13,10 @@ public class MockMigration : IMigration
     public List<MigrationOperationInstance> DownOperations { get; private set; } =
         new List<MigrationOperationInstance>();
 
-    public List<IMigrationTaskBuilder> Tasks { get; private set; } =
+    public List<IMigrationTaskBuilder> AfterTasks { get; private set; } =
         new List<IMigrationTaskBuilder>();
+
+    public List<IMigrationTaskBuilder> BeforeTasks { get; private set; } = new List<IMigrationTaskBuilder>();
 
     public MigrationDirection Direction { get; private set; }
 
@@ -57,9 +59,15 @@ public class MockMigration : IMigration
         return Task.FromResult(_result);
     }
 
-    public IMigration AddTask(IMigrationTaskBuilder task)
+    public IMigration AddAfterTask(IMigrationTaskBuilder task)
     {
-        Tasks.Add(task);
+        AfterTasks.Add(task);
+        return this;
+    }
+
+    public IMigration AddBeforeTask(IMigrationTaskBuilder task)
+    {
+        BeforeTasks.Add(task);
         return this;
     }
 }

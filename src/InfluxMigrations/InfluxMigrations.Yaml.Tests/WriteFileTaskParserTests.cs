@@ -1,6 +1,7 @@
 using InfluxMigrations.Commands.Bucket;
 using InfluxMigrations.Default.Integration;
 using InfluxMigrations.Outputs;
+using InfluxMigrations.Yaml.Parsers;
 using NUnit.Framework;
 
 namespace InfluxMigrations.Yaml.Tests;
@@ -27,9 +28,9 @@ public class WriteFileTaskParserTests
         Assert.That(result, Is.Not.Null);
 
         Assert.That(result.Version, Is.EqualTo("0001"));
-        Assert.That(result.Tasks.Count, Is.EqualTo(1));
+        Assert.That(result.AfterTasks.Count, Is.EqualTo(1));
 
-        var task = result.Tasks[0] as WriteFileTaskBuilder;
+        var task = result.AfterTasks[0] as WriteFileTaskBuilder;
 
         Assert.That(task, Is.Not.Null);
         Assert.That(task.File, Is.EqualTo("test-file"));
@@ -55,9 +56,9 @@ public class WriteFileTaskParserTests
         Assert.That(result, Is.Not.Null);
 
         Assert.That(result.Version, Is.EqualTo("0001"));
-        Assert.That(result.Tasks.Count, Is.EqualTo(1));
+        Assert.That(result.AfterTasks.Count, Is.EqualTo(1));
 
-        var task = result.Tasks[0] as WriteFileTaskBuilder;
+        var task = result.AfterTasks[0] as WriteFileTaskBuilder;
 
         Assert.That(task, Is.Not.Null);
         Assert.That(task.File, Is.EqualTo("test-file"));
@@ -98,16 +99,16 @@ public class WriteFileTaskParserTests
 
         Assert.That(op.Operation, Is.InstanceOf<CreateBucketBuilder>());
 
-        Assert.That(op.ExecuteTasks.Count, Is.EqualTo(0));
-        Assert.That(op.CommitTasks.Count, Is.EqualTo(1));
-        Assert.That(op.CommitTasks[0], Is.InstanceOf<WriteFileTaskBuilder>());
-        Assert.That(((WriteFileTaskBuilder)op.CommitTasks[0]).File, Is.EqualTo("test-file"));
-        Assert.That(((WriteFileTaskBuilder)op.CommitTasks[0]).Content.Count, Is.EqualTo(3));
+        Assert.That(op.AfterExecuteTasks.Count, Is.EqualTo(0));
+        Assert.That(op.AfterCommitTasks.Count, Is.EqualTo(1));
+        Assert.That(op.AfterCommitTasks[0], Is.InstanceOf<WriteFileTaskBuilder>());
+        Assert.That(((WriteFileTaskBuilder)op.AfterCommitTasks[0]).File, Is.EqualTo("test-file"));
+        Assert.That(((WriteFileTaskBuilder)op.AfterCommitTasks[0]).Content.Count, Is.EqualTo(3));
 
-        Assert.That(op.RollbackTasks.Count, Is.EqualTo(1));
-        Assert.That(op.RollbackTasks[0], Is.InstanceOf<WriteFileTaskBuilder>());
-        Assert.That(((WriteFileTaskBuilder)op.RollbackTasks[0]).File, Is.EqualTo("test-file"));
-        Assert.That(((WriteFileTaskBuilder)op.RollbackTasks[0]).Content.Count, Is.EqualTo(3));
+        Assert.That(op.AfterRollbackTasks.Count, Is.EqualTo(1));
+        Assert.That(op.AfterRollbackTasks[0], Is.InstanceOf<WriteFileTaskBuilder>());
+        Assert.That(((WriteFileTaskBuilder)op.AfterRollbackTasks[0]).File, Is.EqualTo("test-file"));
+        Assert.That(((WriteFileTaskBuilder)op.AfterRollbackTasks[0]).Content.Count, Is.EqualTo(3));
     }
 
     [Test]
@@ -141,12 +142,12 @@ public class WriteFileTaskParserTests
 
         Assert.That(op.Operation, Is.InstanceOf<CreateBucketBuilder>());
 
-        Assert.That(op.ExecuteTasks.Count, Is.EqualTo(0));
-        Assert.That(op.CommitTasks.Count, Is.EqualTo(0));
+        Assert.That(op.AfterExecuteTasks.Count, Is.EqualTo(0));
+        Assert.That(op.AfterCommitTasks.Count, Is.EqualTo(0));
 
-        Assert.That(op.RollbackTasks.Count, Is.EqualTo(1));
-        Assert.That(op.RollbackTasks[0], Is.InstanceOf<WriteFileTaskBuilder>());
-        Assert.That(((WriteFileTaskBuilder)op.RollbackTasks[0]).File, Is.EqualTo("test-file"));
-        Assert.That(((WriteFileTaskBuilder)op.RollbackTasks[0]).Content.Count, Is.EqualTo(3));
+        Assert.That(op.AfterRollbackTasks.Count, Is.EqualTo(1));
+        Assert.That(op.AfterRollbackTasks[0], Is.InstanceOf<WriteFileTaskBuilder>());
+        Assert.That(((WriteFileTaskBuilder)op.AfterRollbackTasks[0]).File, Is.EqualTo("test-file"));
+        Assert.That(((WriteFileTaskBuilder)op.AfterRollbackTasks[0]).Content.Count, Is.EqualTo(3));
     }
 }

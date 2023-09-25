@@ -4,12 +4,20 @@
         <TargetFramework>net7.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <Authors>Aidan Morgan</Authors>
+        <Version>0.1.0</Version>
+        <Title>Influx Migrations</Title>
+        <PackageProjectUrl>https://github.com/aidanmorgan/influx-migrations</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/aidanmorgan/influx-migrations</RepositoryUrl>
+        <RepositoryType>GitHub</RepositoryType>
     </PropertyGroup>
 
 
     <ItemGroup>
         <PackageReference Include="Flurl.Http" Version="4.0.0-pre3"/>
         <PackageReference Include="InfluxDB.Client" Version="4.14.0-dev.11972"/>
+        <PackageReference Include="McMaster.NETCore.Plugins" Version="1.4.0" />
     </ItemGroup>
 
 

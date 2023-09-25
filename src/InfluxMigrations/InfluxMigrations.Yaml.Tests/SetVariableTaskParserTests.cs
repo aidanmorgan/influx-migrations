@@ -1,6 +1,7 @@
 using InfluxMigrations.Commands.Bucket;
 using InfluxMigrations.Default.Integration;
 using InfluxMigrations.Outputs;
+using InfluxMigrations.Yaml.Parsers;
 using NUnit.Framework;
 
 namespace InfluxMigrations.Yaml.Tests;
@@ -24,9 +25,9 @@ public class SetVariableTaskParserTests
         Assert.That(result, Is.Not.Null);
 
         Assert.That(result.Version, Is.EqualTo("0001"));
-        Assert.That(result.Tasks.Count, Is.EqualTo(1));
+        Assert.That(result.AfterTasks.Count, Is.EqualTo(1));
 
-        var task = result.Tasks[0] as SetVariableTaskBuilder;
+        var task = result.AfterTasks[0] as SetVariableTaskBuilder;
 
         Assert.That(task, Is.Not.Null);
         Assert.That(task.Key, Is.EqualTo("test-key"));
@@ -50,9 +51,9 @@ public class SetVariableTaskParserTests
         Assert.That(result, Is.Not.Null);
 
         Assert.That(result.Version, Is.EqualTo("0001"));
-        Assert.That(result.Tasks.Count, Is.EqualTo(1));
+        Assert.That(result.AfterTasks.Count, Is.EqualTo(1));
 
-        var task = result.Tasks[0] as SetVariableTaskBuilder;
+        var task = result.AfterTasks[0] as SetVariableTaskBuilder;
 
         Assert.That(task, Is.Not.Null);
         Assert.That(task.Key, Is.EqualTo("test-key"));
@@ -89,18 +90,18 @@ public class SetVariableTaskParserTests
         var operation = result.UpOperations[0];
 
         Assert.That(operation.Operation, Is.InstanceOf<CreateBucketBuilder>());
-        Assert.That(operation.ExecuteTasks.Count, Is.EqualTo(0));
-        Assert.That(operation.CommitTasks.Count, Is.EqualTo(1));
-        Assert.That(operation.CommitTasks[0], Is.InstanceOf<SetVariableTaskBuilder>());
-        Assert.That(((SetVariableTaskBuilder)operation.CommitTasks[0]).Key, Is.EqualTo("test-key"));
-        Assert.That(((SetVariableTaskBuilder)operation.CommitTasks[0]).Value, Is.EqualTo("test-value"));
-        Assert.That(((SetVariableTaskBuilder)operation.CommitTasks[0]).Scope, Is.EqualTo("global"));
+        Assert.That(operation.AfterExecuteTasks.Count, Is.EqualTo(0));
+        Assert.That(operation.AfterCommitTasks.Count, Is.EqualTo(1));
+        Assert.That(operation.AfterCommitTasks[0], Is.InstanceOf<SetVariableTaskBuilder>());
+        Assert.That(((SetVariableTaskBuilder)operation.AfterCommitTasks[0]).Key, Is.EqualTo("test-key"));
+        Assert.That(((SetVariableTaskBuilder)operation.AfterCommitTasks[0]).Value, Is.EqualTo("test-value"));
+        Assert.That(((SetVariableTaskBuilder)operation.AfterCommitTasks[0]).Scope, Is.EqualTo("global"));
 
-        Assert.That(operation.RollbackTasks.Count, Is.EqualTo(1));
-        Assert.That(operation.RollbackTasks[0], Is.InstanceOf<SetVariableTaskBuilder>());
-        Assert.That(((SetVariableTaskBuilder)operation.RollbackTasks[0]).Key, Is.EqualTo("test-key"));
-        Assert.That(((SetVariableTaskBuilder)operation.RollbackTasks[0]).Value, Is.EqualTo("test-value"));
-        Assert.That(((SetVariableTaskBuilder)operation.RollbackTasks[0]).Scope, Is.EqualTo("global"));
+        Assert.That(operation.AfterRollbackTasks.Count, Is.EqualTo(1));
+        Assert.That(operation.AfterRollbackTasks[0], Is.InstanceOf<SetVariableTaskBuilder>());
+        Assert.That(((SetVariableTaskBuilder)operation.AfterRollbackTasks[0]).Key, Is.EqualTo("test-key"));
+        Assert.That(((SetVariableTaskBuilder)operation.AfterRollbackTasks[0]).Value, Is.EqualTo("test-value"));
+        Assert.That(((SetVariableTaskBuilder)operation.AfterRollbackTasks[0]).Scope, Is.EqualTo("global"));
     }
 
     [Test]
@@ -130,13 +131,13 @@ public class SetVariableTaskParserTests
         var operation = result.UpOperations[0];
 
         Assert.That(operation.Operation, Is.InstanceOf<CreateBucketBuilder>());
-        Assert.That(operation.ExecuteTasks.Count, Is.EqualTo(0));
-        Assert.That(operation.CommitTasks.Count, Is.EqualTo(0));
+        Assert.That(operation.AfterExecuteTasks.Count, Is.EqualTo(0));
+        Assert.That(operation.AfterCommitTasks.Count, Is.EqualTo(0));
 
-        Assert.That(operation.RollbackTasks.Count, Is.EqualTo(1));
-        Assert.That(operation.RollbackTasks[0], Is.InstanceOf<SetVariableTaskBuilder>());
-        Assert.That(((SetVariableTaskBuilder)operation.RollbackTasks[0]).Key, Is.EqualTo("test-key"));
-        Assert.That(((SetVariableTaskBuilder)operation.RollbackTasks[0]).Value, Is.EqualTo("test-value"));
-        Assert.That(((SetVariableTaskBuilder)operation.RollbackTasks[0]).Scope, Is.EqualTo("global"));
+        Assert.That(operation.AfterRollbackTasks.Count, Is.EqualTo(1));
+        Assert.That(operation.AfterRollbackTasks[0], Is.InstanceOf<SetVariableTaskBuilder>());
+        Assert.That(((SetVariableTaskBuilder)operation.AfterRollbackTasks[0]).Key, Is.EqualTo("test-key"));
+        Assert.That(((SetVariableTaskBuilder)operation.AfterRollbackTasks[0]).Value, Is.EqualTo("test-value"));
+        Assert.That(((SetVariableTaskBuilder)operation.AfterRollbackTasks[0]).Scope, Is.EqualTo("global"));
     }
 }

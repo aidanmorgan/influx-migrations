@@ -1,6 +1,7 @@
 using InfluxMigrations.Commands.Bucket;
 using InfluxMigrations.Commands.Setup;
 using InfluxMigrations.Default.Integration;
+using InfluxMigrations.Yaml.Parsers;
 using NUnit.Framework;
 
 namespace InfluxMigrations.Yaml.Tests;

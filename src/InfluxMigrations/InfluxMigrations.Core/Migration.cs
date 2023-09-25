@@ -1,78 +1,5 @@
 namespace InfluxMigrations.Core;
 
-public enum MigrationIssueSeverity
-{
-    Fail,
-    Warning
-}
-
-public enum MigrationPhase
-{
-    Execute,
-    Commit,
-    Rollback,
-    Task,
-    Migration
-}
-
-public enum MigrationIssueCategory
-{
-    Task,
-    Operation
-}
-
-public class MigrationIssue
-{
-    public string Id { get; init; }
-    public MigrationIssueSeverity Severity { get; init; }
-    public MigrationPhase Phase { get; init; }
-    public MigrationIssueCategory Category { get; init; }
-    public Exception? Exception { get; init; }
-}
-
-public class MigrationResult
-{
-    public string Version { get; init; }
-
-    private readonly List<MigrationIssue> _issues = new List<MigrationIssue>();
-    public List<MigrationIssue> Issues => new List<MigrationIssue>(_issues);
-
-    public MigrationIssue AddIssue(MigrationIssue issue)
-    {
-        _issues.Add(issue);
-        return issue;
-    }
-
-    public MigrationIssue AddIssue<TS, TR>(string id, MigrationIssueCategory category, MigrationPhase phase,
-        MigrationIssueSeverity severity, OperationResult<TS, TR> result = null) where TS : Enum
-    {
-        var issue = new MigrationIssue()
-        {
-            Id = id,
-            Category = category,
-            Phase = phase,
-            Severity = severity,
-            Exception = result.Result is IExceptionResult exceptionResult ? exceptionResult.Exception : null
-        };
-
-        _issues.Add(issue);
-        return issue;
-    }
-
-    /// <summary>
-    /// Returns true if the migration was a success, false if any issues were encountered.
-    /// </summary>
-    public bool Success => _issues.Count == 0;
-
-    /// <summary>
-    /// Returns true if the underlying database is now in an inconsistent state, false otherwise
-    /// </summary>
-    public bool Inconsistent => _issues.Any(x => x.Phase == MigrationPhase.Rollback);
-
-    public MigrationDirection Direction { get; set; }
-    public MigrationOptions Options { get; set; }
-}
-
 /// <summary>
 /// This pulls together all of the bits into a something that has a chance of being executed. We need to be able to assemble
 /// an operation (and it's corresponding tasks) together with a run-time identifier.
@@ -81,9 +8,15 @@ public class MigrationOperationInstance
 {
     public string Id { get; private set; }
     public IMigrationOperationBuilder Operation { get; private set; }
-    public List<IMigrationTaskBuilder> ExecuteTasks { get; private set; } = new List<IMigrationTaskBuilder>();
-    public List<IMigrationTaskBuilder> CommitTasks { get; private set; } = new List<IMigrationTaskBuilder>();
-    public List<IMigrationTaskBuilder> RollbackTasks { get; private set; } = new List<IMigrationTaskBuilder>();
+
+    public List<IMigrationTaskBuilder> BeforeExecuteTasks { get; private set; } = new List<IMigrationTaskBuilder>();
+    public List<IMigrationTaskBuilder> BeforeCommitTasks { get; private set; } = new List<IMigrationTaskBuilder>();
+    public List<IMigrationTaskBuilder> BeforeRollbackTasks { get; private set; } = new List<IMigrationTaskBuilder>();
+
+    
+    public List<IMigrationTaskBuilder> AfterExecuteTasks { get; private set; } = new List<IMigrationTaskBuilder>();
+    public List<IMigrationTaskBuilder> AfterCommitTasks { get; private set; } = new List<IMigrationTaskBuilder>();
+    public List<IMigrationTaskBuilder> AfterRollbackTasks { get; private set; } = new List<IMigrationTaskBuilder>();
 
 
     public MigrationOperationInstance(string id, IMigrationOperationBuilder operation)
@@ -92,21 +25,44 @@ public class MigrationOperationInstance
         Operation = operation;
     }
 
-    public MigrationOperationInstance AddExecuteTask(IMigrationTaskBuilder builder)
+    private static void AddTask(TaskPrecedence order, IMigrationTaskBuilder builder, List<IMigrationTaskBuilder> befores,  List<IMigrationTaskBuilder> afters)
     {
-        ExecuteTasks.Add(builder);
+        switch (order)
+        {
+            case TaskPrecedence.After:
+            {
+                afters.Add(builder);
+                break;
+            }
+
+            case TaskPrecedence.Before:
+            {
+                befores.Add(builder);
+                break;
+            }
+
+            default:
+            {
+                throw new MigrationConfigurationException($"Unrecognised TaskPrecedence value : {order}");
+            }
+        }
+    }
+    
+    public MigrationOperationInstance AddExecuteTask(TaskPrecedence order, IMigrationTaskBuilder builder)
+    {
+        AddTask(order, builder, BeforeExecuteTasks, AfterExecuteTasks);
         return this;
     }
 
-    public MigrationOperationInstance AddCommitTask(IMigrationTaskBuilder builder)
+    public MigrationOperationInstance AddCommitTask(TaskPrecedence order, IMigrationTaskBuilder builder)
     {
-        CommitTasks.Add(builder);
+        AddTask(order, builder, BeforeCommitTasks, AfterCommitTasks);
         return this;
     }
 
-    public MigrationOperationInstance AddRollbackTask(IMigrationTaskBuilder builder)
+    public MigrationOperationInstance AddRollbackTask(TaskPrecedence order, IMigrationTaskBuilder builder)
     {
-        RollbackTasks.Add(builder);
+        AddTask(order, builder, BeforeRollbackTasks, AfterRollbackTasks);
         return this;
     }
 }
@@ -124,7 +80,9 @@ public interface IMigration
     Task<MigrationResult> ExecuteAsync(IMigrationEnvironmentContext env, MigrationDirection direction,
         MigrationOptions? opts = null);
 
-    IMigration AddTask(IMigrationTaskBuilder task);
+    IMigration AddAfterTask(IMigrationTaskBuilder task);
+
+    IMigration AddBeforeTask(IMigrationTaskBuilder task);
 }
 
 public class MigrationOptions
@@ -139,7 +97,8 @@ public class Migration : IMigration
 {
     private readonly List<MigrationOperationInstance> _upOperations = new List<MigrationOperationInstance>();
     private readonly List<MigrationOperationInstance> _downOperations = new List<MigrationOperationInstance>();
-    private readonly List<IMigrationTaskBuilder> _migrationTasks = new List<IMigrationTaskBuilder>();
+    private readonly List<IMigrationTaskBuilder> _beforeMigrationTasks = new List<IMigrationTaskBuilder>();
+    private readonly List<IMigrationTaskBuilder> _afterMigrationTaks = new List<IMigrationTaskBuilder>();
 
     public string Version { get; set; }
 
@@ -185,11 +144,24 @@ public class Migration : IMigration
 
         try
         {
+            foreach (var task in _beforeMigrationTasks.Select(x => x.Build()))
+            {
+                var outputLogger = logger.TaskStart(task);
+                var result = await task.ExecuteAsync(context);
+                outputLogger.TaskResult(result);
+            }
+            
             foreach (var op in (direction == MigrationDirection.Up ? _upOperations : _downOperations))
             {
                 var executeLog = logger.ExecuteStart(op);
 
                 var executionContext = context.CreateExecutionContext(op.Id);
+
+                foreach (var task in op.BeforeExecuteTasks.Select(x => x.Build()))
+                {
+                    await task.ExecuteAsync(executionContext);
+                }
+                
                 var operation = op.Operation.Build(executionContext);
                 var operationResult = await operation.ExecuteAsync();
 
@@ -199,13 +171,6 @@ public class Migration : IMigration
                         executionContext));
                     executionContext.ExecuteResult = operationResult.Result;
                     executeLog.Complete(operationResult);
-
-                    foreach (var output in op.ExecuteTasks.Select(x => x.Build()))
-                    {
-                        var outputLog = executeLog.TaskStart(output);
-                        var taskResult = await output.ExecuteAsync(executionContext);
-                        outputLog.TaskResult(taskResult);
-                    }
                 }
                 else
                 {
@@ -215,12 +180,27 @@ public class Migration : IMigration
 
                     throw new MigrationExecutionException($"Execution of Operation {op.Id} failed.");
                 }
+                
+                foreach (var output in op.AfterExecuteTasks.Select(x => x.Build()))
+                {
+                    var outputLog = executeLog.TaskStart(output);
+                    var taskResult = await output.ExecuteAsync(executionContext);
+                    outputLog.TaskResult(taskResult);
+                }
             }
 
             // execute has finished successfully, time to perform commits
             foreach (var state in instanceOperations)
             {
                 var commitLog = logger.CommitStart(state.Instance);
+
+                foreach (var task in state.Instance.BeforeCommitTasks.Select(x => x.Build()))
+                {
+                    var outputLog = commitLog.TaskStart(task);
+                    var taskResult = await task.ExecuteAsync(state.ExecutionContext);
+                    outputLog.TaskResult(taskResult);
+                }
+                
                 var commitResult = await state.Operation.CommitAsync(state.ExecuteResult.Result);
                 state.ExecutionContext.CommitResult = commitResult?.Result;
 
@@ -235,7 +215,7 @@ public class Migration : IMigration
                     commitLog.Complete(commitResult);
                 }
 
-                foreach (var output in state.Instance.CommitTasks.Select(x => x.Build()))
+                foreach (var output in state.Instance.AfterCommitTasks.Select(x => x.Build()))
                 {
                     var outputLog = commitLog.TaskStart(output);
 
@@ -256,6 +236,14 @@ public class Migration : IMigration
                 {
                     var rollbackLog = logger.RollbackStart(state.Instance);
 
+                    foreach (var task in state.Instance.BeforeRollbackTasks.Select(x => x.Build()))
+                    {
+                        var outputLog = rollbackLog.TaskStart(task);
+                        var result = await task.ExecuteAsync(state.ExecutionContext);
+                        outputLog.TaskResult(result);
+                    }
+
+                    
                     var rollbackResult = await state.Operation.RollbackAsync(state.ExecuteResult.Result);
                     state.ExecutionContext.RollbackResult = rollbackResult?.Result;
 
@@ -270,7 +258,7 @@ public class Migration : IMigration
                         rollbackLog.Complete(rollbackResult);
                     }
 
-                    foreach (var task in state.Instance.RollbackTasks.Select(x => x.Build()))
+                    foreach (var task in state.Instance.AfterRollbackTasks.Select(x => x.Build()))
                     {
                         var outputLog = rollbackLog.TaskStart(task);
 
@@ -284,7 +272,7 @@ public class Migration : IMigration
         }
         finally
         {
-            foreach (var task in _migrationTasks.Select(x => x.Build()))
+            foreach (var task in _afterMigrationTaks.Select(x => x.Build()))
             {
                 var outputLogger = logger.TaskStart(task);
 
@@ -296,9 +284,15 @@ public class Migration : IMigration
         return migrationResult;
     }
 
-    public IMigration AddTask(IMigrationTaskBuilder task)
+    public IMigration AddAfterTask(IMigrationTaskBuilder task)
     {
-        _migrationTasks.Add(task);
+        _afterMigrationTaks.Add(task);
+        return this;
+    }
+
+    public IMigration AddBeforeTask(IMigrationTaskBuilder task)
+    {
+        _beforeMigrationTasks.Add(task);
         return this;
     }
 }

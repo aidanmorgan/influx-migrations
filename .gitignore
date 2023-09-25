@@ -398,3 +398,4 @@ FodyWeavers.xsd
 *.sln.iml
 src/InfluxMigrations/.idea/.idea.InfluxMigrations/.idea
 influx
+src/InfluxMigrationsExtensions/.idea/.idea.InfluxMigrations.Extensions/.idea

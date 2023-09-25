@@ -48,7 +48,7 @@ public class BucketTests
             new CreateBucketBuilder()
                 .WithBucketName(bucketName)
                 .WithOrganisation(InfluxConstants.Organisation));
-        step.AddExecuteTask(resultCapture);
+        step.AddExecuteTask(TaskPrecedence.After, resultCapture);
 
         var mig = await migration.ExecuteAsync(environment, MigrationDirection.Up);
 
@@ -74,7 +74,7 @@ public class BucketTests
         var step = migration.AddUp("create-bucket",
             new CreateBucketBuilder()
                 .WithBucketName(bucketName)
-                .WithOrganisation(InfluxConstants.Organisation)).AddExecuteTask(resultCapture);
+                .WithOrganisation(InfluxConstants.Organisation)).AddExecuteTask(TaskPrecedence.After, resultCapture);
         migration.AddUp("2", new ForceErrorBuilder().ErrorExecute());
 
         var mig = await migration.ExecuteAsync(environment, MigrationDirection.Up);
@@ -175,7 +175,7 @@ public class BucketTests
             .AddUp("1", new AddMemberToBucketBuilder()
                 .WithBucketName(bucketName)
                 .WithUserName(userName))
-            .AddExecuteTask(result);
+            .AddExecuteTask(TaskPrecedence.After, result);
         
         var environment = new DefaultEnvironmentContext(_influx, new TextWriterMigrationLoggerFactory(Console.Out));
         var x = await migration.ExecuteAsync(environment, MigrationDirection.Up);
@@ -207,7 +207,7 @@ public class BucketTests
             .AddUp("1", new AddMemberToBucketBuilder()
                 .WithBucketId(bucket.Id)
                 .WithUserId(user.Id))
-            .AddExecuteTask(result);
+            .AddExecuteTask(TaskPrecedence.After, result);
         
         var environment = new DefaultEnvironmentContext(_influx, new TextWriterMigrationLoggerFactory(Console.Out));
         var x = await migration.ExecuteAsync(environment, MigrationDirection.Up);

@@ -1,6 +1,7 @@
 using InfluxMigrations.Commands.Bucket;
 using InfluxMigrations.Default.Integration;
 using InfluxMigrations.Outputs;
+using InfluxMigrations.Yaml.Parsers;
 using NUnit.Framework;
 
 namespace InfluxMigrations.Yaml.Tests;
@@ -29,9 +30,9 @@ public class InsertDataTaskParserTests
         Assert.That(result, Is.Not.Null);
 
         Assert.That(result.Version, Is.EqualTo("0001"));
-        Assert.That(result.Tasks.Count, Is.EqualTo(1));
+        Assert.That(result.AfterTasks.Count, Is.EqualTo(1));
 
-        var task = result.Tasks[0] as InsertDataBuilder;
+        var task = result.AfterTasks[0] as InsertDataBuilder;
         Assert.That(task, Is.Not.Null);
 
         Assert.That(task.OrganisationName, Is.EqualTo("organisation-name"));
@@ -63,9 +64,9 @@ public class InsertDataTaskParserTests
         Assert.That(result, Is.Not.Null);
 
         Assert.That(result.Version, Is.EqualTo("0001"));
-        Assert.That(result.Tasks.Count, Is.EqualTo(1));
+        Assert.That(result.AfterTasks.Count, Is.EqualTo(1));
 
-        var task = result.Tasks[0] as InsertDataBuilder;
+        var task = result.AfterTasks[0] as InsertDataBuilder;
         Assert.That(task, Is.Not.Null);
 
         Assert.That(task.OrganisationName, Is.EqualTo("organisation-name"));
@@ -106,17 +107,17 @@ public class InsertDataTaskParserTests
         var operation = result.UpOperations[0];
         Assert.That(operation.Operation, Is.InstanceOf<CreateBucketBuilder>());
 
-        Assert.That(operation.CommitTasks.Count, Is.EqualTo(1));
-        Assert.That(operation.CommitTasks[0], Is.InstanceOf<InsertDataBuilder>());
-        Assert.That(((InsertDataBuilder)operation.CommitTasks[0]).Lines.Count, Is.EqualTo(1));
-        Assert.That(((InsertDataBuilder)operation.CommitTasks[0]).Lines[0], Is.EqualTo("line 1"));
+        Assert.That(operation.AfterCommitTasks.Count, Is.EqualTo(1));
+        Assert.That(operation.AfterCommitTasks[0], Is.InstanceOf<InsertDataBuilder>());
+        Assert.That(((InsertDataBuilder)operation.AfterCommitTasks[0]).Lines.Count, Is.EqualTo(1));
+        Assert.That(((InsertDataBuilder)operation.AfterCommitTasks[0]).Lines[0], Is.EqualTo("line 1"));
 
-        Assert.That(operation.RollbackTasks.Count, Is.EqualTo(1));
-        Assert.That(operation.RollbackTasks[0], Is.InstanceOf<InsertDataBuilder>());
-        Assert.That(((InsertDataBuilder)operation.RollbackTasks[0]).Lines.Count, Is.EqualTo(1));
-        Assert.That(((InsertDataBuilder)operation.RollbackTasks[0]).Lines[0], Is.EqualTo("line 1"));
+        Assert.That(operation.AfterRollbackTasks.Count, Is.EqualTo(1));
+        Assert.That(operation.AfterRollbackTasks[0], Is.InstanceOf<InsertDataBuilder>());
+        Assert.That(((InsertDataBuilder)operation.AfterRollbackTasks[0]).Lines.Count, Is.EqualTo(1));
+        Assert.That(((InsertDataBuilder)operation.AfterRollbackTasks[0]).Lines[0], Is.EqualTo("line 1"));
 
-        Assert.That(operation.ExecuteTasks.Count, Is.EqualTo(0));
+        Assert.That(operation.AfterExecuteTasks.Count, Is.EqualTo(0));
     }
 
     [Test]
@@ -147,12 +148,12 @@ public class InsertDataTaskParserTests
         var operation = result.UpOperations[0];
         Assert.That(operation.Operation, Is.InstanceOf<CreateBucketBuilder>());
 
-        Assert.That(operation.CommitTasks.Count, Is.EqualTo(1));
-        Assert.That(operation.CommitTasks[0], Is.InstanceOf<InsertDataBuilder>());
-        Assert.That(((InsertDataBuilder)operation.CommitTasks[0]).Lines.Count, Is.EqualTo(1));
-        Assert.That(((InsertDataBuilder)operation.CommitTasks[0]).Lines[0], Is.EqualTo("line 1"));
+        Assert.That(operation.AfterCommitTasks.Count, Is.EqualTo(1));
+        Assert.That(operation.AfterCommitTasks[0], Is.InstanceOf<InsertDataBuilder>());
+        Assert.That(((InsertDataBuilder)operation.AfterCommitTasks[0]).Lines.Count, Is.EqualTo(1));
+        Assert.That(((InsertDataBuilder)operation.AfterCommitTasks[0]).Lines[0], Is.EqualTo("line 1"));
 
-        Assert.That(operation.RollbackTasks.Count, Is.EqualTo(0));
-        Assert.That(operation.ExecuteTasks.Count, Is.EqualTo(0));
+        Assert.That(operation.AfterRollbackTasks.Count, Is.EqualTo(0));
+        Assert.That(operation.AfterExecuteTasks.Count, Is.EqualTo(0));
     }
 }

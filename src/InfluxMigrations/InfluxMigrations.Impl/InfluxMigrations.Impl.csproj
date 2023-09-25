@@ -8,7 +8,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\InfluxMigrations.Core\InfluxMigrations.Core.csproj"/>
-        <ProjectReference Include="..\InfluxMigrations.Yaml\InfluxMigrations.Yaml.csproj"/>
+        <ProjectReference Include="..\InfluxMigrations.Yaml.Parsers\InfluxMigrations.Yaml.Parsers.csproj" />
     </ItemGroup>
 
     <ItemGroup>

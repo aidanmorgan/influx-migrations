@@ -1,6 +1,6 @@
 ﻿namespace InfluxMigrations.CodeFirst;
 
-public class InfluxMigrationAttribute
+public class InfluxMigrationAttribute : Attribute
 {
     public string Version { get; init; }
 

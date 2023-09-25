@@ -8,23 +8,24 @@ public class CodeFirstMigrationLoaderService : IMigrationLoaderService
 
     static CodeFirstMigrationLoaderService()
     {
-        FoundMigrations = AppDomain.CurrentDomain
-            .GetAssemblies()
-            .AsParallel()
-            .SelectMany(x => x.GetTypes())
-            .Select(x =>
-            {
-                var attributed = x.GetCustomAttributes(typeof(InfluxMigrationAttribute), true);
-                if (attributed.Length > 0 && x.GetInterfaces().Contains(typeof(ICodeFirstMigration)))
-                {
-                    var attr = (InfluxMigrationAttribute)attributed.First();
-                    return new Tuple<string, Type>(attr.Version, x);
-                }
+        AppDomain.CurrentDomain.GetExtensionService()?.AddSharedTypes(typeof(ICodeFirstMigration).Assembly);
 
-                return null;
-            })
-            .Where(x => x != null)
-            .ToList()!;
+        var coreTypes = AppDomain.CurrentDomain
+            .GetAssemblies()
+            .SelectMany(x => x.GetTypes())
+            .ToList()
+            .WithAttributeAndInterface(typeof(InfluxMigrationAttribute), typeof(ICodeFirstMigration));
+
+        var extensionTypes = AppDomain.CurrentDomain
+            .GetExtensionService()?
+            .GetExtensionTypes()
+            .WithAttributeAndInterface(typeof(InfluxMigrationAttribute), typeof(ICodeFirstMigration));
+
+
+        var join = new List<Tuple<Attribute, Type>>().Concat(coreTypes).Concat(extensionTypes).ToList();
+
+        FoundMigrations =
+            join.Select(x => new Tuple<string, Type>(((InfluxMigrationAttribute)x.Item1).Version, x.Item2)).ToList();
     }
 
     public async Task<List<IMigration>> LoadMigrationsAsync()

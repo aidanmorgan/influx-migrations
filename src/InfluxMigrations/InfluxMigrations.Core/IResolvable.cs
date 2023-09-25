@@ -12,11 +12,17 @@ public interface IResolvable<out T>
     public T? Resolve(IOperationExecutionContext context);
 
     public T? Resolve(IMigrationExecutionContext executionContext);
-}
 
-public interface IResolverFunction
-{
-    IResolvable<string?> Parse(string entry, Func<string, IResolvable<string?>> next);
+    public T? Resolve(IContext context)
+    {
+        return context switch
+        {
+            IOperationExecutionContext executionContext => Resolve(executionContext),
+            IMigrationExecutionContext migrationExecutionContext => Resolve(migrationExecutionContext),
+            _ => throw new MigrationResolutionException(
+                $"Cannot determine correct resolver for IContext {context.GetType().FullName}.")
+        };
+    }
 }
 
 /// <summary>

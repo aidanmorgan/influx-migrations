@@ -1,6 +1,7 @@
 using InfluxMigrations.Commands.Auth;
 using InfluxMigrations.Commands.User;
 using InfluxMigrations.Default.Integration;
+using InfluxMigrations.Yaml.Parsers;
 using NUnit.Framework;
 
 namespace InfluxMigrations.Yaml.Tests;
