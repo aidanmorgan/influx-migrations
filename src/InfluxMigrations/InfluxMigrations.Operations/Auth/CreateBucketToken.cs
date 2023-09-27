@@ -1,11 +1,8 @@
-﻿using InfluxDB.Client;
-using InfluxDB.Client.Api.Domain;
-using InfluxDB.Client.Core.Exceptions;
-using InfluxMigrations.Commands.Bucket;
+﻿using InfluxDB.Client.Api.Domain;
 using InfluxMigrations.Core;
 using InfluxMigrations.Core.Resolvers;
 
-namespace InfluxMigrations.Commands.Auth;
+namespace InfluxMigrations.Operations.Auth;
 
 public class CreateBucketToken : IMigrationOperation
 {
@@ -41,7 +38,7 @@ public class CreateBucketToken : IMigrationOperation
     {
         try
         {
-            var bucketId = await Bucket.GetAsync(_context);
+            var bucketId = await Bucket?.GetAsync(_context);
             if (string.IsNullOrEmpty(bucketId))
             {
                 return OperationResults.ExecuteFailed($"Coult not resolve Bucket id.");
@@ -49,7 +46,7 @@ public class CreateBucketToken : IMigrationOperation
 
             var description = TokenDescription?.Resolve(_context) ??
                               $"Token created via Migration {_context.MigrationExecutionContext.Version}";
-            var userId = await User.GetAsync(_context);
+            var userId = await User?.GetAsync(_context);
 
             Authorization auth = null;
 
@@ -73,7 +70,7 @@ public class CreateBucketToken : IMigrationOperation
                                 Type = PermissionResource.TypeBuckets
                             })
                         ).ToList(),
-                        AuthorizationUpdateRequest.StatusEnum.Active,
+                        AuthorizationUpdateRequest.StatusEnum.Inactive,
                         description
                     )
                 );
@@ -81,13 +78,18 @@ public class CreateBucketToken : IMigrationOperation
             else
             {
                 auth = await _context.Influx.GetAuthorizationsApi().CreateAuthorizationAsync(
-                    bucket.OrgID,
-                    actionEnums.Select(x => new Permission(x,
-                        new PermissionResource()
-                        {
-                            Id = bucketId,
-                            Type = PermissionResource.TypeBuckets
-                        })).ToList());
+                    new AuthorizationPostRequest()
+                    {
+                        OrgID = bucket.OrgID,
+                        Status = AuthorizationUpdateRequest.StatusEnum.Inactive,
+                        Permissions = actionEnums.Select(x => new Permission(x, new PermissionResource()
+                            {
+                                Id = bucketId,
+                                Type = PermissionResource.TypeBuckets
+                            })
+                        ).ToList(),
+                        Description = description
+                    });
             }
 
             return OperationResults.ExecuteSuccess(new CreateBucketTokenResult()
@@ -104,14 +106,39 @@ public class CreateBucketToken : IMigrationOperation
         }
     }
 
-    public Task<OperationResult<OperationCommitState, ICommitResult>> CommitAsync(IExecuteResult result)
+    public async Task<OperationResult<OperationCommitState, ICommitResult>> CommitAsync(IExecuteResult r)
     {
-        return OperationResults.CommitUnnecessary(result);
+        var result = (CreateBucketTokenResult)r;
+
+        try
+        {
+            var token = await _context.Influx.GetAuthorizationsApi().FindAuthorizationByIdAsync(result.TokenId);
+            token.Status = AuthorizationUpdateRequest.StatusEnum.Active;
+            await _context.Influx.GetAuthorizationsApi().UpdateAuthorizationAsync(token);
+
+            return OperationResults.CommitSuccess(result);
+        }
+        catch (Exception x)
+        {
+            return OperationResults.CommitFailed(result, x);
+        }
     }
 
-    public Task<OperationResult<OperationRollbackState, IRollbackResult>> RollbackAsync(IExecuteResult result)
+    public async Task<OperationResult<OperationRollbackState, IRollbackResult>> RollbackAsync(IExecuteResult r)
     {
-        return OperationResults.RollbackImpossible(result);
+        var result = (CreateBucketTokenResult)r;
+
+        try
+        {
+            await _context.Influx.GetAuthorizationsApi().DeleteAuthorizationAsync(result.TokenId);
+            return OperationResults.RollbackSuccess(r);
+        }
+        catch (Exception x)
+        {
+            return OperationResults.RollbackFailed(result, x);
+        }
+
+
     }
 }
 

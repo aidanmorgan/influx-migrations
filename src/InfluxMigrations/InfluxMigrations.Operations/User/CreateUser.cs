@@ -1,11 +1,8 @@
-using System.Net;
-using System.Web;
 using Flurl.Http;
-using InfluxDB.Client;
 using InfluxMigrations.Core;
 using InfluxMigrations.Core.Resolvers;
 
-namespace InfluxMigrations.Commands.User;
+namespace InfluxMigrations.Operations.User;
 
 public class CreateUser : IMigrationOperation
 {
@@ -24,7 +21,7 @@ public class CreateUser : IMigrationOperation
     {
         try
         {
-            var username = Username.Resolve(_context);
+            var username = Username?.Resolve(_context);
 
             if (string.IsNullOrEmpty(username))
             {
@@ -33,7 +30,7 @@ public class CreateUser : IMigrationOperation
 
             var user = await _context.Influx.GetUsersApi().CreateUserAsync(username);
 
-            var requestedPassword = Password.Resolve(_context);
+            var requestedPassword = Password?.Resolve(_context);
             if (!string.IsNullOrEmpty(requestedPassword))
             {
                 var response = await _context.Influx.Raw()

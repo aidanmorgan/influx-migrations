@@ -1,9 +1,8 @@
-﻿using System.ComponentModel;
-using System.Runtime.Serialization;
+﻿using System.Runtime.Serialization;
 using InfluxMigrations.Core;
 using InfluxMigrations.Core.Resolvers;
 
-namespace InfluxMigrations.Outputs;
+namespace InfluxMigrations.Tasks;
 
 public enum VariableScope
 {
@@ -12,7 +11,7 @@ public enum VariableScope
     [EnumMember(Value = "global")] Global
 }
 
-public class SetVariableTask : IMigrationTask
+public class SetVariableTask : IMigrationTask, IOperationTask, IEnvironmentTask
 {
     private static readonly IDictionary<string, VariableScope> VariableScopeLookup =
         new Dictionary<string, VariableScope>()
@@ -33,6 +32,13 @@ public class SetVariableTask : IMigrationTask
     public Task<TaskResult> ExecuteAsync(IOperationExecutionContext context)
     {
         var key = Key.Resolve(context);
+
+        if (string.IsNullOrEmpty(key))
+        {
+            return TaskResults.TaskFailureAsync("Cannot set variable, cannot resolve Key value.");
+        }
+        
+        // variable is allowed to be null, it will cause the value (if it exists) to be unset
         var value = Value.Resolve(context);
 
         var scope = VariableScopeLookup[Scope.Resolve(context)];
@@ -53,7 +59,13 @@ public class SetVariableTask : IMigrationTask
 
             case VariableScope.Global:
             {
-                context.MigrationExecutionContext.EnvironmentContext.Set(key, value);
+                context.MigrationExecutionContext.EnvironmentExecutionContext.Set(key, value);
+                break;
+            }
+
+            default:
+            {
+                context.Set(key, value);
                 break;
             }
         }
@@ -83,16 +95,47 @@ public class SetVariableTask : IMigrationTask
 
             case VariableScope.Global:
             {
-                executionContext.EnvironmentContext.Set(key, value);
+                executionContext.EnvironmentExecutionContext.Set(key, value);
                 break;
             }
         }
 
         return TaskResults.TaskSuccessAsync();
     }
+
+    public Task<TaskResult> ExecuteAsync(IEnvironmentExecutionContext executionContext)
+    {
+        var key = Key.Resolve(executionContext);
+        var value = Value.Resolve(executionContext);
+        var scope = VariableScopeLookup[Scope.Resolve(executionContext)];
+
+        switch (scope)
+        {
+            case VariableScope.Local:
+            {
+                throw new MigrationExecutionException($"Cannot resolve a Local scope variable for an Environment.");
+                break;
+            }
+
+            case VariableScope.Migration:
+            {
+                throw new MigrationExecutionException($"Cannot resolve a Migration scope variable for an Environment.");
+                break;
+            }
+
+            case VariableScope.Global:
+            {
+                executionContext.Set(key, value);
+                break;
+            }
+        }
+
+        return TaskResults.TaskSuccessAsync();
+        
+    }
 }
 
-public class SetVariableTaskBuilder : IMigrationTaskBuilder
+public class SetVariableTaskBuilder : IMigrationTaskBuilder, IOperationTaskBuilder, IEnvironmentTaskBuilder
 {
     public string Key { get; private set; }
     public string Value { get; private set; }
@@ -116,7 +159,27 @@ public class SetVariableTaskBuilder : IMigrationTaskBuilder
         return this;
     }
 
-    public IMigrationTask Build()
+    public IMigrationTask BuildMigration()
+    {
+        return new SetVariableTask()
+        {
+            Key = StringResolvable.Parse(Key),
+            Value = StringResolvable.Parse(Value),
+            Scope = StringResolvable.Parse(Scope),
+        };
+    }
+
+    public IOperationTask BuildOperation()
+    {
+        return new SetVariableTask()
+        {
+            Key = StringResolvable.Parse(Key),
+            Value = StringResolvable.Parse(Value),
+            Scope = StringResolvable.Parse(Scope),
+        };
+    }
+
+    public IEnvironmentTask BuildEnvironment()
     {
         return new SetVariableTask()
         {

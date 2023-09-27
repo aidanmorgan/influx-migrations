@@ -1,0 +1,8 @@
+before:
+  - task: echo
+    expr: "**** Running before Migration task **** "
+  
+after:
+  - task: echo
+    expr: "**** Running after Migration task ****"
+  

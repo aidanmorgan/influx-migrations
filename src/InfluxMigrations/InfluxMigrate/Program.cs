@@ -1,12 +1,9 @@
-﻿// See https://aka.ms/new-console-template for more information
-
-using System.Diagnostics;
-using System.Reflection;
+﻿using System.Diagnostics;
 using CommandLine;
-using InfluxDB.Client;
 using InfluxMigrations.Core;
 using InfluxMigrations.Impl;
 using InfluxMigrations.Yaml;
+using InfluxMigrations.Yaml.Parsers;
 using Pastel;
 
 namespace InfluxMigrate;
@@ -87,6 +84,7 @@ public class Program
                 {
                     Logger = new TextWriterMigrationLoaderLogger(Console.Out)
                 }),
+            EnvironmentConfigurator = YamlEnvironmentConfigurator.CreateFromDirectory(o.MigrationsDirectory),
             History = new DefaultMigrationHistoryService(influx, new DefaultMigrationHistoryOptions()
             {
                 Logger = new TextWriterMigrationHistoryLogger(Console.Out),
@@ -102,11 +100,8 @@ public class Program
 
         try
         {
-            var results = await migrationRunner
-                .ExecuteMigrationsAsync(influx, o.TargetVersion);
-            var unpacked = results
-                .SelectMany(x => x.Issues)
-                .ToList();
+            var results = await migrationRunner.ExecuteMigrationsAsync(influx, o.TargetVersion);
+            var unpacked = results.SelectMany(x => x.Issues).ToList();
 
             if (unpacked.Count > 0)
             {

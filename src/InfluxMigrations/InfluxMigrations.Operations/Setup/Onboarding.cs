@@ -2,7 +2,7 @@
 using InfluxMigrations.Core;
 using InfluxMigrations.Core.Resolvers;
 
-namespace InfluxMigrations.Commands.Setup;
+namespace InfluxMigrations.Operations.Setup;
 
 public class Onboarding : IMigrationOperation
 {
@@ -24,21 +24,20 @@ public class Onboarding : IMigrationOperation
         try
         {
             var allowed = await _context.Influx.IsOnboardingAllowedAsync();
-
             if (!allowed)
             {
                 return OperationResults.ExecuteFailed("Cannot onboard Influx, it is not allowed.");
             }
 
-            var adminToken = Token.Resolve(_context);
+            var adminToken = Token?.Resolve(_context);
 
             var result = await _context.Influx.OnboardingAsync(
                 new OnboardingRequest(
-                    Username.Resolve(_context),
-                    Password.Resolve(_context),
-                    Organisation.Resolve(_context),
-                    Bucket.Resolve(_context),
-                    token: Token.Resolve(_context)
+                    Username?.Resolve(_context),
+                    Password?.Resolve(_context),
+                    Organisation?.Resolve(_context),
+                    Bucket?.Resolve(_context),
+                    token: adminToken
                 ));
 
             if (!string.IsNullOrEmpty(adminToken))
@@ -153,10 +152,10 @@ public class ChangeAdminTokenVisitor : IContextVisitor
 
     public void Visit(IMigrationExecutionContext ctx)
     {
-        ctx.EnvironmentContext.Accept(this);
+        ctx.EnvironmentExecutionContext.Accept(this);
     }
 
-    public void Visit(IMigrationEnvironmentContext ctx)
+    public void Visit(IEnvironmentExecutionContext ctx)
     {
         ctx.InfluxFactory.WithToken(_token);
     }

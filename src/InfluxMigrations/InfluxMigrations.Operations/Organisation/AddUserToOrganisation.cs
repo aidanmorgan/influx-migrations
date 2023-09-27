@@ -1,14 +1,12 @@
-﻿using InfluxDB.Client;
-using InfluxDB.Client.Api.Domain;
-using InfluxDB.Client.Core.Exceptions;
+﻿using InfluxDB.Client.Api.Domain;
 using InfluxMigrations.Core;
 using InfluxMigrations.Core.Resolvers;
 
-namespace InfluxMigrations.Commands.Organisation;
+namespace InfluxMigrations.Operations.Organisation;
 
 public class AddUserToOrganisation : IMigrationOperation
 {
-    private IOperationExecutionContext _context;
+    private readonly IOperationExecutionContext _context;
     public IInfluxRuntimeResolver Organisation { get; private set; }
     public IInfluxRuntimeResolver User { get; private set; }
 

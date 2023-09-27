@@ -1,6 +1,6 @@
-using InfluxMigrations.Commands.Bucket;
 using InfluxMigrations.Default.Integration;
-using InfluxMigrations.Outputs;
+using InfluxMigrations.Operations.Bucket;
+using InfluxMigrations.Tasks;
 using InfluxMigrations.Yaml.Parsers;
 using NUnit.Framework;
 

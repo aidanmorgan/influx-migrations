@@ -59,9 +59,11 @@ public class StringResolvableTests
     }
 
     [Test]
-    public void ResolveResultOfPreviousStep()
+    public async Task ResolveResultOfPreviousStep()
     {
-        var environment = new DefaultEnvironmentContext();
+        var environment = new DefaultEnvironmentExecutionContext();
+        await environment.Initialise();
+
         var migration = environment.CreateMigrationContext("0001");
         var step1 = migration.CreateExecutionContext("step1");
         step1.ExecuteResult = new
@@ -84,9 +86,11 @@ public class StringResolvableTests
     }
 
     [Test]
-    public void ResolveVariableOfPreviousStep()
+    public async Task ResolveVariableOfPreviousStep()
     {
-        var environment = new DefaultEnvironmentContext();
+        var environment = new DefaultEnvironmentExecutionContext();
+        await environment.Initialise();
+
         var migration = environment.CreateMigrationContext("0001");
         var step1 = migration.CreateExecutionContext("step1");
         step1.Set("secret_key", "hidden");
@@ -102,9 +106,11 @@ public class StringResolvableTests
     }
 
     [Test]
-    public void ResolveVariableOfPreviousStepUsingVariableFromPreviousStep()
+    public async Task ResolveVariableOfPreviousStepUsingVariableFromPreviousStep()
     {
-        var environment = new DefaultEnvironmentContext();
+        var environment = new DefaultEnvironmentExecutionContext();
+        await environment.Initialise();
+
         var migration = environment.CreateMigrationContext("0001");
         var step1 = migration.CreateExecutionContext("step1");
         step1.Set("secret_key", "hidden");
@@ -121,9 +127,11 @@ public class StringResolvableTests
     }
 
     [Test]
-    public void ResolveResultOfFirstStepUsingKeyDefinedInSecondStep()
+    public async Task ResolveResultOfFirstStepUsingKeyDefinedInSecondStep()
     {
-        var environment = new DefaultEnvironmentContext();
+        var environment = new DefaultEnvironmentExecutionContext();
+        await environment.Initialise();
+        
         var migration = environment.CreateMigrationContext("0001");
         var step1 = migration.CreateExecutionContext("step1");
         step1.ExecuteResult = new
@@ -143,9 +151,11 @@ public class StringResolvableTests
     }
 
     [Test]
-    public void TestResolveVariableToOtherStep()
+    public async Task TestResolveVariableToOtherStep()
     {
-        var environment = new DefaultEnvironmentContext();
+        var environment = new DefaultEnvironmentExecutionContext();
+        await environment.Initialise();
+
         var migration = environment.CreateMigrationContext("0001");
         migration.Set("migrationvariablename", "secret");
         var step1 = migration.CreateExecutionContext("step1");
@@ -160,9 +170,11 @@ public class StringResolvableTests
     }
 
     [Test]
-    public void TestResolveVariableBasedOnEnvironmentVariable()
+    public async Task TestResolveVariableBasedOnEnvironmentVariable()
     {
-        var environment = new DefaultEnvironmentContext().Add("environmentvariablename", "stepvariablename");
+        var environment = new DefaultEnvironmentExecutionContext().Add("environmentvariablename", "stepvariablename");
+        await environment.Initialise();
+
         var migration = environment.CreateMigrationContext("0001");
 
         var step1 = migration.CreateExecutionContext("step1");

@@ -36,7 +36,7 @@ public class MigrationValueResolver : AbstractResolverFunction
                 }
 
                 // now try get it from the environment context
-                value = x.MigrationExecutionContext.EnvironmentContext.Get(keyVal);
+                value = x.MigrationExecutionContext.EnvironmentExecutionContext.Get(keyVal);
                 if (!string.IsNullOrEmpty(value))
                 {
                     return value;
@@ -59,14 +59,14 @@ public class MigrationValueResolver : AbstractResolverFunction
                     return value;
                 }
 
-                value = x.EnvironmentContext.Get(keyVal);
+                value = x.EnvironmentExecutionContext.Get(keyVal);
                 if (!string.IsNullOrEmpty(value))
                 {
                     return value;
                 }
 
                 throw new MigrationResolutionException($"Could not find a value for key {key} in any context.");
-            });
+            }, x => throw new MigrationResolutionException("Cannot resolve a Migration value for an Environment context."));
     }
 
     public MigrationValueResolver(string prefix, string suffix) : base(prefix, suffix)

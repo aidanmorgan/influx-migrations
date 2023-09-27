@@ -1,5 +1,5 @@
 ﻿using InfluxMigrations.Core;
-using InfluxMigrations.Outputs;
+using InfluxMigrations.Tasks;
 using YamlDotNet.RepresentationModel;
 
 namespace InfluxMigrations.Yaml.Parsers.Tasks;
@@ -7,7 +7,7 @@ namespace InfluxMigrations.Yaml.Parsers.Tasks;
 [YamlTaskParser("set")]
 public class SetVariableTaskParser : IYamlTaskParser
 {
-    public IMigrationTaskBuilder Parse(YamlMappingNode node)
+    private SetVariableTaskBuilder Parse(YamlMappingNode node)
     {
         var builder = new SetVariableTaskBuilder();
 
@@ -39,5 +39,20 @@ public class SetVariableTaskParser : IYamlTaskParser
         }
 
         return builder;
+    }
+
+    public IOperationTaskBuilder ParseOperationTask(YamlMappingNode node)
+    {
+        return Parse(node);
+    }
+
+    public IMigrationTaskBuilder ParseMigrationTask(YamlMappingNode node)
+    {
+        return Parse(node);
+    }
+
+    public IEnvironmentTaskBuilder ParseEnvironmentTask(YamlMappingNode node)
+    {
+        return Parse(node);
     }
 }

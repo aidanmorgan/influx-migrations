@@ -14,16 +14,33 @@ public class TaskResult
     public Exception? Exception { get; init; }
 }
 
-/// <summary>
-/// A IMigrationTask is a set of tasks that are performed after a MigrationOperation or after the Migration as a whole
-/// have completed.
-///
-/// MigrationOutput's are not allowed to throw exceptions, they can be invoked at different phases.
-/// </summary>
-public interface IMigrationTask
+public interface ITask
 {
-    // runs the task in the context of an 
-    Task<TaskResult> ExecuteAsync(IOperationExecutionContext ctx);
+    // flagging interface only    
+}
 
+
+/// <summary>
+/// A IMigrationTask is a set of tasks that are performed either before/after a Migration
+/// </summary>
+public interface IMigrationTask : ITask
+{
     Task<TaskResult> ExecuteAsync(IMigrationExecutionContext ctx);
+}
+
+/// <summary>
+/// A IOperationTask is a task that is performed before/after an operation - can be scoped to an additional phase
+/// </summary>
+public interface IOperationTask: ITask
+{
+    Task<TaskResult> ExecuteAsync(IOperationExecutionContext ctx);
+}
+
+/// <summary>
+/// A IEnvironmentTask is a task that is performed before/after all Migrations have been performed.
+/// </summary>
+public interface IEnvironmentTask: ITask
+{
+    Task<TaskResult> ExecuteAsync(IEnvironmentExecutionContext ctx);
+
 }

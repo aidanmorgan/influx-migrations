@@ -1,27 +1,11 @@
-﻿using System.Runtime.Serialization;
-using System.Web;
-using InfluxDB.Client;
-using InfluxDB.Client.Api.Domain;
+﻿using InfluxDB.Client.Api.Domain;
 using InfluxDB.Client.Core.Exceptions;
-using InfluxDB.Client.Writes;
 using InfluxMigrations.Core;
 using InfluxMigrations.Core.Resolvers;
 
-namespace InfluxMigrations.Outputs;
+namespace InfluxMigrations.Tasks;
 
-public class Data
-{
-    public IResolvable<string?> Measurement { get; init; }
-    public IResolvable<string?> Timestamp { get; init; }
-
-    public Dictionary<IResolvable<string?>, IResolvable<string?>> Tags { get; } =
-        new Dictionary<IResolvable<string?>, IResolvable<string?>>();
-
-    public Dictionary<IResolvable<string?>, IResolvable<string?>> Fields { get; } =
-        new Dictionary<IResolvable<string?>, IResolvable<string?>>();
-}
-
-public class InsertData : IMigrationTask
+public class InsertData : IMigrationTask, IOperationTask, IEnvironmentTask
 {
     public IInfluxRuntimeResolver  Bucket { get; private set; } = InfluxRuntimeNameResolver.CreateBucket();
 
@@ -43,36 +27,20 @@ public class InsertData : IMigrationTask
 
     public async Task<TaskResult> ExecuteAsync(IOperationExecutionContext ctx)
     {
-        var bucket = await Bucket.GetAsync(ctx);
-        var organisation = await Organisation.GetAsync(ctx);
-
-        var pointData = Data.Select(x =>
-        {
-            var line = x.Resolve(ctx);
-            return line;
-        }).ToList();
-
-        try
-        {
-            if (string.IsNullOrEmpty(bucket) || string.IsNullOrEmpty(organisation))
-            {
-                await ctx.Influx.GetWriteApiAsync().WriteRecordsAsync(pointData, WritePrecision.Ms);
-            }
-            else
-            {
-                await ctx.Influx.GetWriteApiAsync()
-                    .WriteRecordsAsync(pointData, WritePrecision.Ms, bucket, organisation);
-            }
-        }
-        catch (InfluxException x)
-        {
-            return TaskResults.TaskFailure(x);
-        }
-
-        return TaskResults.TaskSuccess();
+        return await Execute(ctx);
     }
 
     public async Task<TaskResult> ExecuteAsync(IMigrationExecutionContext ctx)
+    {
+        return await Execute(ctx);
+    }
+
+    public async Task<TaskResult> ExecuteAsync(IEnvironmentExecutionContext ctx)
+    {
+        return await Execute(ctx);
+    }
+
+    private async Task<TaskResult> Execute(IContext ctx)
     {
         var bucket = await Bucket.GetAsync(ctx);
         var organisation = await Organisation.GetAsync(ctx);
@@ -101,10 +69,11 @@ public class InsertData : IMigrationTask
         }
 
         return TaskResults.TaskSuccess();
+        
     }
 }
 
-public class InsertDataBuilder : IMigrationTaskBuilder
+public class InsertDataBuilder : IMigrationTaskBuilder, IOperationTaskBuilder, IEnvironmentTaskBuilder
 {
     public List<string> Lines { get; private set; } = new List<string>();
     public string BucketId { get; private set; }
@@ -148,7 +117,35 @@ public class InsertDataBuilder : IMigrationTaskBuilder
         return this;
     }
 
-    public IMigrationTask Build()
+    public IMigrationTask BuildMigration()
+    {
+        return new InsertData()
+            {
+                Data = Lines.Select(StringResolvable.Parse).ToList(),
+                WritePrecision = WritePrecision.Ms
+            }
+            .Initialise(x =>
+            {
+                x.Bucket.WithName(BucketName).WithId(BucketId);
+                x.Organisation.WithName(OrganisationName).WithId(OrganisationId);
+            });
+    }
+
+    public IOperationTask BuildOperation()
+    {
+        return new InsertData()
+            {
+                Data = Lines.Select(StringResolvable.Parse).ToList(),
+                WritePrecision = WritePrecision.Ms
+            }
+            .Initialise(x =>
+            {
+                x.Bucket.WithName(BucketName).WithId(BucketId);
+                x.Organisation.WithName(OrganisationName).WithId(OrganisationId);
+            });
+    }
+
+    public IEnvironmentTask BuildEnvironment()
     {
         return new InsertData()
             {

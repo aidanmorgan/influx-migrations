@@ -1,7 +1,7 @@
 ﻿using InfluxMigrations.Core;
 using InfluxMigrations.Core.Resolvers;
 
-namespace InfluxMigrations.Commands.Bucket;
+namespace InfluxMigrations.Operations.Bucket;
 
 public class RemoveMemberFromBucket : IMigrationOperation
 {

@@ -7,6 +7,8 @@ namespace InfluxMigrations.Impl;
 
 public class DefaultMigrationLoaderOptions : IMigrationLoaderServiceOptions
 {
+    public const string GlobalConfigurationFilename = "global.yml";
+    
     public bool IncludeSubdirectories { get; init; } = true;
 
     public List<string> FileExtensions { get; init; } = new List<string>()
@@ -19,10 +21,10 @@ public class DefaultMigrationLoaderOptions : IMigrationLoaderServiceOptions
     // a value that is inside the file.
     public Func<string, string> VersionFromFilenameCallback { get; init; } = Path.GetFileNameWithoutExtension;
 
-    private static YamlMigrationParser _parser = new YamlMigrationParser();
+    private static readonly YamlMigrationParser _parser = new YamlMigrationParser();
 
-    public Func<string, Task<IMigration>> Parse { get; init; } = (x) => _parser.ParseFile(x);
-
+    public Func<string, Task<IMigration>> ParseMigration { get; init; } = (x) => _parser.ParseFile(x);
+    
     public IMigrationLoaderLogger Logger { get; init; } = new NoOpMigrationLoaderLogger();
 
     public IComparer<string> VersionComparator { get; init; } = new DefaultVersionComparer();
@@ -57,9 +59,14 @@ public class DefaultMigrationLoaderService : IMigrationLoaderService
             {
                 if (Options.FileExtensions.Any(x => file.EndsWith(x, StringComparison.InvariantCultureIgnoreCase)))
                 {
+                    if (file.ToLowerInvariant().EndsWith(DefaultMigrationLoaderOptions.GlobalConfigurationFilename))
+                    {
+                        continue;
+                    }
+                    
                     try
                     {
-                        var migration = await Options.Parse(file);
+                        var migration = await Options.ParseMigration(file);
 
                         // if the version is not in the migration file, then we try to derive the version from the filename itself
                         if (string.IsNullOrEmpty(migration.Version))
@@ -69,8 +76,7 @@ public class DefaultMigrationLoaderService : IMigrationLoaderService
 
                         if (string.IsNullOrEmpty(migration.Version))
                         {
-                            throw new MigrationLoadingException(
-                                $"Found migration file {file}, but cannot determine version.");
+                            throw new MigrationLoadingException($"Found migration file {file}, but cannot determine version.");
                         }
 
                         logger.FoundMigration(file, migration);

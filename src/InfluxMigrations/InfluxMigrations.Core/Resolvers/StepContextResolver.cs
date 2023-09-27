@@ -50,7 +50,8 @@ public class StepContextResolver : AbstractResolverFunction
 
                 var result = key.Resolve((IOperationExecutionContext)context);
                 return result;
-            });
+            },
+            x => throw new MigrationResolutionException("Cannot use a step result on an Environment context."));
     }
 
     public StepContextResolver(string prefix, string suffix) : base(prefix, suffix)

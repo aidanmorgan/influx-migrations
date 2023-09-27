@@ -1,13 +1,11 @@
-﻿using InfluxDB.Client.Core.Exceptions;
-using InfluxMigrations.Core;
+﻿using InfluxMigrations.Core;
 using InfluxMigrations.Core.Resolvers;
 
-namespace InfluxMigrations.Commands.Bucket;
+namespace InfluxMigrations.Operations.Bucket;
 
 public class AddMemberToBucket : IMigrationOperation
 {
     private readonly IOperationExecutionContext _context;
-
     public IInfluxRuntimeResolver User { get; private set; }
     public IInfluxRuntimeResolver Bucket { get; private set; }
 
@@ -67,7 +65,7 @@ public class AddMemberToBucket : IMigrationOperation
 }
 
 public class AddMemberToBucketBuilder : IMigrationOperationBuilder
-{
+{ 
     public string UserName { get; private set; }
     public string UserId { get; private set; }
     public string BucketName { get; private set; }

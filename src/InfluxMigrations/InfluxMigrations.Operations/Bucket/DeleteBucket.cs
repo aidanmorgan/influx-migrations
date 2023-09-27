@@ -1,29 +1,24 @@
-using InfluxDB.Client;
 using InfluxMigrations.Core;
 using InfluxMigrations.Core.Resolvers;
 
-namespace InfluxMigrations.Commands.Bucket;
+namespace InfluxMigrations.Operations.Bucket;
 
 public class DeleteBucket : IMigrationOperation
 {
-    public const string DeletePrefix = "DEL_";
-
+    private const string DeletePrefix = "DEL_";
     private readonly IOperationExecutionContext _context;
-    public IInfluxRuntimeResolver Bucket { get; private set; }
-
+    public IInfluxRuntimeResolver Bucket { get; private set; } = InfluxRuntimeIdResolver.CreateBucket();
 
     public DeleteBucket(IOperationExecutionContext context)
     {
         _context = context;
-        Bucket = InfluxRuntimeIdResolver.CreateBucket();
     }
 
-    public DeleteBucket Initalise(Action<DeleteBucket> bucket)
+    public DeleteBucket Initialise(Action<DeleteBucket> bucket)
     {
         bucket(this);
         return this;
     }
-
 
     public async Task<OperationResult<OperationExecutionState, IExecuteResult>> ExecuteAsync()
     {
@@ -137,7 +132,7 @@ public class DeleteBucketBuilder : IMigrationOperationBuilder
             throw new MigrationOperationBuildingException("No Bucket specified.");
         }
 
-        return new DeleteBucket(context).Initalise(x =>
+        return new DeleteBucket(context).Initialise(x =>
         {
             x.Bucket
                 .WithId(StringResolvable.Parse(BucketId))

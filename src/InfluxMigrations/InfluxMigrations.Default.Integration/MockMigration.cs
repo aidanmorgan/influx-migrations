@@ -50,7 +50,7 @@ public class MockMigration : IMigration
         return entry;
     }
 
-    public Task<MigrationResult> ExecuteAsync(IMigrationEnvironmentContext env, MigrationDirection direction,
+    public Task<MigrationResult> ExecuteAsync(IEnvironmentExecutionContext env, MigrationDirection direction,
         MigrationOptions? opts = null)
     {
         _result ??= new MigrationResult() { Version = this.Version };

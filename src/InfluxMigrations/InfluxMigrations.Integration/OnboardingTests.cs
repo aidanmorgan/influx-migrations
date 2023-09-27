@@ -1,11 +1,11 @@
 using Ductus.FluentDocker.Builders;
 using Ductus.FluentDocker.Services;
 using Ductus.FluentDocker.Services.Extensions;
-using InfluxMigrations.Commands.Bucket;
-using InfluxMigrations.Commands.Setup;
 using InfluxMigrations.Core;
 using InfluxMigrations.Impl;
-using InfluxMigrations.Outputs;
+using InfluxMigrations.Operations.Bucket;
+using InfluxMigrations.Operations.Setup;
+using InfluxMigrations.Tasks;
 using NUnit.Framework;
 
 namespace InfluxMigrations.IntegrationTests;
@@ -62,8 +62,10 @@ public class OnboardingTests
                 .WithBucket(bucket)
                 .WithAdminToken("${env:admin_token}"));
 
-        var result = await migration.ExecuteAsync(new DefaultEnvironmentContext(_influx).Set("admin_token", token),
-            MigrationDirection.Up);
+        var executionContext = new DefaultEnvironmentExecutionContext(_influx).Set("admin_token", token);
+        await executionContext.Initialise();
+        
+        var result = await migration.ExecuteAsync(executionContext, MigrationDirection.Up);
 
         Assert.That(result, Is.Not.Null);
         Assert.That(result.Success, Is.EqualTo(true));
@@ -94,8 +96,10 @@ public class OnboardingTests
                 .WithOrganisation(org));
         migration.AddAfterTask(new EchoTaskBuilder().WithString("Admin token: ${env:admin_token}"));
 
-        var result = await migration.ExecuteAsync(new DefaultEnvironmentContext(_influx).Set("admin_token", token),
-            MigrationDirection.Up);
+        var executionContext = new DefaultEnvironmentExecutionContext(_influx).Set("admin_token", token);
+        await executionContext.Initialise();
+        
+        var result = await migration.ExecuteAsync(executionContext, MigrationDirection.Up);
 
         Assert.That(result, Is.Not.Null);
         Assert.That(result.Success, Is.EqualTo(true));

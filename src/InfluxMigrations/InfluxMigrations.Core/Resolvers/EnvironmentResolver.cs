@@ -23,12 +23,18 @@ public class EnvironmentResolver : AbstractResolverFunction
                 var resolvedKey = key.Resolve((IOperationExecutionContext)x);
                 return string.IsNullOrEmpty(resolvedKey)
                     ? null
-                    : x.MigrationExecutionContext.EnvironmentContext.Get(resolvedKey);
+                    : x.MigrationExecutionContext.EnvironmentExecutionContext.Get(resolvedKey);
             },
             x =>
             {
                 var resolvedKey = key.Resolve((IMigrationExecutionContext)x);
-                return string.IsNullOrEmpty(resolvedKey) ? null : x.EnvironmentContext.Get(resolvedKey);
-            });
+                return string.IsNullOrEmpty(resolvedKey) ? null : x.EnvironmentExecutionContext.Get(resolvedKey);
+            },
+            x =>
+            {
+                var resolvedKey = key.Resolve((IEnvironmentExecutionContext)x);
+                return string.IsNullOrEmpty(resolvedKey) ? null : x.Get(resolvedKey);
+            }
+            );
     }
 }

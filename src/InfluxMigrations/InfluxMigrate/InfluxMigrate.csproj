@@ -27,6 +27,9 @@
       <Content Include="..\..\migrations\0003.yml">
         <Link>migrations\0003.yml</Link>
       </Content>
+      <Content Include="..\..\migrations\global.yml">
+        <Link>migrations\global.yml</Link>
+      </Content>
     </ItemGroup>
 
 </Project>

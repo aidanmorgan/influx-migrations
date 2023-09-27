@@ -1,7 +1,7 @@
 namespace InfluxMigrations.Core;
 
 /// <summary>
-/// A MigrationOperation is a step in a Migration that performs an action against an InfluxDb.
+/// A IMigrationOperation is a step in a Migration that performs an action against an InfluxDb.
 /// </summary>
 public interface IMigrationOperation
 {

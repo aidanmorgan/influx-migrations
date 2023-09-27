@@ -1,5 +1,5 @@
-using InfluxMigrations.Commands.Bucket;
 using InfluxMigrations.Core;
+using InfluxMigrations.Operations.Bucket;
 using YamlDotNet.RepresentationModel;
 
 namespace InfluxMigrations.Yaml.Parsers.Bucket;

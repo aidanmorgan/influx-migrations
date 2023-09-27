@@ -28,6 +28,11 @@ public class NoOpMigrationRunnerLogger : IMigrationRunnerLogger
     public void MigrationSaveFailed(MigrationHistory entry)
     {
     }
+
+    public ITaskLogger StartTask(IEnvironmentTask task)
+    {
+        return new NoOpTaskLogger();
+    }
 }
 
 public class NoOpMigrationLoaderLogger : IMigrationLoaderLogger
@@ -72,7 +77,7 @@ public class NoOpMigrationLogger : IMigrationLogger
         return new NoOpMigrationOperationLogger<OperationRollbackState, IRollbackResult>();
     }
 
-    public IMigrationTaskLogger TaskStart(IMigrationTask task)
+    public ITaskLogger TaskStart(IMigrationTask task)
     {
         return new NoOpTaskLogger();
     }
@@ -96,7 +101,12 @@ public class NoOpMigrationOperationLogger<A, B> : IMigrationOperationLogger<A, B
     {
     }
 
-    public IMigrationTaskLogger TaskStart(IMigrationTask migrationTask)
+    public ITaskLogger TaskStart(IMigrationTask migrationTask)
+    {
+        return new NoOpTaskLogger();
+    }
+
+    public ITaskLogger TaskStart(IOperationTask task)
     {
         return new NoOpTaskLogger();
     }
@@ -110,7 +120,7 @@ public class NoOpMigrationOperationLogger<A, B> : IMigrationOperationLogger<A, B
     }
 }
 
-public class NoOpTaskLogger : IMigrationTaskLogger
+public class NoOpTaskLogger : ITaskLogger
 {
     public NoOpTaskLogger()
     {

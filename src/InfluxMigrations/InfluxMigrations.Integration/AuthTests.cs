@@ -1,14 +1,13 @@
+using System.Reflection;
 using DotNet.Testcontainers;
 using InfluxDB.Client;
 using InfluxDB.Client.Api.Domain;
-using InfluxMigrations.Commands.Auth;
-using InfluxMigrations.Commands.Bucket;
-using InfluxMigrations.Commands.Organisation;
-using InfluxMigrations.Commands.User;
+using InfluxDB.Client.Core.Exceptions;
 using InfluxMigrations.Core;
 using InfluxMigrations.Default.Integration;
 using InfluxMigrations.Impl;
 using InfluxMigrations.IntegrationCommon;
+using InfluxMigrations.Operations.Auth;
 using Microsoft.Extensions.Logging;
 using NUnit.Framework;
 using Testcontainers.InfluxDb;
@@ -36,56 +35,35 @@ public class AuthTests
         await _influxFixture.TearDown();
     }
 
+
     [Test]
-    public async Task CreateUser()
+    public async Task CreateBucketAuthorizationByName_Success()
     {
+        var bucketName = _random.RandomString();
         var userName = _random.RandomString();
-        var password = _random.RandomString();
-        
-        var environment = new DefaultEnvironmentContext(_influx, new TextWriterMigrationLoggerFactory(Console.Out));
+        var orgName = _random.RandomString();
 
-        CaptureResultBuilder createdUserResult = new CaptureResultBuilder();
 
-        var migration = new Migration("0001");
-        migration.AddUp("create-user", new CreateUserBuilder()
-                .WithUsername(userName)
-                .WithPassword(password))
-            .AddExecuteTask(TaskPrecedence.After, createdUserResult);
+        var org = await _influx.Create().GetOrganizationsApi().CreateOrganizationAsync(orgName);
 
-        await migration.ExecuteAsync(environment, MigrationDirection.Up);
-
-        var user = await _influx.Create()
-            .GetUsersApi()
-            .FindUserByIdAsync(createdUserResult.As<CreateUserResult>().Id);
-
-        Assert.That(user, Is.Not.Null);
-        Assert.That(user.Name, Is.EqualTo(userName));
-    }
-
-    [Test]
-    public async Task CreateBucketAuthorization_SpecificUser()
-    {
-        var org = (await _influx.Create().GetOrganizationsApi().FindOrganizationsAsync()).FirstOrDefault(
-            x => string.Equals(x?.Name, InfluxConstants.Organisation, StringComparison.InvariantCultureIgnoreCase),
-            null);
-        Assert.That(org, Is.Not.Null);
-
-        var bucket = await _influx.Create().GetBucketsApi().CreateBucketAsync("specific_user_bucket", org!.Id);
-        var user = await _influx.Create().GetUsersApi().CreateUserAsync("username");
+        var bucket = await _influx.Create().GetBucketsApi().CreateBucketAsync(bucketName, org!.Id);
+        var user = await _influx.Create().GetUsersApi().CreateUserAsync(userName);
 
         var createBucketResult = new CaptureResultBuilder();
 
-        var migration = new Migration("0002");
-        migration.AddUp("create-bucket-token",
+        var migration = new Migration("1");
+        migration.AddUp("step 1",
                 new CreateBucketTokenBuilder()
-                    .WithBucketName("specific_user_bucket")
+                    .WithBucketName(bucketName)
                     .WithPermission("read")
                     .WithPermission("write")
                     .WithTokenName("new-user-token")
-                    .WithUserName("username"))
+                    .WithUserName(userName))
             .AddExecuteTask(TaskPrecedence.After, createBucketResult);
 
-        var environment = new DefaultEnvironmentContext(_influx, new TextWriterMigrationLoggerFactory(Console.Out));
+        var environment = new DefaultEnvironmentExecutionContext(_influx);
+        await environment.Initialise();
+        
         var x = await migration.ExecuteAsync(environment, MigrationDirection.Up);
 
         NunitExtensions.AssertMigrationSuccess(x);
@@ -94,6 +72,81 @@ public class AuthTests
 
         Assert.That(result, Is.Not.Null);
         Assert.That(result.Token, Is.Not.Null);
+    }
+
+    [Test]
+    public async Task CreateBucketAuthorizationById_Success()
+    {
+        var bucketName = _random.RandomString();
+        var userName = _random.RandomString();
+        var orgName = _random.RandomString();
+
+        var org = await _influx.Create().GetOrganizationsApi().CreateOrganizationAsync(orgName);
+
+        var bucket = await _influx.Create().GetBucketsApi().CreateBucketAsync(bucketName, org!.Id);
+        var user = await _influx.Create().GetUsersApi().CreateUserAsync(userName);
+
+        var createBucketResult = new CaptureResultBuilder();
+
+        var migration = new Migration("1");
+        migration.AddUp("step 1",
+                new CreateBucketTokenBuilder()
+                    .WithBucketId(bucket.Id)
+                    .WithPermission("read")
+                    .WithPermission("write")
+                    .WithTokenName("new-user-token")
+                    .WithUserId(user.Id))
+            .AddExecuteTask(TaskPrecedence.After, createBucketResult);
+
+        var environment = new DefaultEnvironmentExecutionContext(_influx);
+        await environment.Initialise();
+        
+        var x = await migration.ExecuteAsync(environment, MigrationDirection.Up);
+
+        NunitExtensions.AssertMigrationSuccess(x);
+
+        var result = (CreateBucketTokenResult?)createBucketResult.Result;
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Token, Is.Not.Null);
+    }
+
+    [Test]
+    public async Task CreateBucketAuthorization_Rollback()
+    {
+        var bucketName = _random.RandomString();
+        var userName = _random.RandomString();
+        var orgName = _random.RandomString();
+
+        var org = await _influx.Create().GetOrganizationsApi().CreateOrganizationAsync(orgName);
+
+        var bucket = await _influx.Create().GetBucketsApi().CreateBucketAsync(bucketName, org!.Id);
+        var user = await _influx.Create().GetUsersApi().CreateUserAsync(userName);
+
+        var createBucketResult = new CaptureResultBuilder();
+
+        var migration = new Migration("1");
+        migration.AddUp("step 1",
+                new CreateBucketTokenBuilder()
+                    .WithUserId(user.Id)
+                    .WithBucketId(bucket.Id)
+                    .WithPermission("read")
+                    .WithPermission("write")
+                    .WithTokenName("new-user-token"))
+            .AddExecuteTask(TaskPrecedence.After, createBucketResult);
+        migration.AddUp("step 2", new ForceErrorBuilder().ErrorExecute());
+
+        var environment = new DefaultEnvironmentExecutionContext(_influx);
+        await environment.Initialise();
+        
+        var x = await migration.ExecuteAsync(environment, MigrationDirection.Up);
+
+        NunitExtensions.AssertMigrationRollback(x);
+
+        var result = (CreateBucketTokenResult?)createBucketResult.Result;
+
+        var bucketMembers = await _influx.Create().GetAuthorizationsApi().FindAuthorizationsByUserIdAsync(user.Id);
+        Assert.That(bucketMembers.Count, Is.EqualTo(0));
     }
 
     

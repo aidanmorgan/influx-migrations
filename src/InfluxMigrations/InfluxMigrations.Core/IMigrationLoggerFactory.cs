@@ -24,6 +24,7 @@ public interface IMigrationRunnerLogger
     void NoMigrations();
     void MigrationSaved(MigrationHistory entry);
     void MigrationSaveFailed(MigrationHistory entry);
+    ITaskLogger StartTask(IEnvironmentTask task);
 }
 
 public interface IMigrationLogger
@@ -31,7 +32,7 @@ public interface IMigrationLogger
     IMigrationOperationLogger<OperationExecutionState, IExecuteResult> ExecuteStart(MigrationOperationInstance op);
     IMigrationOperationLogger<OperationCommitState, ICommitResult> CommitStart(MigrationOperationInstance op);
     IMigrationOperationLogger<OperationRollbackState, IRollbackResult> RollbackStart(MigrationOperationInstance op);
-    IMigrationTaskLogger TaskStart(IMigrationTask task);
+    ITaskLogger TaskStart(IMigrationTask task);
     void Complete();
     void Failed(Exception x);
 }
@@ -39,12 +40,15 @@ public interface IMigrationLogger
 public interface IMigrationOperationLogger<S, R> where S : Enum
 {
     void Complete(OperationResult<S, R?> result);
-    IMigrationTaskLogger TaskStart(IMigrationTask task);
+    
+    ITaskLogger TaskStart(IMigrationTask task);
+    ITaskLogger TaskStart(IOperationTask task);
+    
     void Failed(OperationResult<S, R?> result);
     void Failed(Exception result);
 }
 
-public interface IMigrationTaskLogger
+public interface ITaskLogger
 {
     void Complete();
     void Failed(Exception x);

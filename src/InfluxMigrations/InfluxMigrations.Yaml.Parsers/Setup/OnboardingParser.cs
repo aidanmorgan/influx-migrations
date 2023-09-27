@@ -1,5 +1,5 @@
-using InfluxMigrations.Commands.Setup;
 using InfluxMigrations.Core;
+using InfluxMigrations.Operations.Setup;
 using YamlDotNet.RepresentationModel;
 
 namespace InfluxMigrations.Yaml.Parsers.Setup;

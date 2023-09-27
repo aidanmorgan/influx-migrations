@@ -22,4 +22,9 @@ public class MockMigrationLoaderService : IMigrationLoaderService
     {
         return Task.FromResult(_migrations);
     }
+
+    public Task ConfigureEnvironmentAsync(IEnvironmentExecutionContext env, IMigrationRunnerOptions options)
+    {
+        return Task.CompletedTask;
+    }
 }

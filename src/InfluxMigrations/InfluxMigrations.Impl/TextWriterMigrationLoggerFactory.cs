@@ -67,6 +67,11 @@ public class TextWriterRunnerLogger : IMigrationRunnerLogger
     {
         _writer.WriteLine($"Migration {entry.Version} was not saved.".Pastel(ConsoleColor.Red));
     }
+
+    public ITaskLogger StartTask(IEnvironmentTask task)
+    {
+        return new TextWriterTaskLogger(_writer, null, task);
+    }
 }
 
 public class TextWriterMigrationLogger : IMigrationLogger
@@ -100,10 +105,12 @@ public class TextWriterMigrationLogger : IMigrationLogger
         return new TextWriterMigrationOperationLogger<OperationRollbackState, IRollbackResult>(_stream, op, "rollback");
     }
 
-    public IMigrationTaskLogger TaskStart(IMigrationTask task)
+    public ITaskLogger TaskStart(IMigrationTask task)
     {
-        return new TextWriterTaskLogger(_stream, null, task, "migration");
+        return new TextWriterTaskLogger(_stream, null, task);
     }
+    
+    
 
     public void Complete()
     {
@@ -142,9 +149,14 @@ public class TextWriterMigrationOperationLogger<TStateEnum, TResult> : IMigratio
             $"{_operationInstance.Id.Pastel(ConsoleColor.White)}#{$"{_operationInstance.Operation.GetType().FullName}".Pastel(Color.Beige)}  {$"{_prefix}".Pastel(ConsoleColor.Cyan)} {"[COMPLETE]".Pastel(ConsoleColor.Green)}");
     }
 
-    public IMigrationTaskLogger TaskStart(IMigrationTask task)
+    public ITaskLogger TaskStart(IMigrationTask task)
     {
-        return new TextWriterTaskLogger(_textWriter, _operationInstance, task, "migration");
+        return new TextWriterTaskLogger(_textWriter, _operationInstance, task);
+    }
+
+    public ITaskLogger TaskStart(IOperationTask task)
+    {
+        return new TextWriterTaskLogger(_textWriter, _operationInstance, task);
     }
 
     public void Failed(OperationResult<TStateEnum, TResult?> result)
@@ -162,20 +174,27 @@ public class TextWriterMigrationOperationLogger<TStateEnum, TResult> : IMigratio
     }
 }
 
-public class TextWriterTaskLogger : IMigrationTaskLogger
+public class TextWriterTaskLogger : ITaskLogger
 {
     private readonly TextWriter _textWriter;
     private readonly MigrationOperationInstance? _operationInstance;
-    private readonly IMigrationTask _task;
+    private readonly ITask _task;
     private readonly string _prefix;
 
     public TextWriterTaskLogger(TextWriter textWriter, MigrationOperationInstance? operationInstance,
-        IMigrationTask task, string prefix)
+        ITask task)
     {
         _textWriter = textWriter;
         _operationInstance = operationInstance;
         _task = task;
-        _prefix = prefix;
+
+        _prefix = task switch
+        {
+            IOperationTask => "operation",
+            IMigrationTask => "migration",
+            IEnvironmentTask => "environment",
+            _ => _prefix
+        } ?? string.Empty;
     }
 
     public void Complete()

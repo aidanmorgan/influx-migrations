@@ -10,6 +10,7 @@ public static class TaskResults
         });
     }
 
+    
     public static Task<TaskResult> TaskFailureAsync(Exception? x)
     {
         return Task.FromResult(new TaskResult()
@@ -33,7 +34,7 @@ public static class TaskResults
         return TaskFailure(new MigrationTaskExecutionException(message));
     }
     
-    public static Task<TaskResult> TaskFailureAsymc(string message)
+    public static Task<TaskResult> TaskFailureAsync(string message)
     {
         return TaskFailureAsync(new MigrationTaskExecutionException(message));
     }

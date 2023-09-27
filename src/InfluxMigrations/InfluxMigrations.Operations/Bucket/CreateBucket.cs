@@ -1,12 +1,8 @@
-using System.Diagnostics;
-using InfluxDB.Client;
 using InfluxDB.Client.Api.Domain;
-using InfluxDB.Client.Core.Exceptions;
-using InfluxMigrations.Commands.Auth;
 using InfluxMigrations.Core;
 using InfluxMigrations.Core.Resolvers;
 
-namespace InfluxMigrations.Commands.Bucket;
+namespace InfluxMigrations.Operations.Bucket;
 
 public class CreateBucket : IMigrationOperation
 {
@@ -45,7 +41,7 @@ public class CreateBucket : IMigrationOperation
                 return OperationResults.ExecuteFailed($"Cannot create Bucket, cannot resolve Organisation id.");
             }
 
-            var bucketName = Bucket.Resolve(_context);
+            var bucketName = Bucket?.Resolve(_context);
 
             var bucket = await _context.Influx.GetBucketsApi().FindBucketByNameAsync(bucketName);
             if (bucket != null)

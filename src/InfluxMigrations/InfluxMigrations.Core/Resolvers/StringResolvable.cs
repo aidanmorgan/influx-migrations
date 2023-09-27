@@ -67,7 +67,7 @@ public class StringResolvable : IResolvable<string?>, IEquatable<StringResolvabl
         // so we can't just do a split based on ${ and } values as they can be multiple deep.
         //
         // Basically the approach to this is to try and pull off all non-interpreter characters then recursively call this method
-        // to pull off each interperter instruction block. That way the approach is always either processing interpreter commands
+        // to pull off each instruction block. That way the approach is always either processing interpreter commands
         // or plain text entries at a time which _should_ simplify the code.
         //
         // There are unit tests, i recommend looking at those.
@@ -156,19 +156,20 @@ public class StringResolvable : IResolvable<string?>, IEquatable<StringResolvabl
         if (entry.StartsWith(KeyOpening) && entry.EndsWith(KeyClosing))
         {
             var key = _Parse(ResolverFunctionCommon.Unwrap(entry, KeyOpening));
-            return key == null
-                ? null
-                : new StringResolvable(ResolutionType.Local, entry, (x) =>
+            return key == null ? null : new StringResolvable(ResolutionType.Local, entry, (x) =>
                 {
                     var keyVal = key.Resolve(x);
                     return string.IsNullOrEmpty(keyVal) ? null : x.Get(keyVal);
                 }, x =>
                 {
-                    // TODO : decide if this is correct - does a 'local' make sense in a migration context?
+                    var keyVal = key.Resolve(x);
+                    return string.IsNullOrEmpty(keyVal) ? null : x.Get(keyVal);
+                },
+                    x =>
+                {
                     var keyVal = key.Resolve(x);
                     return string.IsNullOrEmpty(keyVal) ? null : x.Get(keyVal);
                 });
-            ;
         }
 
         // This isn't recognised as a variable for resolution, so just return a fixed string value
@@ -177,17 +178,22 @@ public class StringResolvable : IResolvable<string?>, IEquatable<StringResolvabl
 
     private readonly Func<IOperationExecutionContext, string?> _operationFunc;
     private readonly Func<IMigrationExecutionContext, string?> _migrationFunc;
+    private readonly Func<IEnvironmentExecutionContext,string?> _environmentFunc;
+
     private readonly string _id = Guid.NewGuid().ToString();
+    
     public ResolutionType Scope { get; private init; }
     private readonly string _expression;
 
     public StringResolvable(ResolutionType resolutionType, string expression,
         Func<IOperationExecutionContext, string?> operationFunc,
-        Func<IMigrationExecutionContext, string?> migrationFunc)
+        Func<IMigrationExecutionContext, string?> migrationFunc,
+        Func<IEnvironmentExecutionContext, string?> envFunc)
     {
         this.Scope = resolutionType;
         this._operationFunc = operationFunc;
         this._migrationFunc = migrationFunc;
+        this._environmentFunc = envFunc;
         this._expression = expression;
     }
 
@@ -204,6 +210,11 @@ public class StringResolvable : IResolvable<string?>, IEquatable<StringResolvabl
     public string? Resolve(IMigrationExecutionContext executionContext)
     {
         return _migrationFunc(executionContext);
+    }
+
+    public string? Resolve(IEnvironmentExecutionContext context)
+    {
+        return _environmentFunc(context);
     }
 
     public bool Equals(StringResolvable? other)

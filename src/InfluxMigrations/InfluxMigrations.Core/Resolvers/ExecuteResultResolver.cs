@@ -49,7 +49,8 @@ public class ExecuteResultResolver : AbstractResolverFunction
 
                 return (string?)property.GetValue(result, null);
             },
-            x => throw new MigrationResolutionException($"Cannot resolve a result for a Migration."));
+            x => throw new MigrationResolutionException($"Cannot resolve a result for a Migration."),
+            x => throw new MigrationException("Cannot resolve a result for an Environment."));
     }
 
     public ExecuteResultResolver(string prefix, string suffix) : base(prefix, suffix)

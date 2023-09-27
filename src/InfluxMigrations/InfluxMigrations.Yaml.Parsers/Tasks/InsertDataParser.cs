@@ -1,5 +1,5 @@
 using InfluxMigrations.Core;
-using InfluxMigrations.Outputs;
+using InfluxMigrations.Tasks;
 using YamlDotNet.RepresentationModel;
 
 namespace InfluxMigrations.Yaml.Parsers.Tasks;
@@ -7,7 +7,22 @@ namespace InfluxMigrations.Yaml.Parsers.Tasks;
 [YamlTaskParser("insert-data")]
 public class InsertDataParser : IYamlTaskParser
 {
-    public IMigrationTaskBuilder Parse(YamlMappingNode node)
+    public IOperationTaskBuilder ParseOperationTask(YamlMappingNode node)
+    {
+        return Parse(node);
+    }
+
+    public IMigrationTaskBuilder ParseMigrationTask(YamlMappingNode node)
+    {
+        return Parse(node);
+    }
+
+    public IEnvironmentTaskBuilder ParseEnvironmentTask(YamlMappingNode node)
+    {
+        return Parse(node);
+    }
+
+    private InsertDataBuilder Parse(YamlMappingNode node)
     {
         var builder = new InsertDataBuilder();
 
@@ -30,5 +45,6 @@ public class InsertDataParser : IYamlTaskParser
         });
 
         return builder;
+        
     }
 }

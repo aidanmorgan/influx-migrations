@@ -1,6 +1,6 @@
 using InfluxMigrations.Core;
 
-namespace InfluxMigrations.Commands.Organisation;
+namespace InfluxMigrations.Operations.Organisation;
 
 public class AddOwnerToOrganisation : IMigrationOperation
 {
@@ -74,7 +74,6 @@ public class AddOwnerToOrganisationBuilder : IMigrationOperationBuilder
 {
     public string UserId { get; private set; }
     public string UserName { get; private set; }
-
     public string OrganisationName { get; private set; }
 
     public AddOwnerToOrganisationBuilder WithOrganisationName(string v)

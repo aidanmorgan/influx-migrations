@@ -1,12 +1,7 @@
-using DotNet.Testcontainers;
-using InfluxDB.Client;
-using InfluxMigrations.Commands;
 using InfluxMigrations.Core;
 using InfluxMigrations.Impl;
 using InfluxMigrations.IntegrationCommon;
-using Microsoft.Extensions.Logging;
 using NUnit.Framework;
-using Testcontainers.InfluxDb;
 
 namespace InfluxMigrations.IntegrationTests;
 
@@ -38,7 +33,9 @@ public class InfluxApiValueTests
 
         var org = InfluxRuntimeIdResolver.CreateOrganisation().WithName(InfluxConstants.Organisation);
 
-        var environment = new DefaultEnvironmentContext(_influx);
+        var environment = new DefaultEnvironmentExecutionContext(_influx);
+        await environment.Initialise();
+        
         var migrationContext = environment.CreateMigrationContext("0001");
         var executionContext = migrationContext.CreateExecutionContext(nameof(BucketName));
 
@@ -56,7 +53,9 @@ public class InfluxApiValueTests
             null);
         var org = InfluxRuntimeIdResolver.CreateOrganisation().WithId(o.Id);
 
-        var environment = new DefaultEnvironmentContext(_influx);
+        var environment = new DefaultEnvironmentExecutionContext(_influx);
+        await environment.Initialise();
+
         var migrationContext = environment.CreateMigrationContext("0001");
         var executionContext = migrationContext.CreateExecutionContext(nameof(BucketName));
 
@@ -77,9 +76,12 @@ public class InfluxApiValueTests
 
         var bucket = InfluxRuntimeIdResolver.CreateBucket().WithName(nameof(BucketName));
 
-        var environment = new DefaultEnvironmentContext(_influx);
+        var environment = new DefaultEnvironmentExecutionContext(_influx);
+        await environment.Initialise();
+
         var migrationContext = environment.CreateMigrationContext("0001");
         var executionContext = migrationContext.CreateExecutionContext(nameof(BucketName));
+
         var bucketId = await bucket.GetAsync(executionContext);
 
         Assert.That(bucketId, Is.Not.Null);
@@ -98,7 +100,9 @@ public class InfluxApiValueTests
         var org = InfluxRuntimeIdResolver.CreateOrganisation().WithName(InfluxConstants.Organisation);
         var bucket = InfluxRuntimeIdResolver.CreateBucket().WithId(b.Id);
 
-        var environment = new DefaultEnvironmentContext(_influx);
+        var environment = new DefaultEnvironmentExecutionContext(_influx);
+        await environment.Initialise();
+
         var migrationContext = environment.CreateMigrationContext("0001");
         var executionContext = migrationContext.CreateExecutionContext(nameof(BucketId));
         var bucketId = await bucket.GetAsync(executionContext);

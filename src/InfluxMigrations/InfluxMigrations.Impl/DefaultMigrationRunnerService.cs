@@ -2,7 +2,7 @@
 
 namespace InfluxMigrations.Impl;
 
-public class DefaultMigrationRunnerOptions
+public class DefaultMigrationRunnerOptions : IMigrationRunnerOptions
 {
     public IComparer<string> VersionComparer { get; init; } = new DefaultVersionComparer();
 
@@ -11,10 +11,15 @@ public class DefaultMigrationRunnerOptions
         Logger = new TextWriterMigrationLoggerFactory(Console.Out)
     };
 
+    public Func<IInfluxFactory, MigrationOptions, Task<IEnvironmentExecutionContext>> EnvironmentExecutionContextFactory { get; init; } 
+        = (influx, options) => Task.FromResult<IEnvironmentExecutionContext>(new DefaultEnvironmentExecutionContext(influx, options));
+    
     public IMigrationLoaderService Loader { get; init; }
+    public IEnvironmentConfigurator? EnvironmentConfigurator { get; init; } = new NoOpEnvironmentConfigurator();
     public IMigrationHistoryService History { get; init; }
 
     public IMigrationRunnerLogger Logger { get; init; } = new TextWriterMigrationRunnerLogger(Console.Out);
+
 }
 
 public class DefaultMigrationRunnerService : IMigrationRunnerService
@@ -43,7 +48,6 @@ public class DefaultMigrationRunnerService : IMigrationRunnerService
         var logger = _options.Logger;
 
         var history = await _options.History.LoadMigrationHistoryAsync();
-
         var loaded = await _options.Loader.LoadMigrationsAsync();
 
         if (loaded
@@ -76,7 +80,6 @@ public class DefaultMigrationRunnerService : IMigrationRunnerService
                 var toExecute = loaded
                     .Where(x => toRollback.Any(y => _options.VersionComparer.Compare(y, x.Version) == 0)).ToList();
 
-                logger.ExecutionPlan(toExecute, MigrationDirection.Down);
                 return await Execute(influx, toExecute, MigrationDirection.Down, _options.MigrationOptions, logger);
             }
             else
@@ -84,9 +87,7 @@ public class DefaultMigrationRunnerService : IMigrationRunnerService
                 var toExecute = new List<IMigration>(loaded);
                 toExecute.RemoveAll(x => alreadyExecuted.Any(y => _options.VersionComparer.Compare(y, x.Version) == 0));
                 toExecute.RemoveAll(x => _options.VersionComparer.Compare(x.Version, targetVersion) > 0);
-
-                logger.ExecutionPlan(toExecute, MigrationDirection.Up);
-
+                
                 return await Execute(influx, toExecute, MigrationDirection.Up, _options.MigrationOptions, logger);
             }
         }
@@ -97,7 +98,6 @@ public class DefaultMigrationRunnerService : IMigrationRunnerService
             toExecute.RemoveAll(x =>
                 alreadyExecuted.FirstOrDefault(y => _options.VersionComparer.Compare(x.Version, y) == 0, null) != null);
 
-            logger.ExecutionPlan(toExecute, MigrationDirection.Up);
 
             return await Execute(influx, toExecute, MigrationDirection.Up, _options.MigrationOptions, logger);
         }
@@ -111,16 +111,25 @@ public class DefaultMigrationRunnerService : IMigrationRunnerService
             logger.NoMigrations();
             return new List<MigrationResult>();
         }
-
+        
         var results = new List<MigrationResult>();
 
         var plan = direction == MigrationDirection.Up
             ? migrations.OrderBy(x => x.Version, _options.VersionComparer).ToList()
             : migrations.OrderByDescending(x => x.Version, _options.VersionComparer).ToList();
 
+        logger.ExecutionPlan(plan, direction);
+
+        var environment = await _options.EnvironmentExecutionContextFactory(influx, _options.MigrationOptions);
+        if (_options.EnvironmentConfigurator != null)
+        {
+            await _options.EnvironmentConfigurator.ConfigureEnvironmentAsync(environment, _options);
+        }
+
+        await environment.Initialise(_options.Logger);
+
         foreach (var migration in plan)
         {
-            var environment = new DefaultEnvironmentContext(influx, _options.MigrationOptions.Logger);
             var r = await migration.ExecuteAsync(environment, direction, options);
 
             results.Add(r);
@@ -151,6 +160,8 @@ public class DefaultMigrationRunnerService : IMigrationRunnerService
                 return results;
             }
         }
+
+        await environment.Finalise(_options.Logger);
 
         return results;
     }

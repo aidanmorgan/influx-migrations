@@ -69,8 +69,18 @@ public class ExtensionsService : IExtensionsService
         {
             return _loaders;
         }
-        
-        var result = Directory.GetDirectories(_directory).Select(
+
+        string[] directories = null;
+        try
+        {
+            directories = Directory.GetDirectories(_directory);
+        }
+        catch (IOException x)
+        {
+            return Array.Empty<PluginLoader>();
+        }
+
+        var result = directories.Select(
                 x =>
                 {
                     if (!_filter(x)) return null;

@@ -1,7 +1,6 @@
-using System.Runtime.CompilerServices;
 using InfluxMigrations.Core;
 
-namespace InfluxMigrations.Commands.Bucket;
+namespace InfluxMigrations.Operations.Bucket;
 
 public class AddOwnerToBucket : IMigrationOperation
 {

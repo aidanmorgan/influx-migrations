@@ -1,6 +1,5 @@
-using InfluxMigrations.Commands.Auth;
-using InfluxMigrations.Commands.User;
 using InfluxMigrations.Default.Integration;
+using InfluxMigrations.Operations.User;
 using InfluxMigrations.Yaml.Parsers;
 using NUnit.Framework;
 

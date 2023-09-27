@@ -1,12 +1,13 @@
 using System.Diagnostics;
+using System.Reflection;
 using DotNet.Testcontainers;
 using InfluxDB.Client;
 using InfluxDB.Client.Api.Domain;
 using InfluxDB.Client.Core.Exceptions;
-using InfluxMigrations.Commands.Bucket;
 using InfluxMigrations.Core;
 using InfluxMigrations.Impl;
 using InfluxMigrations.IntegrationCommon;
+using InfluxMigrations.Operations.Bucket;
 using Microsoft.Extensions.Logging;
 using NUnit.Framework;
 using Testcontainers.InfluxDb;
@@ -40,7 +41,9 @@ public class BucketTests
     {
         var bucketName = _random.RandomString(8);
 
-        var environment = new DefaultEnvironmentContext(_influx);
+        var environment = new DefaultEnvironmentExecutionContext(_influx);
+        await environment.Initialise();
+
         var resultCapture = new CaptureResultBuilder();
 
         var migration = new Migration("0001");
@@ -67,7 +70,9 @@ public class BucketTests
     {
         var bucketName = _random.RandomString(8);
 
-        var environment = new DefaultEnvironmentContext(_influx);
+        var environment = new DefaultEnvironmentExecutionContext(_influx);
+        await environment.Initialise(new NoOpMigrationRunnerLogger());
+
         var resultCapture = new CaptureResultBuilder();
 
         var migration = new Migration("0001");
@@ -97,7 +102,9 @@ public class BucketTests
             .FirstOrDefault(x => x.Name == InfluxConstants.Organisation);
         var bucket = await _influx.Create().GetBucketsApi().CreateBucketAsync(bucketName, org);
 
-        var environment = new DefaultEnvironmentContext(_influx);
+        var environment = new DefaultEnvironmentExecutionContext(_influx);
+        await environment.Initialise();
+
         var migration = new Migration("0001");
         var step = migration.AddUp("delete-bucket-name", new DeleteBucketBuilder().WithBucketName(bucketName));
 
@@ -120,7 +127,9 @@ public class BucketTests
             x.Name == InfluxConstants.Organisation);
         var bucket = await _influx.Create().GetBucketsApi().CreateBucketAsync(bucketName, org);
 
-        var environment = new DefaultEnvironmentContext(_influx);
+        var environment = new DefaultEnvironmentExecutionContext(_influx);
+        await environment.Initialise();
+
         var migration = new Migration("0001");
         var step = migration.AddUp("delete-bucket-name", new DeleteBucketBuilder().WithBucketId(bucket.Id));
 
@@ -142,7 +151,9 @@ public class BucketTests
             x.Name == InfluxConstants.Organisation);
         var bucket = await _influx.Create().GetBucketsApi().CreateBucketAsync(bucketName, org);
 
-        var environment = new DefaultEnvironmentContext(_influx);
+        var environment = new DefaultEnvironmentExecutionContext(_influx);
+        await environment.Initialise();
+
         var migration = new Migration("0001");
         migration.AddUp("delete-bucket-name", new DeleteBucketBuilder().WithBucketId(bucket.Id));
         migration.AddUp("force-throw", new ForceErrorBuilder().ErrorExecute());
@@ -177,7 +188,9 @@ public class BucketTests
                 .WithUserName(userName))
             .AddExecuteTask(TaskPrecedence.After, result);
         
-        var environment = new DefaultEnvironmentContext(_influx, new TextWriterMigrationLoggerFactory(Console.Out));
+        var environment = new DefaultEnvironmentExecutionContext(_influx);
+        await environment.Initialise();
+
         var x = await migration.ExecuteAsync(environment, MigrationDirection.Up);
 
         AssertMigrationSuccess(x);
@@ -209,7 +222,9 @@ public class BucketTests
                 .WithUserId(user.Id))
             .AddExecuteTask(TaskPrecedence.After, result);
         
-        var environment = new DefaultEnvironmentContext(_influx, new TextWriterMigrationLoggerFactory(Console.Out));
+        var environment = new DefaultEnvironmentExecutionContext(_influx);
+        await environment.Initialise();
+
         var x = await migration.ExecuteAsync(environment, MigrationDirection.Up);
 
         AssertMigrationSuccess(x);
@@ -241,7 +256,9 @@ public class BucketTests
         migration.AddUp("2", new ForceErrorBuilder().ErrorExecute());
             
         
-        var environment = new DefaultEnvironmentContext(_influx, new TextWriterMigrationLoggerFactory(Console.Out));
+        var environment = new DefaultEnvironmentExecutionContext(_influx);
+        await environment.Initialise();
+
         var x = await migration.ExecuteAsync(environment, MigrationDirection.Up);
 
         AssertMigrationRollback(x);
@@ -271,7 +288,9 @@ public class BucketTests
                 .WithUserName(userName));
             
         
-        var environment = new DefaultEnvironmentContext(_influx, new TextWriterMigrationLoggerFactory(Console.Out));
+        var environment = new DefaultEnvironmentExecutionContext(_influx);
+        await environment.Initialise();
+
         var x = await migration.ExecuteAsync(environment, MigrationDirection.Up);
 
         AssertMigrationSuccess(x);
@@ -301,7 +320,9 @@ public class BucketTests
                 .WithUserId(user.Id));
             
         
-        var environment = new DefaultEnvironmentContext(_influx, new TextWriterMigrationLoggerFactory(Console.Out));
+        var environment = new DefaultEnvironmentExecutionContext(_influx);
+        await environment.Initialise();
+
         var x = await migration.ExecuteAsync(environment, MigrationDirection.Up);
 
         AssertMigrationSuccess(x);
@@ -331,7 +352,9 @@ public class BucketTests
                 .WithUserId(user.Id));
         migration.AddUp("2", new ForceErrorBuilder().ErrorExecute());
         
-        var environment = new DefaultEnvironmentContext(_influx, new TextWriterMigrationLoggerFactory(Console.Out));
+        var environment = new DefaultEnvironmentExecutionContext(_influx);
+        await environment.Initialise();
+
         var x = await migration.ExecuteAsync(environment, MigrationDirection.Up);
 
         AssertMigrationRollback(x);
@@ -355,7 +378,9 @@ public class BucketTests
         var migration = new Migration("0001");
         migration.AddUp("1", new AddOwnerToBucketBuilder().WithBucketName(bucket.Name).WithUserName(user.Name));
         
-        var environment = new DefaultEnvironmentContext(_influx, new TextWriterMigrationLoggerFactory(Console.Out));
+        var environment = new DefaultEnvironmentExecutionContext(_influx);
+        await environment.Initialise();
+
         var x = await migration.ExecuteAsync(environment, MigrationDirection.Up);
 
         AssertMigrationSuccess(x);
@@ -379,7 +404,9 @@ public class BucketTests
         var migration = new Migration("0001");
         migration.AddUp("1", new AddOwnerToBucketBuilder().WithBucketId(bucket.Id).WithUserId(user.Id));
         
-        var environment = new DefaultEnvironmentContext(_influx, new TextWriterMigrationLoggerFactory(Console.Out));
+        var environment = new DefaultEnvironmentExecutionContext(_influx);
+        await environment.Initialise();
+
         var x = await migration.ExecuteAsync(environment, MigrationDirection.Up);
 
         AssertMigrationSuccess(x);
@@ -404,7 +431,9 @@ public class BucketTests
         migration.AddUp("1", new AddOwnerToBucketBuilder().WithBucketId(bucket.Id).WithUserId(user.Id));
         migration.AddUp("2", new ForceErrorBuilder().ErrorExecute());
         
-        var environment = new DefaultEnvironmentContext(_influx, new TextWriterMigrationLoggerFactory(Console.Out));
+        var environment = new DefaultEnvironmentExecutionContext(_influx);
+        await environment.Initialise();
+
         var x = await migration.ExecuteAsync(environment, MigrationDirection.Up);
 
         AssertMigrationRollback(x);
@@ -412,6 +441,90 @@ public class BucketTests
         var owners = await _influx.Create().GetBucketsApi().GetOwnersAsync(bucket.Id);
         Assert.That(owners.All(x => x.Id != user.Id));
     }
-    
+
+    [Test]
+    public async Task RemoveOwnerFromBucketById_Success()
+    {
+        var bucketName = _random.RandomString();
+        var userName = _random.RandomString();
+
+        var org = (await _influx.Create().GetOrganizationsApi().FindOrganizationsAsync()).FirstOrDefault(
+            x => string.Equals(x?.Name, InfluxConstants.Organisation, StringComparison.InvariantCultureIgnoreCase),
+            null);
+
+        var user = await _influx.Create().GetUsersApi().CreateUserAsync(userName);
+        var bucket = await _influx.Create().GetBucketsApi().CreateBucketAsync(bucketName, org.Id);
+        await _influx.Create().GetBucketsApi().AddOwnerAsync(user.Id, bucket.Id);
+
+        var migration = new Migration("1");
+        migration.AddUp("1", new RemoveOwnerFromBucketBuilder().WithBucketId(bucket.Id).WithUserId(user.Id));
+        
+        var environment = new DefaultEnvironmentExecutionContext(_influx);
+        await environment.Initialise();
+
+        var x = await migration.ExecuteAsync(environment, MigrationDirection.Up);
+        
+        AssertMigrationSuccess(x);
+
+        var owners = await _influx.Create().GetBucketsApi().GetOwnersAsync(bucket.Id);
+        Assert.That(owners.Any(y => y.Id == user.Id), Is.False);
+    }
+
+    [Test]
+    public async Task RemoveOwnerFromBucketByName_Success()
+    {
+        var bucketName = _random.RandomString();
+        var userName = _random.RandomString();
+
+        var org = (await _influx.Create().GetOrganizationsApi().FindOrganizationsAsync()).FirstOrDefault(
+            x => string.Equals(x?.Name, InfluxConstants.Organisation, StringComparison.InvariantCultureIgnoreCase),
+            null);
+
+        var user = await _influx.Create().GetUsersApi().CreateUserAsync(userName);
+        var bucket = await _influx.Create().GetBucketsApi().CreateBucketAsync(bucketName, org.Id);
+        await _influx.Create().GetBucketsApi().AddOwnerAsync(user.Id, bucket.Id);
+
+        var migration = new Migration("1");
+        migration.AddUp("1", new RemoveOwnerFromBucketBuilder().WithBucketName(bucketName).WithUserName(userName));
+        
+        var environment = new DefaultEnvironmentExecutionContext(_influx);
+        await environment.Initialise();
+
+        var x = await migration.ExecuteAsync(environment, MigrationDirection.Up);
+        
+        AssertMigrationSuccess(x);
+
+        var owners = await _influx.Create().GetBucketsApi().GetOwnersAsync(bucket.Id);
+        Assert.That(owners.Any(y => y.Id == user.Id), Is.False);
+    }
+
+    [Test]
+    public async Task RemoveOwnerFromBucket_Rollback()
+    {
+        var bucketName = _random.RandomString();
+        var userName = _random.RandomString();
+
+        var org = (await _influx.Create().GetOrganizationsApi().FindOrganizationsAsync()).FirstOrDefault(
+            x => string.Equals(x?.Name, InfluxConstants.Organisation, StringComparison.InvariantCultureIgnoreCase),
+            null);
+
+        var user = await _influx.Create().GetUsersApi().CreateUserAsync(userName);
+        var bucket = await _influx.Create().GetBucketsApi().CreateBucketAsync(bucketName, org.Id);
+        await _influx.Create().GetBucketsApi().AddOwnerAsync(user.Id, bucket.Id);
+
+        var migration = new Migration("1");
+        migration.AddUp("1", new RemoveOwnerFromBucketBuilder().WithBucketName(bucketName).WithUserName(userName));
+        migration.AddUp("2", new ForceErrorBuilder().ErrorExecute());
+        
+        var environment = new DefaultEnvironmentExecutionContext(_influx);
+        await environment.Initialise();
+
+        var x = await migration.ExecuteAsync(environment, MigrationDirection.Up);
+        
+        AssertMigrationRollback(x);
+
+        var owners = await _influx.Create().GetBucketsApi().GetOwnersAsync(bucket.Id);
+        Assert.That(owners.Any(y => y.Id == user.Id), Is.True);
+    }
     
 }

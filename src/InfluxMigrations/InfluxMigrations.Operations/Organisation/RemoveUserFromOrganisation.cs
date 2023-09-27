@@ -1,7 +1,6 @@
-﻿using InfluxDB.Client;
-using InfluxMigrations.Core;
+﻿using InfluxMigrations.Core;
 
-namespace InfluxMigrations.Commands.Organisation;
+namespace InfluxMigrations.Operations.Organisation;
 
 public class RemoveUserFromOrganisation : IMigrationOperation
 {
@@ -41,13 +40,9 @@ public class RemoveUserFromOrganisation : IMigrationOperation
                 return OperationResults.ExecuteFailed($"Cannot remove User from Organisation, no User id set.");
             }
 
-            var result = await _context.Influx.GetOrganizationsApi().AddMemberAsync(userId, organisationId);
+            await _context.Influx.GetOrganizationsApi().DeleteMemberAsync(userId, organisationId);
 
-            return OperationResults.ExecuteSuccess(new RemoveUserFromOrganisationResult()
-            {
-                OrganisationId = organisationId,
-                UserId = userId
-            });
+            return OperationResults.ExecuteSuccess();
         }
         catch (Exception x)
         {
@@ -55,37 +50,31 @@ public class RemoveUserFromOrganisation : IMigrationOperation
         }
     }
 
-    public async Task<OperationResult<OperationCommitState, ICommitResult>> CommitAsync(IExecuteResult? r)
+    public Task<OperationResult<OperationCommitState, ICommitResult>> CommitAsync(IExecuteResult? r)
     {
-        var result = (RemoveUserFromOrganisationResult?)r;
+        return OperationResults.CommitUnnecessary(r);
+    }
 
-        if (string.IsNullOrEmpty(result.OrganisationId) || string.IsNullOrEmpty(result.UserId))
+    public  async Task<OperationResult<OperationRollbackState, IRollbackResult>> RollbackAsync(IExecuteResult? r)
+    {
+        var organisationId = await Organisation.GetAsync(_context);
+        var userId = await User.GetAsync(_context);
+
+        if (string.IsNullOrEmpty(organisationId) || string.IsNullOrEmpty(userId))
         {
-            return OperationResults.CommitFailed(result,
-                $"Cannot commit {typeof(RemoveUserFromOrganisationResult).FullName}, Organisation and User Id's are required.");
+            return OperationResults.RollbackSuccess(r);
         }
 
         try
         {
-            await _context.Influx.GetOrganizationsApi().DeleteMemberAsync(result.UserId, result.OrganisationId);
-            return OperationResults.CommitSuccess(result);
+            await _context.Influx.GetOrganizationsApi().AddMemberAsync(userId, organisationId);
+            return OperationResults.RollbackSuccess(r);
         }
         catch (Exception x)
         {
-            return OperationResults.CommitFailed(result, x);
+            return OperationResults.RollbackFailed(r, x);
         }
     }
-
-    public Task<OperationResult<OperationRollbackState, IRollbackResult>> RollbackAsync(IExecuteResult? r)
-    {
-        return OperationResults.RollbackUnnecessary(r);
-    }
-}
-
-public class RemoveUserFromOrganisationResult : IExecuteResult
-{
-    public string OrganisationId { get; set; }
-    public string UserId { get; set; }
 }
 
 public class RemoveUserFromOrganisationBuilder : IMigrationOperationBuilder
@@ -93,8 +82,8 @@ public class RemoveUserFromOrganisationBuilder : IMigrationOperationBuilder
     public string OrganisationId { get; private set; }
     public string OrganisationName { get; private set; }
 
-    public string? UserId { get; private set; }
-    public string? UserName { get; private set; }
+    public string UserId { get; private set; }
+    public string UserName { get; private set; }
 
     public RemoveUserFromOrganisationBuilder WithOrganisationName(string name)
     {

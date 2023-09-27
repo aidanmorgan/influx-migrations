@@ -1,5 +1,8 @@
 ﻿namespace InfluxMigrations.Core;
 
+/// <summary>
+/// Flagging attribute to allow disovery of IResolverFunction instances at runtime.
+/// </summary>
 public class ResolverFunctionAttribute : Attribute
 {
     public string Key { get; init; }

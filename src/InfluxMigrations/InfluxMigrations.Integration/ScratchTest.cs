@@ -1,12 +1,12 @@
 ﻿using System.Data.SqlTypes;
-using InfluxMigrations.Commands.Auth;
-using InfluxMigrations.Commands.Bucket;
-using InfluxMigrations.Commands.Organisation;
-using InfluxMigrations.Commands.User;
 using InfluxMigrations.Core;
 using InfluxMigrations.Impl;
 using InfluxMigrations.IntegrationCommon;
-using InfluxMigrations.Outputs;
+using InfluxMigrations.Operations.Auth;
+using InfluxMigrations.Operations.Bucket;
+using InfluxMigrations.Operations.Organisation;
+using InfluxMigrations.Operations.User;
+using InfluxMigrations.Tasks;
 using NUnit.Framework;
 
 namespace InfluxMigrations.IntegrationTests;
@@ -51,7 +51,9 @@ public class ScratchTest
             _random.RandomString(16)
         };
 
-        var environment = new DefaultEnvironmentContext(_influx, new TextWriterMigrationLoggerFactory(Console.Out));
+        var environment = new DefaultEnvironmentExecutionContext(_influx);
+        await environment.Initialise();
+
 
         var migration = new Migration("0001");
         migration.AddUp("create-organisation", new CreateOrganisationBuilder().WithName(organisationName));

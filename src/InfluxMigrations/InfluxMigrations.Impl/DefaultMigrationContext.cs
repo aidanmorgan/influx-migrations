@@ -7,13 +7,13 @@ namespace InfluxMigrations.Impl;
 public class DefaultMigrationExecutionContext : IMigrationExecutionContext
 {
     public string Version { get; private set; }
-    public IMigrationEnvironmentContext EnvironmentContext { get; private set; }
+    public IEnvironmentExecutionContext EnvironmentExecutionContext { get; private set; }
 
     private Dictionary<string, string> _variables = new Dictionary<string, string>();
 
-    public DefaultMigrationExecutionContext(IMigrationEnvironmentContext env, string version)
+    public DefaultMigrationExecutionContext(IEnvironmentExecutionContext env, string version)
     {
-        this.EnvironmentContext = env;
+        this.EnvironmentExecutionContext = env;
         this.Version = version;
     }
 
@@ -31,16 +31,10 @@ public class DefaultMigrationExecutionContext : IMigrationExecutionContext
 
     public string? Get(string name)
     {
-        if (_variables.TryGetValue(name, out var variable))
-        {
-            return variable;
-        }
-
-        return null;
+        return _variables.TryGetValue(name, out var variable) ? variable : null;
     }
 
-    private Dictionary<string, IOperationExecutionContext> _executionContexts =
-        new Dictionary<string, IOperationExecutionContext>();
+    private readonly Dictionary<string, IOperationExecutionContext> _executionContexts =  new Dictionary<string, IOperationExecutionContext>();
 
     public IOperationExecutionContext CreateExecutionContext(string id)
     {
@@ -59,5 +53,5 @@ public class DefaultMigrationExecutionContext : IMigrationExecutionContext
         visitor.Visit(this);
     }
 
-    public IInfluxDBClient Influx => EnvironmentContext.Influx;
+    public IInfluxDBClient Influx => EnvironmentExecutionContext.Influx;
 }

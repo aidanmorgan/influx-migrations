@@ -8,5 +8,5 @@ public interface IContextVisitor
 {
     void Visit(IOperationExecutionContext ctx);
     void Visit(IMigrationExecutionContext ctx);
-    void Visit(IMigrationEnvironmentContext ctx);
+    void Visit(IEnvironmentExecutionContext ctx);
 }

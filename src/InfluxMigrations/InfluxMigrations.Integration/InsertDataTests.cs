@@ -1,8 +1,8 @@
-﻿using InfluxMigrations.Commands.Bucket;
-using InfluxMigrations.Core;
+﻿using InfluxMigrations.Core;
 using InfluxMigrations.Impl;
 using InfluxMigrations.IntegrationCommon;
-using InfluxMigrations.Outputs;
+using InfluxMigrations.Operations.Bucket;
+using InfluxMigrations.Tasks;
 using NUnit.Framework;
 
 namespace InfluxMigrations.IntegrationTests;
@@ -41,7 +41,10 @@ public class InsertDataTests
             .WithOrganisationName(InfluxConstants.Organisation)
             .AddLine("weather,location=us-midwest temperature=82 ${now}"));
 
-        await migration.ExecuteAsync(new DefaultEnvironmentContext(_influx), MigrationDirection.Up);
+        var environment = new DefaultEnvironmentExecutionContext(_influx);
+        await environment.Initialise();
+        
+        await migration.ExecuteAsync(environment, MigrationDirection.Up);
 
         var tables = await _influx.Create().GetQueryApi().QueryAsync($"from(bucket:\"{bucketName}\") |> range(start:0)",
             org: InfluxConstants.Organisation);

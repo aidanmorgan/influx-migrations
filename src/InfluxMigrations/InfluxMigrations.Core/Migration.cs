@@ -9,14 +9,14 @@ public class MigrationOperationInstance
     public string Id { get; private set; }
     public IMigrationOperationBuilder Operation { get; private set; }
 
-    public List<IMigrationTaskBuilder> BeforeExecuteTasks { get; private set; } = new List<IMigrationTaskBuilder>();
-    public List<IMigrationTaskBuilder> BeforeCommitTasks { get; private set; } = new List<IMigrationTaskBuilder>();
-    public List<IMigrationTaskBuilder> BeforeRollbackTasks { get; private set; } = new List<IMigrationTaskBuilder>();
+    public List<IOperationTaskBuilder> BeforeExecuteTasks { get; private set; } = new List<IOperationTaskBuilder>();
+    public List<IOperationTaskBuilder> BeforeCommitTasks { get; private set; } = new List<IOperationTaskBuilder>();
+    public List<IOperationTaskBuilder> BeforeRollbackTasks { get; private set; } = new List<IOperationTaskBuilder>();
 
     
-    public List<IMigrationTaskBuilder> AfterExecuteTasks { get; private set; } = new List<IMigrationTaskBuilder>();
-    public List<IMigrationTaskBuilder> AfterCommitTasks { get; private set; } = new List<IMigrationTaskBuilder>();
-    public List<IMigrationTaskBuilder> AfterRollbackTasks { get; private set; } = new List<IMigrationTaskBuilder>();
+    public List<IOperationTaskBuilder> AfterExecuteTasks { get; private set; } = new List<IOperationTaskBuilder>();
+    public List<IOperationTaskBuilder> AfterCommitTasks { get; private set; } = new List<IOperationTaskBuilder>();
+    public List<IOperationTaskBuilder> AfterRollbackTasks { get; private set; } = new List<IOperationTaskBuilder>();
 
 
     public MigrationOperationInstance(string id, IMigrationOperationBuilder operation)
@@ -25,7 +25,7 @@ public class MigrationOperationInstance
         Operation = operation;
     }
 
-    private static void AddTask(TaskPrecedence order, IMigrationTaskBuilder builder, List<IMigrationTaskBuilder> befores,  List<IMigrationTaskBuilder> afters)
+    private static void AddTask(TaskPrecedence order, IOperationTaskBuilder builder, List<IOperationTaskBuilder> befores,  List<IOperationTaskBuilder> afters)
     {
         switch (order)
         {
@@ -48,19 +48,19 @@ public class MigrationOperationInstance
         }
     }
     
-    public MigrationOperationInstance AddExecuteTask(TaskPrecedence order, IMigrationTaskBuilder builder)
+    public MigrationOperationInstance AddExecuteTask(TaskPrecedence order, IOperationTaskBuilder builder)
     {
         AddTask(order, builder, BeforeExecuteTasks, AfterExecuteTasks);
         return this;
     }
 
-    public MigrationOperationInstance AddCommitTask(TaskPrecedence order, IMigrationTaskBuilder builder)
+    public MigrationOperationInstance AddCommitTask(TaskPrecedence order, IOperationTaskBuilder builder)
     {
         AddTask(order, builder, BeforeCommitTasks, AfterCommitTasks);
         return this;
     }
 
-    public MigrationOperationInstance AddRollbackTask(TaskPrecedence order, IMigrationTaskBuilder builder)
+    public MigrationOperationInstance AddRollbackTask(TaskPrecedence order, IOperationTaskBuilder builder)
     {
         AddTask(order, builder, BeforeRollbackTasks, AfterRollbackTasks);
         return this;
@@ -70,20 +70,6 @@ public class MigrationOperationInstance
 record MigrationOperationRuntimeState(string Id, MigrationOperationInstance Instance, IMigrationOperation Operation,
     OperationResult<OperationExecutionState, IExecuteResult> ExecuteResult,
     IOperationExecutionContext ExecutionContext);
-
-public interface IMigration
-{
-    string Version { get; set; }
-    MigrationOperationInstance AddUp(string id, IMigrationOperationBuilder operation);
-    MigrationOperationInstance AddDown(string id, IMigrationOperationBuilder operation);
-
-    Task<MigrationResult> ExecuteAsync(IMigrationEnvironmentContext env, MigrationDirection direction,
-        MigrationOptions? opts = null);
-
-    IMigration AddAfterTask(IMigrationTaskBuilder task);
-
-    IMigration AddBeforeTask(IMigrationTaskBuilder task);
-}
 
 public class MigrationOptions
 {
@@ -125,7 +111,7 @@ public class Migration : IMigration
         return entry;
     }
 
-    public async Task<MigrationResult> ExecuteAsync(IMigrationEnvironmentContext env, MigrationDirection direction,
+    public async Task<MigrationResult> ExecuteAsync(IEnvironmentExecutionContext env, MigrationDirection direction,
         MigrationOptions? o = null)
     {
         // TODO : refactor this method, it's long and doing too many things
@@ -144,7 +130,7 @@ public class Migration : IMigration
 
         try
         {
-            foreach (var task in _beforeMigrationTasks.Select(x => x.Build()))
+            foreach (var task in _beforeMigrationTasks.Select(x => x.BuildMigration()))
             {
                 var outputLogger = logger.TaskStart(task);
                 var result = await task.ExecuteAsync(context);
@@ -157,7 +143,7 @@ public class Migration : IMigration
 
                 var executionContext = context.CreateExecutionContext(op.Id);
 
-                foreach (var task in op.BeforeExecuteTasks.Select(x => x.Build()))
+                foreach (var task in op.BeforeExecuteTasks.Select(x => x.BuildOperation()))
                 {
                     await task.ExecuteAsync(executionContext);
                 }
@@ -181,7 +167,7 @@ public class Migration : IMigration
                     throw new MigrationExecutionException($"Execution of Operation {op.Id} failed.");
                 }
                 
-                foreach (var output in op.AfterExecuteTasks.Select(x => x.Build()))
+                foreach (var output in op.AfterExecuteTasks.Select(x => x.BuildOperation()))
                 {
                     var outputLog = executeLog.TaskStart(output);
                     var taskResult = await output.ExecuteAsync(executionContext);
@@ -194,7 +180,7 @@ public class Migration : IMigration
             {
                 var commitLog = logger.CommitStart(state.Instance);
 
-                foreach (var task in state.Instance.BeforeCommitTasks.Select(x => x.Build()))
+                foreach (var task in state.Instance.BeforeCommitTasks.Select(x => x.BuildOperation()))
                 {
                     var outputLog = commitLog.TaskStart(task);
                     var taskResult = await task.ExecuteAsync(state.ExecutionContext);
@@ -215,7 +201,7 @@ public class Migration : IMigration
                     commitLog.Complete(commitResult);
                 }
 
-                foreach (var output in state.Instance.AfterCommitTasks.Select(x => x.Build()))
+                foreach (var output in state.Instance.AfterCommitTasks.Select(x => x.BuildOperation()))
                 {
                     var outputLog = commitLog.TaskStart(output);
 
@@ -236,7 +222,7 @@ public class Migration : IMigration
                 {
                     var rollbackLog = logger.RollbackStart(state.Instance);
 
-                    foreach (var task in state.Instance.BeforeRollbackTasks.Select(x => x.Build()))
+                    foreach (var task in state.Instance.BeforeRollbackTasks.Select(x => x.BuildOperation()))
                     {
                         var outputLog = rollbackLog.TaskStart(task);
                         var result = await task.ExecuteAsync(state.ExecutionContext);
@@ -258,7 +244,7 @@ public class Migration : IMigration
                         rollbackLog.Complete(rollbackResult);
                     }
 
-                    foreach (var task in state.Instance.AfterRollbackTasks.Select(x => x.Build()))
+                    foreach (var task in state.Instance.AfterRollbackTasks.Select(x => x.BuildOperation()))
                     {
                         var outputLog = rollbackLog.TaskStart(task);
 
@@ -272,7 +258,7 @@ public class Migration : IMigration
         }
         finally
         {
-            foreach (var task in _afterMigrationTaks.Select(x => x.Build()))
+            foreach (var task in _afterMigrationTaks.Select(x => x.BuildMigration()))
             {
                 var outputLogger = logger.TaskStart(task);
 

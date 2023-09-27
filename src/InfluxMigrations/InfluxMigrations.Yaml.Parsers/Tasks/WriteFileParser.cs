@@ -1,5 +1,5 @@
 ﻿using InfluxMigrations.Core;
-using InfluxMigrations.Outputs;
+using InfluxMigrations.Tasks;
 using YamlDotNet.RepresentationModel;
 
 namespace InfluxMigrations.Yaml.Parsers.Tasks;
@@ -7,7 +7,7 @@ namespace InfluxMigrations.Yaml.Parsers.Tasks;
 [YamlTaskParser("write-file")]
 public class WriteFileParser : IYamlTaskParser
 {
-    public IMigrationTaskBuilder Parse(YamlMappingNode node)
+    private WriteFileTaskBuilder Parse(YamlMappingNode node)
     {
         var builder = new WriteFileTaskBuilder();
 
@@ -23,5 +23,20 @@ public class WriteFileParser : IYamlTaskParser
         });
 
         return builder;
+    }
+
+    public IMigrationTaskBuilder ParseMigrationTask(YamlMappingNode node)
+    {
+        return Parse(node);
+    }
+
+    public IEnvironmentTaskBuilder ParseEnvironmentTask(YamlMappingNode node)
+    {
+        return Parse(node);
+    }
+
+    IOperationTaskBuilder IYamlTaskParser.ParseOperationTask(YamlMappingNode node)
+    {
+        return Parse(node);
     }
 }

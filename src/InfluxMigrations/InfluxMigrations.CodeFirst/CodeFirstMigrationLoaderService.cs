@@ -51,4 +51,16 @@ public class CodeFirstMigrationLoaderService : IMigrationLoaderService
 
         return migrations;
     }
+
+    public async Task ConfigureEnvironmentAsync(IEnvironmentExecutionContext env, IMigrationRunnerOptions options)
+    {
+        var configurer = AppDomain.CurrentDomain.GetExtensionService()?.GetExtensionTypes()
+            .WithAttributeAndInterface(typeof(InfluxMigrationAttribute), typeof(IEnvironmentConfigurator)).FirstOrDefault();
+
+        if (configurer != null)
+        {
+            var instance = (IEnvironmentConfigurator)Activator.CreateInstance(configurer.Item2);
+            await instance?.ConfigureEnvironmentAsync(env, options);
+        }
+    }
 }

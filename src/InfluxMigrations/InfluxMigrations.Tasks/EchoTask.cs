@@ -1,9 +1,9 @@
 ﻿using InfluxMigrations.Core;
 using InfluxMigrations.Core.Resolvers;
 
-namespace InfluxMigrations.Outputs;
+namespace InfluxMigrations.Tasks;
 
-public class EchoTask : IMigrationTask
+public class EchoTask : IMigrationTask, IOperationTask, IEnvironmentTask
 {
     public List<IResolvable<string>> Values { get; set; } = new List<IResolvable<string>>();
 
@@ -37,9 +37,21 @@ public class EchoTask : IMigrationTask
 
         return TaskResults.TaskSuccessAsync();
     }
+
+    public Task<TaskResult> ExecuteAsync(IEnvironmentExecutionContext ctx)
+    {
+        var line = string.Join("\n", Values.Select(x => x.Resolve(ctx)));
+
+        if (!string.IsNullOrEmpty(line))
+        {
+            Writer.WriteLine(line);
+        }
+
+        return TaskResults.TaskSuccessAsync();
+    }
 }
 
-public class EchoTaskBuilder : IMigrationTaskBuilder
+public class EchoTaskBuilder : IMigrationTaskBuilder, IOperationTaskBuilder, IEnvironmentTaskBuilder
 {
     public TextWriter Writer { get; private set; }
     public List<string> Lines { get; private set; } = new List<string>();
@@ -56,7 +68,25 @@ public class EchoTaskBuilder : IMigrationTaskBuilder
         return this;
     }
 
-    public IMigrationTask Build()
+    public IMigrationTask BuildMigration()
+    {
+        return new EchoTask()
+        {
+            Values = Lines.Select(StringResolvable.Parse).ToList(),
+            Writer = this.Writer ?? Console.Out
+        };
+    }
+
+    public IOperationTask BuildOperation()
+    {
+        return new EchoTask()
+        {
+            Values = Lines.Select(StringResolvable.Parse).ToList(),
+            Writer = this.Writer ?? Console.Out
+        };
+    }
+
+    public IEnvironmentTask BuildEnvironment()
     {
         return new EchoTask()
         {

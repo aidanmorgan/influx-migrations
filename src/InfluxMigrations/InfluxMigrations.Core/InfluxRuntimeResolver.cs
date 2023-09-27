@@ -4,10 +4,16 @@ using InfluxMigrations.Core.Resolvers;
 
 namespace InfluxMigrations.Core;
 
+/// <summary>
+/// A mechanism that is used to load a value from Influx at runtime based on a Name or Id for resources such as
+/// Organisations, Buckets, Users etc.
+/// </summary>
 public interface IInfluxRuntimeResolver
 {
-    Task<string?> GetAsync(IOperationExecutionContext ctx);
-    Task<string?> GetAsync(IMigrationExecutionContext ctx);
+    /// <summary>
+    /// Retrieves the value from influx.
+    /// </summary>
+    Task<string?> GetAsync(IContext ctx);
 
     IInfluxRuntimeResolver WithId(IResolvable<string?> id);
     IInfluxRuntimeResolver WithName(IResolvable<string?> name);
@@ -47,15 +53,7 @@ public abstract class InfluxRuntimeResolver : IInfluxRuntimeResolver
         return this;
     }
     
-    public async Task<string?> GetAsync(IOperationExecutionContext ctx)
-    {
-        var nameValue = Name?.Resolve(ctx);
-        var idValue = Id?.Resolve(ctx);
-
-        return await _lookup(idValue, nameValue, ctx.Influx);
-    }
-
-    public async Task<string?> GetAsync(IMigrationExecutionContext ctx)
+    public async Task<string?> GetAsync(IContext ctx)
     {
         var nameValue = Name?.Resolve(ctx);
         var idValue = Id?.Resolve(ctx);
@@ -64,10 +62,6 @@ public abstract class InfluxRuntimeResolver : IInfluxRuntimeResolver
     }
 }
 
-/// <summary>
-/// A utility wrapper that can be used to try and resolve an influxdb id given either the id name or a name in a migration,
-/// if the name is provided then an influxdb API call is made to lookup the corresponding entry and find it's id.
-/// </summary>
 public class InfluxRuntimeIdResolver : InfluxRuntimeResolver
 {
     private InfluxRuntimeIdResolver(Func<string?, string?, IInfluxDBClient, Task<string?>> lookup) : base(lookup)

@@ -3,6 +3,9 @@ using System.Text.RegularExpressions;
 
 namespace InfluxMigrations.Core;
 
+/// <summary>
+/// Used to parse a string in a influx db format into a TimeSpan.
+/// </summary>
 public static class TimeSpanParser
 {
     const string Quantity = "quantity";

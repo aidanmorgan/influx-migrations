@@ -7,14 +7,16 @@ public class MigrationResult
     private readonly List<MigrationIssue> _issues = new List<MigrationIssue>();
     public List<MigrationIssue> Issues => new List<MigrationIssue>(_issues);
 
+    /// <summary>
+    /// Adds a MigrationIssue to the list of issues about this Migration.
+    /// </summary>
     public MigrationIssue AddIssue(MigrationIssue issue)
     {
         _issues.Add(issue);
         return issue;
     }
 
-    public MigrationIssue AddIssue<TS, TR>(string id, MigrationIssueCategory category, MigrationPhase phase,
-        MigrationIssueSeverity severity, OperationResult<TS, TR> result = null) where TS : Enum
+    public MigrationIssue AddIssue<TS, TR>(string id, MigrationIssueCategory category, MigrationPhase phase, MigrationIssueSeverity severity, OperationResult<TS, TR> result = null) where TS : Enum
     {
         var issue = new MigrationIssue()
         {
@@ -39,6 +41,13 @@ public class MigrationResult
     /// </summary>
     public bool Inconsistent => _issues.Any(x => x.Phase == MigrationPhase.Rollback);
 
+    /// <summary>
+    /// Which direction is the operation going - forwards or backwards?
+    /// </summary>
     public MigrationDirection Direction { get; set; }
+    
+    /// <summary>
+    /// Any options that were used to configure the Migration.
+    /// </summary>
     public MigrationOptions Options { get; set; }
 }

@@ -23,6 +23,11 @@ public class LocalContextResolver : AbstractResolverFunction
             // TODO : decide if this is correct - does a 'local' make sense in a migration context?
             var keyVal = key.Resolve((IMigrationExecutionContext)x);
             return string.IsNullOrEmpty(keyVal) ? null : x.Get(keyVal);
+        },
+        x =>
+        {
+            var keyVal = key.Resolve((IEnvironmentExecutionContext)x);
+            return string.IsNullOrEmpty(keyVal) ? null : x.Get(keyVal);
         });
     }
 

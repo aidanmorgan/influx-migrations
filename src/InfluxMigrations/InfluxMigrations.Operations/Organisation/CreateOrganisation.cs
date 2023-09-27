@@ -1,9 +1,8 @@
-﻿using InfluxDB.Client;
-using InfluxDB.Client.Api.Domain;
+﻿using InfluxDB.Client.Api.Domain;
 using InfluxMigrations.Core;
 using InfluxMigrations.Core.Resolvers;
 
-namespace InfluxMigrations.Commands.Organisation;
+namespace InfluxMigrations.Operations.Organisation;
 
 public class CreateOrganisation : IMigrationOperation
 {
@@ -20,7 +19,7 @@ public class CreateOrganisation : IMigrationOperation
     {
         try
         {
-            var name = OrganisationName.Resolve(_context);
+            var name = OrganisationName?.Resolve(_context);
 
             if (string.IsNullOrEmpty(name))
             {

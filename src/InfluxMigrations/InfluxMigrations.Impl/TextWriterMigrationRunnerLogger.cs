@@ -1,4 +1,5 @@
-﻿using InfluxMigrations.Core;
+﻿using System.Transactions;
+using InfluxMigrations.Core;
 using Pastel;
 
 namespace InfluxMigrations.Impl;
@@ -49,5 +50,10 @@ public class TextWriterMigrationRunnerLogger : IMigrationRunnerLogger
     public void MigrationSaveFailed(MigrationHistory entry)
     {
         _writer.WriteLine($"Migration {entry.Version} failed.".Pastel(ConsoleColor.Red));
+    }
+
+    public ITaskLogger StartTask(IEnvironmentTask task)
+    {
+        return new TextWriterTaskLogger(_writer, null, task);
     }
 }

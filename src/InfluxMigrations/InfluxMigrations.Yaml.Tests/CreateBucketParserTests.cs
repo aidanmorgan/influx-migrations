@@ -1,9 +1,9 @@
 using InfluxDB.Client;
-using InfluxMigrations.Commands.Bucket;
 using InfluxMigrations.Core;
 using InfluxMigrations.Default.Integration;
 using InfluxMigrations.Impl;
 using InfluxMigrations.IntegrationCommon;
+using InfluxMigrations.Operations.Bucket;
 using InfluxMigrations.Yaml.Parsers;
 using NUnit.Framework;
 
