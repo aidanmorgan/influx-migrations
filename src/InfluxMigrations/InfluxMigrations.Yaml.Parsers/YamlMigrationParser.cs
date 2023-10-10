@@ -5,7 +5,6 @@ namespace InfluxMigrations.Yaml.Parsers;
 
 public class YamlMigrationParser : ParserCommon, IYamlMigrationParser
 {
-    
     public YamlMigrationParser()
     {
     }

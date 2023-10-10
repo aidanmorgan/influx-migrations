@@ -7,12 +7,21 @@ namespace InfluxMigrations.Tasks;
 
 public class InsertData : IMigrationTask, IOperationTask, IEnvironmentTask
 {
+    private static readonly IDictionary<string, WritePrecision> PrecisionLookup =
+        new Dictionary<string, WritePrecision>()
+        {
+            { "ms", WritePrecision.Ms },
+            { "ns", WritePrecision.Ns },
+            { "us", WritePrecision.Us },
+            { "s", WritePrecision.S }
+        };
+
     public IInfluxRuntimeResolver  Bucket { get; private set; } = InfluxRuntimeNameResolver.CreateBucket();
 
     public IInfluxRuntimeResolver Organisation { get; private set; } =
         InfluxRuntimeNameResolver.CreateOrganisation();
 
-    public WritePrecision WritePrecision { get; set; } = WritePrecision.Ms;
+    public IResolvable<string> Precision { get; init; } = StringResolvable.Parse("ms");
     public List<IResolvable<string?>> Data { get; init; } = new List<IResolvable<string?>>();
 
     public InsertData()
@@ -42,6 +51,14 @@ public class InsertData : IMigrationTask, IOperationTask, IEnvironmentTask
 
     private async Task<TaskResult> Execute(IContext ctx)
     {
+        var precision = Precision.Resolve((ctx));
+        if (string.IsNullOrEmpty(precision) || !PrecisionLookup.ContainsKey(precision.ToLowerInvariant()))
+        {
+            return TaskResults.TaskFailure($"Cannot resolve WritePrecision.");
+        }
+        
+        var writePrecision = PrecisionLookup[precision.ToLowerInvariant()];
+       
         var bucket = await Bucket.GetAsync(ctx);
         var organisation = await Organisation.GetAsync(ctx);
 
@@ -55,12 +72,12 @@ public class InsertData : IMigrationTask, IOperationTask, IEnvironmentTask
         {
             if (string.IsNullOrEmpty(bucket) || string.IsNullOrEmpty(organisation))
             {
-                await ctx.Influx.GetWriteApiAsync().WriteRecordsAsync(pointData, WritePrecision.Ms);
+                await ctx.Influx.GetWriteApiAsync().WriteRecordsAsync(pointData, writePrecision);
             }
             else
             {
                 await ctx.Influx.GetWriteApiAsync()
-                    .WriteRecordsAsync(pointData, WritePrecision.Ms, bucket, organisation);
+                    .WriteRecordsAsync(pointData, writePrecision, bucket, organisation);
             }
         }
         catch (InfluxException x)
@@ -80,6 +97,7 @@ public class InsertDataBuilder : IMigrationTaskBuilder, IOperationTaskBuilder, I
     public string BucketName { get; private set; }
     public string OrganisationId { get; private set; }
     public string OrganisationName { get; private set; }
+    public string Precision { get; private set; } = "ms";
 
     public InsertDataBuilder WithBucketId(string id)
     {
@@ -117,12 +135,18 @@ public class InsertDataBuilder : IMigrationTaskBuilder, IOperationTaskBuilder, I
         return this;
     }
 
+    public InsertDataBuilder WithPrecision(string precision)
+    {
+        this.Precision = precision;
+        return this;
+    }
+
     public IMigrationTask BuildMigration()
     {
         return new InsertData()
             {
                 Data = Lines.Select(StringResolvable.Parse).ToList(),
-                WritePrecision = WritePrecision.Ms
+                Precision = StringResolvable.Parse(Precision)
             }
             .Initialise(x =>
             {
@@ -136,7 +160,7 @@ public class InsertDataBuilder : IMigrationTaskBuilder, IOperationTaskBuilder, I
         return new InsertData()
             {
                 Data = Lines.Select(StringResolvable.Parse).ToList(),
-                WritePrecision = WritePrecision.Ms
+                Precision = StringResolvable.Parse(Precision)
             }
             .Initialise(x =>
             {
@@ -150,7 +174,7 @@ public class InsertDataBuilder : IMigrationTaskBuilder, IOperationTaskBuilder, I
         return new InsertData()
             {
                 Data = Lines.Select(StringResolvable.Parse).ToList(),
-                WritePrecision = WritePrecision.Ms
+                Precision = StringResolvable.Parse(Precision)
             }
             .Initialise(x =>
             {

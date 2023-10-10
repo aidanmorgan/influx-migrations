@@ -10,7 +10,7 @@
 
     <ItemGroup>
         <PackageReference Include="LunarLabs.Parser" Version="1.5.5"/>
-        <PackageReference Include="YamlDotNet" Version="13.3.1"/>
+        <PackageReference Include="YamlDotNet" Version="13.4.0" />
     </ItemGroup>
 
     <ItemGroup>

@@ -6,13 +6,6 @@ namespace InfluxMigrations.Operations.Auth;
 
 public class CreateBucketToken : IMigrationOperation
 {
-    private static readonly IDictionary<string, Permission.ActionEnum> ActionEnums =
-        new Dictionary<string, Permission.ActionEnum>()
-        {
-            { "read", Permission.ActionEnum.Read },
-            { "write", Permission.ActionEnum.Write }
-        };
-
     private readonly IOperationExecutionContext _context;
     public IInfluxRuntimeResolver Bucket { get; set; }
     public IInfluxRuntimeResolver User { get; set; }
@@ -47,57 +40,46 @@ public class CreateBucketToken : IMigrationOperation
             var description = TokenDescription?.Resolve(_context) ??
                               $"Token created via Migration {_context.MigrationExecutionContext.Version}";
             var userId = await User?.GetAsync(_context);
-
-            Authorization auth = null;
+            if (string.IsNullOrEmpty(userId))
+            {
+                return OperationResults.ExecuteFailed("Could not resolve User id.");
+            }
 
             var bucket = await _context.Influx.GetBucketsApi().FindBucketByIdAsync(bucketId);
 
-            var actionEnums = Permissions.Select(x => x.Resolve(_context)).Select(x => ActionEnums[x])
+            var actionEnums = Permissions
+                .Select(x => x.Resolve(_context))
+                .Select(TokenCommon.MapPermission)
                 .ToList();
 
-            // if a userid is set, then it should be set as the owner of the authroization, otherwise the authorization
-            // is created with the Auth token as the owner.
-            if (userId != null)
+            if (actionEnums.Any(x => x == null))
             {
-                auth = await _context.Influx.GetAuthorizationsApi().CreateAuthorizationAsync(
-                    new AuthorizationPostRequest(
-                        bucket.OrgID,
-                        userId,
-                        actionEnums.Select(x => new Permission(x,
-                            new PermissionResource()
-                            {
-                                Id = bucketId,
-                                Type = PermissionResource.TypeBuckets
-                            })
-                        ).ToList(),
-                        AuthorizationUpdateRequest.StatusEnum.Inactive,
-                        description
-                    )
-                );
+                return OperationResults.ExecuteFailed($"Cannot find permission for provided value.");
             }
-            else
-            {
-                auth = await _context.Influx.GetAuthorizationsApi().CreateAuthorizationAsync(
-                    new AuthorizationPostRequest()
-                    {
-                        OrgID = bucket.OrgID,
-                        Status = AuthorizationUpdateRequest.StatusEnum.Inactive,
-                        Permissions = actionEnums.Select(x => new Permission(x, new PermissionResource()
-                            {
-                                Id = bucketId,
-                                Type = PermissionResource.TypeBuckets
-                            })
-                        ).ToList(),
-                        Description = description
-                    });
-            }
+
+            var permissions = actionEnums
+                .Select(x => new Permission((Permission.ActionEnum)x!,
+                    new PermissionResource(type: PermissionResource.TypeBuckets, id: bucketId)))
+                .ToList();
+            
+            var existing = await _context.Influx.GetAuthorizationsApi().FindAuthorizationsByUserIdAsync(userId);
+
+            var auth = await _context.Influx.GetAuthorizationsApi().CreateAuthorizationAsync(
+                new AuthorizationPostRequest(
+                    bucket.OrgID,
+                    userId,
+                    permissions,
+                    AuthorizationUpdateRequest.StatusEnum.Inactive,
+                    description
+                )
+            );
 
             return OperationResults.ExecuteSuccess(new CreateBucketTokenResult()
             {
                 Token = auth.Token,
                 TokenId = auth.Id,
                 BucketId = bucketId,
-                OwnerId = auth.Links?.User
+                OwnerId = userId
             });
         }
         catch (Exception x)

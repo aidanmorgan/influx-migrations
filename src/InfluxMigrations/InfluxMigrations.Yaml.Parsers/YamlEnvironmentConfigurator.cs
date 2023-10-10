@@ -8,10 +8,14 @@ public class YamlEnvironmentConfigurator : ParserCommon, IEnvironmentConfigurato
     private static readonly List<string> EnvironmentConfigurationFilenames = new List<string>()
     {
         "global.yml",
-        "env.yml"
+        "global.yaml",
+        "env.yml",
+        "env.yaml",
+        "setup.yml",
+        "setup.yaml"
     };
     
-    private readonly YamlStream _stream;
+    private readonly YamlStream? _stream;
 
     public static IEnvironmentConfigurator CreateFromDirectory(string directory)
     {
@@ -51,6 +55,11 @@ public class YamlEnvironmentConfigurator : ParserCommon, IEnvironmentConfigurato
     
     public Task ConfigureEnvironmentAsync(IEnvironmentExecutionContext ctx, IMigrationRunnerOptions opts)
     {
+        if (_stream == null)
+        {
+            return Task.CompletedTask;
+        }
+        
         _stream.Documents.First().RootNode.ForEach("before", x =>
         {
             var task = x.GetStringValue("task");

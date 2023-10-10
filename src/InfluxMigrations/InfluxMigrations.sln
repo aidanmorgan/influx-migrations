@@ -16,7 +16,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InfluxMigrations.Tasks", "I
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InfluxMigrations.Impl", "InfluxMigrations.Impl\InfluxMigrations.Impl.csproj", "{27EF0A7E-12F4-4222-8865-E47801295D17}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InfluxMigrations.Integration", "InfluxMigrations.Integration\InfluxMigrations.Integration.csproj", "{9A30CCE9-A6B7-46E5-B4DD-81B08C3BFC85}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InfluxMigrations.Operations.Integration", "InfluxMigrations.Operations.Integration\InfluxMigrations.Operations.Integration.csproj", "{9A30CCE9-A6B7-46E5-B4DD-81B08C3BFC85}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InfluxMigrate", "InfluxMigrate\InfluxMigrate.csproj", "{1D86A2C4-DED7-4A74-B1CE-EC7E2F6FA48C}"
 EndProject

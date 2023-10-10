@@ -7,11 +7,13 @@
 
         <IsPackable>false</IsPackable>
         <IsTestProject>true</IsTestProject>
+        <RootNamespace>InfluxMigrations.Operations.IntegrationTests</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Ductus.FluentDocker" Version="2.10.59"/>
         <PackageReference Include="InfluxDB.Client" Version="4.14.0-dev.11972"/>
-        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.5.0"/>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.6.0"/>
         <PackageReference Include="NUnit" Version="3.13.3"/>
         <PackageReference Include="NUnit3TestAdapter" Version="4.5.0" />
         <PackageReference Include="NUnit.Analyzers" Version="3.6.1"/>
@@ -23,7 +25,9 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\InfluxMigrations.Core\InfluxMigrations.Core.csproj"/>
+        <ProjectReference Include="..\InfluxMigrations.Default.Integration\InfluxMigrations.Default.Integration.csproj" />
+        <ProjectReference Include="..\InfluxMigrations.Impl\InfluxMigrations.Impl.csproj"/>
+        <ProjectReference Include="..\InfluxMigrations.IntegrationCommon\InfluxMigrations.IntegrationCommon.csproj"/>
     </ItemGroup>
 
 </Project>

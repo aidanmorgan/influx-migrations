@@ -36,12 +36,12 @@ public class Program
         public string? TargetVersion { get; set; } = null;
 
         [Option(shortName: 'e', longName: "extensions", Required = false, HelpText = "Directory to load additional assemblies from.", Default = "Extensions")]
-        public string ExtensionsDirectory { get; set; } = null;
+        public string ExtensionsDirectory { get; set; }
     }
 
     public static async Task<int> Main(string[] args)
     {
-        var result = Parser.Default.ParseArguments<Options>(args).MapResult(Do, Error);
+        var result = Parser.Default.ParseArguments<Options>(args).MapResult(_ExecuteMigration, Error);
 
         return (await result);
     }
@@ -56,7 +56,7 @@ public class Program
         return Task.FromResult(-1);
     }
 
-    private static async Task<int> Do(Options o)
+    private static async Task<int> _ExecuteMigration(Options o)
     {
         var extensionsLoader = string.IsNullOrEmpty(o.ExtensionsDirectory) ? null : new ExtensionsService(o.ExtensionsDirectory);
         if (extensionsLoader != null)

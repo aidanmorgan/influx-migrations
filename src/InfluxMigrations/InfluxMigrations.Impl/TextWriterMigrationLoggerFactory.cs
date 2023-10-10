@@ -70,6 +70,9 @@ public class TextWriterRunnerLogger : IMigrationRunnerLogger
 
     public ITaskLogger StartTask(IEnvironmentTask task)
     {
+        _writer.Write($"Starting task {task.GetType().FullName}");
+        _writer.WriteLine($"[migration]".Pastel(ConsoleColor.Cyan));
+
         return new TextWriterTaskLogger(_writer, null, task);
     }
 }

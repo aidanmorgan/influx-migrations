@@ -1,0 +1,7 @@
+migration:
+  up:
+    - operation: create-user
+      id: create-aidan
+      username: aidan
+      password: password
+    
