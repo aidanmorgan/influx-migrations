@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net7.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <PackageId>InfluxMigrations.Extensions.Vault</PackageId>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\Core\InfluxMigrations.Core\InfluxMigrations.Core.csproj" />
+      <ProjectReference Include="..\..\Core\InfluxMigrations.Operations\InfluxMigrations.Operations.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="HashiCorp.Vault" Version="0.3.0" />
+      <PackageReference Include="InfluxMigrations.Core" Version="0.1.0" />
+      <PackageReference Include="InfluxMigrations.Yaml" Version="1.0.0" />
+    </ItemGroup>
+
+
+
+
+</Project>
