@@ -399,3 +399,8 @@ FodyWeavers.xsd
 src/InfluxMigrations/.idea/.idea.InfluxMigrations/.idea
 influx
 src/InfluxMigrationsExtensions/.idea/.idea.InfluxMigrations.Extensions/.idea
+InfluxMigrations/.packages
+Extensions/InfluxMigrations.Extensions.Vault/.idea
+**/packages/**
+**/.packages/**
+**/.idea/**

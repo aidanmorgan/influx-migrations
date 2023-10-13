@@ -20,32 +20,25 @@ using static Nuke.Common.Tools.DotNet.DotNetTasks;
 class Build : NukeBuild
 {
     [GitVersion] readonly GitVersion GitVersion;
-    static readonly AbsolutePath PackageOutputDirectory = RootDirectory / "packages";
-    static readonly AbsolutePath CoreInterfacesPackageOutputDirectory = PackageOutputDirectory / "core-interfaces";
-    static readonly AbsolutePath CorePackagesDirectory = PackageOutputDirectory / "core";
-    static readonly AbsolutePath ExtensionsPackageOutputDirectory = PackageOutputDirectory / "extensions";
-
     static readonly AbsolutePath TestsRoot = RootDirectory / "tests";
 
-    static readonly AbsolutePath CorePath = RootDirectory / "src" / "InfluxMigrations";
-    static readonly Solution CoreSolutionFile = (CorePath / "InfluxMigrations.sln").ReadSolution();
-    static readonly AbsolutePath CoreTestsDirectory = TestsRoot / "core";
+    static readonly AbsolutePath CoreRootDirectory = RootDirectory / "InfluxMigrations";
+    static readonly AbsolutePath ExtensionsRootDirectory = RootDirectory / "Extensions";
+
+    static readonly Solution CoreSolution = SolutionModelTasks.ParseSolution(CoreRootDirectory / "InfluxMigrations.sln");
 
     static readonly List<AbsolutePath> InterfaceProjects = new List<AbsolutePath>()
     {
-        CorePath / "Core" / "InfluxMigrations.Core",
-        CorePath / "Yaml" / "InfluxMigrations.Yaml"
+        CoreRootDirectory / "src" / "Core" / "InfluxMigrations.Core",
+        CoreRootDirectory / "src" / "Core"/"InfluxMigrations.Yaml"
     };
 
-    static readonly AbsolutePath ExtensionsPath = RootDirectory / "src" / "InfluxMigrationsExtensions";
-    static readonly Solution ExtensionsSolutionFile = (ExtensionsPath / "InfluxMigrations.Extensions.sln").ReadSolution();
-
-    static readonly List<AbsolutePath> AllSolutionDirectories = new List<AbsolutePath>()
-    {
-        CorePath,
-        ExtensionsPath
-    };
-
+    static readonly AbsolutePath PackageOutputDirectory = RootDirectory / "pack";
+    static readonly AbsolutePath InterfacesPackDirectory = PackageOutputDirectory / "abstractions";
+    static readonly AbsolutePath CorePackDirectory = PackageOutputDirectory / "core";
+    static readonly AbsolutePath ExtensionsPackBaseDirectory = PackageOutputDirectory / "extensions";
+    
+    
     public static int Main () => Execute<Build>(x => x.All);
 
     [Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")]
@@ -55,34 +48,30 @@ class Build : NukeBuild
         .Before(CoreRestore)
         .Executes(() =>
         {
-            foreach (var project in AllSolutionDirectories)
-            {
-                project.GlobDirectories("**/bin", "**/obj")
-                    .ForEach(x => x.DeleteDirectory());
-            }
-            
-            PackageOutputDirectory.DeleteDirectory();
-            TestsRoot.DeleteDirectory();
+            CoreRootDirectory.GlobDirectories("**/bin", "**/obj")
+                .ForEach(x => x.DeleteDirectory());
         });
 
     Target CoreRestore => _ => _
         .Executes(() =>
         {
-            DotNetRestore(s => s.SetProjectFile(CoreSolutionFile));    
+            DotNetRestore(s => s
+                .SetProjectFile(CoreSolution)
+                .SetPackageDirectory(CoreRootDirectory / "packages"));    
         });
 
     Target CoreCompile => _ => _
         .DependsOn(CoreRestore)
         .Executes(() =>
         {
-            Console.WriteLine(CoreSolutionFile);
-            DotNetBuild(s => s
-                .SetProjectFile(CoreSolutionFile)
-                .SetConfiguration(Configuration)
-                .SetFileVersion(GitVersion.AssemblySemFileVer)
-                .SetAssemblyVersion(GitVersion.AssemblySemVer)
-                .EnableNoRestore());
-            
+                DotNetBuild(s => s
+                    .SetNoWarns()
+                    .SetProjectFile(CoreSolution)
+                    .SetConfiguration(Configuration)
+                    .SetFileVersion(GitVersion.AssemblySemFileVer)
+                    .SetAssemblyVersion(GitVersion.AssemblySemVer)
+                    .SetPackageDirectory(CoreRootDirectory / "packages")
+                    .EnableNoRestore());
         });
 
     Target CoreUnitTests => _ => _
@@ -90,13 +79,13 @@ class Build : NukeBuild
         .Before(CorePackage)
         .Executes(() =>
         {
-            foreach (var testProject in CoreSolutionFile.GetAllProjects("*UnitTests"))
+            foreach (var testProject in CoreSolution.GetUnitTestProjects())
             {
                 DotNetTest(s => s
                     .SetProjectFile(testProject)
                     .SetNoBuild(true)
                     .SetNoRestore(true)
-                    .SetResultsDirectory(CoreTestsDirectory / "results")
+                    .SetResultsDirectory(TestsRoot / "results" / testProject.Solution.Name)
                 );
             }
         });
@@ -106,13 +95,13 @@ class Build : NukeBuild
         .Before(CorePackage)
         .Executes(() =>
         {
-            foreach (var testProject in CoreSolutionFile.GetAllProjects("*IntegrationTests"))
+            foreach (var testProject in CoreSolution.GetIntegrationTestProjects())
             {
                 DotNetTest(s => s
                     .SetProjectFile(testProject)
                     .SetNoBuild(true)
                     .SetNoRestore(true)
-                    .SetResultsDirectory(CoreTestsDirectory / "results")
+                    .SetResultsDirectory(TestsRoot / "results" / testProject.Solution.Name)
                 );
             }
         });
@@ -121,29 +110,40 @@ class Build : NukeBuild
         .DependsOn(CoreCompile)
         .Executes(() =>
         {
+            InterfacesPackDirectory.CreateOrCleanDirectory();
+            
             foreach (var interfaceProject in InterfaceProjects)
             {
                 DotNetPack(s => 
                     s.SetProject(interfaceProject)
                         .SetNoRestore(true)
                         .SetNoBuild(true)
-                        .SetOutputDirectory(CoreInterfacesPackageOutputDirectory)
+                        .SetVersion(GitVersion.AssemblySemVer)
+                        .SetOutputDirectory(InterfacesPackDirectory)
                         .SetAuthors("Aidan Morgan")
                         .SetRepositoryUrl("https://github.com/aidanmorgan/influx-migrations")
                 );
             }
 
-            var coreProjects = CoreSolutionFile.GetAllProjects("*")
-                .Where(x => !x.Directory.Contains("Test"))
-                .Where(x => !InterfaceProjects.Contains(x.Directory));
+            var ignoreProjects = new List<AbsolutePath>();
+            ignoreProjects.AddRange(InterfaceProjects);
+            ignoreProjects.AddRange(CoreSolution.GetUnitTestProjects().Select(x => x.Path));
+            ignoreProjects.AddRange(CoreSolution.GetIntegrationTestProjects().Select(x => x.Path));
+            
+            // skip tests and any interface projects
+            var coreProjects = CoreSolution.GetAllProjects("*")
+                .Where(x => ! ignoreProjects.Contains(x.Path));
 
+            CorePackDirectory.CreateOrCleanDirectory();
+            
             foreach (var pkg in coreProjects)
             {
                 DotNetPack(s => 
                     s.SetProject(pkg)
                         .SetNoRestore(true)
                         .SetNoBuild(true)
-                        .SetOutputDirectory(CorePackagesDirectory)
+                        .SetVersion(GitVersion.AssemblySemVer)
+                        .SetOutputDirectory(CorePackDirectory)
                         .SetAuthors("Aidan Morgan")
                         .SetRepositoryUrl("https://github.com/aidanmorgan/influx-migrations")
                 );
@@ -155,36 +155,88 @@ class Build : NukeBuild
         .DependsOn(CoreRestore)
         .DependsOn(CoreCompile)
         .DependsOn(CoreUnitTests)
-//        .DependsOn(CoreIntegrationTests)
         .DependsOn(CorePackage);
 
+    private IEnumerable<Solution> FindExtensionSolutions()
+    {
+        return ExtensionsRootDirectory.GlobFiles("**/*.sln").Select(SolutionModelTasks.ParseSolution);
+    }
+    
     Target ExtensionRestore => _ => _
         .Executes(() =>
         {
-            DotNetRestore(s => s
-                .SetProjectFile(ExtensionsSolutionFile)
-                .AddSources(CoreInterfacesPackageOutputDirectory));
+            foreach (var extensionSolution in FindExtensionSolutions())
+            {
+                DotNetRestore(s => s
+                    .SetProjectFile(extensionSolution)
+                    .SetPackageDirectory(extensionSolution.Directory / "packages")
+                    .AddSources(InterfacesPackDirectory)
+                    .AddSources("https://api.nuget.org/v3/index.json")
+                );
+            }
         });
 
     Target ExtensionsCompile => _ => _
         .DependsOn(ExtensionRestore)
         .Executes(() =>
         {
-            DotNetBuild(s =>
-                s.SetProjectFile(ExtensionsSolutionFile));
+            foreach (var extensionSolution in FindExtensionSolutions())
+            {
+                DotNetBuild(s =>
+                    s.SetProjectFile(extensionSolution)
+                        .SetNoRestore(true)
+                        .SetPackageDirectory(extensionSolution.Directory / "packages")
+                    );
+            }
         });
 
-    Target ExtensionsPackage => _ => _
+    Target ExtensionsUnitTests => _ => _
         .DependsOn(ExtensionsCompile)
         .Executes(() =>
         {
-            DotNetPack(s =>
-                s.SetProject(ExtensionsPath)
+            var projects = FindExtensionSolutions().SelectMany(x => x.GetUnitTestProjects());
+            
+            foreach (var project in projects)
+            {
+                DotNetTest(s => s
+                    .SetProjectFile(project)
                     .SetNoBuild(true)
-                    .SetOutputDirectory(ExtensionsPackageOutputDirectory)
-                    .SetAuthors("Aidan Morgan")
-                    .SetRepositoryUrl("https://github.com/aidanmorgan/influx-migrations")
-            );
+                    .SetNoRestore(true)
+                    .SetResultsDirectory(TestsRoot / "results" / project.Solution.Name));
+            }
+        });
+
+    Target ExtensionsIntegrationTests => _ => _
+        .Executes(() =>
+        {
+            var projects = FindExtensionSolutions().SelectMany(x => x.GetIntegrationTestProjects());
+            
+            foreach (var project in projects)
+            {
+                DotNetTest(s => s
+                    .SetProjectFile(project)
+                    .SetNoBuild(true)
+                    .SetNoRestore(true)
+                    .SetResultsDirectory(TestsRoot / "results" / project.Solution.Name));
+            }
+
+        });
+
+    Target ExtensionsPackage => _ => _
+        .DependsOn(ExtensionsUnitTests)
+        .Executes(() =>
+        {
+            foreach (var extensionSolution in FindExtensionSolutions())
+            {
+                DotNetPack(s =>
+                    s.SetProject(extensionSolution)
+                        .SetNoBuild(true)
+                        .SetVersion(GitVersion.AssemblySemVer)
+                        .SetOutputDirectory(ExtensionsPackBaseDirectory / extensionSolution.Name)
+                        .SetAuthors("Aidan Morgan")
+                        .SetRepositoryUrl("https://github.com/aidanmorgan/influx-migrations")
+                );
+            }
         });
 
     Target Extensions => _ => _
@@ -195,4 +247,19 @@ class Build : NukeBuild
     Target All => _ => _
         .DependsOn(Core)
         .Triggers(Extensions);
+}
+
+
+public static class SolutionExtensions
+{
+    public static IEnumerable<Project> GetUnitTestProjects(this Solution solution)
+    {
+        return solution.GetAllProjects("*UnitTests");
+    }
+
+    public static IEnumerable<Project> GetIntegrationTestProjects(this Solution solution)
+    {
+        return solution.GetAllProjects("*IntegrationTests");
+
+    }
 }

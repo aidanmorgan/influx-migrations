@@ -83,7 +83,9 @@
               "ExtensionRestore",
               "Extensions",
               "ExtensionsCompile",
-              "ExtensionsPackage"
+              "ExtensionsIntegrationTests",
+              "ExtensionsPackage",
+              "ExtensionsUnitTests"
             ]
           }
         },
@@ -104,7 +106,9 @@
               "ExtensionRestore",
               "Extensions",
               "ExtensionsCompile",
-              "ExtensionsPackage"
+              "ExtensionsIntegrationTests",
+              "ExtensionsPackage",
+              "ExtensionsUnitTests"
             ]
           }
         },
