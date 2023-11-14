@@ -523,6 +523,4 @@ public class BucketTests
         var owners = await _influx.Create().GetBucketsApi().GetOwnersAsync(bucket.Id);
         Assert.That(owners.Any(y => y.Id == user.Id), Is.True);
     }
-
-
 }

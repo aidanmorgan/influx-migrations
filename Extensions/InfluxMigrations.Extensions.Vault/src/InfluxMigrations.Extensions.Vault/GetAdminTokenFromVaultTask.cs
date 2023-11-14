@@ -25,7 +25,7 @@ public class GetAdminTokenFromVaultTask : AbstractVaultTask
     }
 }
 
-[YamlTaskParser("vault-get-admin-token")]
+[YamlTaskParser("vault:get-admin-token")]
 public class GetAdminTokenFromVaultTaskBuilder : IMigrationTaskBuilder, IOperationTaskBuilder, IEnvironmentTaskBuilder
 {
     private GetAdminTokenFromVaultTask Build()

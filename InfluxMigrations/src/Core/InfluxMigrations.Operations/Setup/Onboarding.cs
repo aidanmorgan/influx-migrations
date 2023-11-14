@@ -45,6 +45,10 @@ namespace InfluxMigrations.Operations.Setup
                 {
                     _context.Accept(new ChangeAdminTokenVisitor(adminToken));
                 }
+                else
+                {
+                    _context.Accept(new ChangeAdminTokenVisitor(result.Auth.Token));
+                }
 
                 return OperationResults.ExecuteSuccess(new OnboardingResult()
                 {
@@ -53,7 +57,8 @@ namespace InfluxMigrations.Operations.Setup
                     OrganisationId = result.Org.Id,
                     OrganisationName = result.Org.Name,
                     User = result.User.Id,
-                    UserName = result.User.Name
+                    UserName = result.User.Name,
+                    Token = result.Auth.Token
                 });
             }
             catch (Exception x)
@@ -81,6 +86,7 @@ namespace InfluxMigrations.Operations.Setup
         public string OrganisationName { get; init; }
         public string User { get; init; }
         public string UserName { get; init; }
+        public string Token { get; init; }
     }
 
     public class OnboardingBuilder : IMigrationOperationBuilder

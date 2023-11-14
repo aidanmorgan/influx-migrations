@@ -97,7 +97,7 @@ public class VaultWriterBuilder : IMigrationTaskBuilder, IOperationTaskBuilder, 
     }
 }
 
-[YamlTaskParser("vault-write")]
+[YamlTaskParser("vault:write")]
 public class VaultWriterParser : IYamlTaskParser
 {
     private VaultWriterBuilder Parse(YamlMappingNode node)

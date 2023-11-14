@@ -125,14 +125,14 @@ class Build : NukeBuild
                 );
             }
 
-            var ignoreProjects = new List<AbsolutePath>();
-            ignoreProjects.AddRange(InterfaceProjects);
-            ignoreProjects.AddRange(CoreSolution.GetUnitTestProjects().Select(x => x.Path));
-            ignoreProjects.AddRange(CoreSolution.GetIntegrationTestProjects().Select(x => x.Path));
+            var projectsToIgnoreWhenPacking = new List<AbsolutePath>();
+            projectsToIgnoreWhenPacking.AddRange(InterfaceProjects);
+            projectsToIgnoreWhenPacking.AddRange(CoreSolution.GetUnitTestProjects().Select(x => x.Path));
+            projectsToIgnoreWhenPacking.AddRange(CoreSolution.GetIntegrationTestProjects().Select(x => x.Path));
             
             // skip tests and any interface projects
             var coreProjects = CoreSolution.GetAllProjects("*")
-                .Where(x => ! ignoreProjects.Contains(x.Path));
+                .Where(x => ! projectsToIgnoreWhenPacking.Contains(x.Path));
 
             CorePackDirectory.CreateOrCleanDirectory();
             

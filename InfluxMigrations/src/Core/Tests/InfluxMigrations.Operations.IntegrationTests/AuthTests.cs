@@ -144,140 +144,366 @@ public class AuthTests
     }
 
     [Test]
-    public async Task DeleteBucketToken_SeparateTokens()
+    public async Task ChangeAuthorizationState_ByBucketAndUserName_Success()
     {
-        var bucketName = _random.RandomString();
-        var organisationName = _random.RandomString();
-        var userName = _random.RandomString();
+        var result = await CreateBucketAuth();
 
-        var organisation = await _influx.Create().GetOrganizationsApi().CreateOrganizationAsync(organisationName);
-        var user = await _influx.Create().GetUsersApi().CreateUserAsync(userName);
-        var bucket = await _influx.Create().GetBucketsApi().CreateBucketAsync(bucketName, organisation);
-
-        await CreateToken(bucket, user, Permission.ActionEnum.Read);
-        await CreateToken(bucket, user, Permission.ActionEnum.Write);
-
-        var migration = new Migration("1.0");
-        migration.AddUp("step 1",
-            new DeleteBucketTokenPermissionsBuilder()
-                .WithBucketId(bucket.Id)
-                .WithUserId(user.Id)
-                .WithPermission("read"));
-
-        var env = new DefaultEnvironmentExecutionContext(_influx);
-        await env.Initialise();
+        var migration = new Migration("1");
+        migration.AddUp("1",
+            new ChangeAuthorisationStateBuilder()
+                .WithBucketName(result.Bucket.Name)
+                .WithUserName(result.User.Name)
+                .WithState("inactive"));
         
-        await migration.ExecuteAsync(env, MigrationDirection.Up);
+        var environment = new DefaultEnvironmentExecutionContext(_influx);
+        await environment.Initialise();
+        
+        var x = await migration.ExecuteAsync(environment, MigrationDirection.Up);
 
-        var loaded = await _influx.Create().GetAuthorizationsApi().FindAuthorizationsByUserIdAsync(user.Id);
+        NunitExtensions.AssertMigrationSuccess(x);
+
+        var loaded = await _influx.Create().GetAuthorizationsApi().FindAuthorizationsByUserIdAsync(result.User.Id);
         Assert.That(loaded.Count, Is.EqualTo(1));
-        Assert.That(loaded.First().Permissions.Count, Is.EqualTo(1));
-        Assert.That(loaded.First().Permissions.First().Action, Is.EqualTo(Permission.ActionEnum.Write));
+        Assert.That(loaded.First().Status, Is.EqualTo(AuthorizationUpdateRequest.StatusEnum.Inactive));
     }
     
     [Test]
-    public async Task DeleteBucketToken_IndividualToken()
+    public async Task ChangeAuthorizationState_ByBucketAndUserNameWithMultipleActions_Success()
     {
-        var bucketName = _random.RandomString();
-        var organisationName = _random.RandomString();
-        var userName = _random.RandomString();
+        var result = await CreateBucketAuth(Permission.ActionEnum.Read, Permission.ActionEnum.Write);
 
-        var organisation = await _influx.Create().GetOrganizationsApi().CreateOrganizationAsync(organisationName);
-        var user = await _influx.Create().GetUsersApi().CreateUserAsync(userName);
-        var bucket = await _influx.Create().GetBucketsApi().CreateBucketAsync(bucketName, organisation);
-
-        await CreateToken(bucket, user, Permission.ActionEnum.Read, Permission.ActionEnum.Write);
-
-        var migration = new Migration("1.0");
-        migration.AddUp("step 1",
-            new DeleteBucketTokenPermissionsBuilder()
-                .WithBucketId(bucket.Id)
-                .WithUserId(user.Id)
-                .WithPermission("read"));
-
-        var env = new DefaultEnvironmentExecutionContext(_influx);
-        await env.Initialise();
+        var migration = new Migration("1");
+        migration.AddUp("1",
+            new ChangeAuthorisationStateBuilder()
+                .WithBucketName(result.Bucket.Name)
+                .WithUserName(result.User.Name)
+                .WithState("inactive"));
         
-        await migration.ExecuteAsync(env, MigrationDirection.Up);
+        var environment = new DefaultEnvironmentExecutionContext(_influx);
+        await environment.Initialise();
+        
+        var x = await migration.ExecuteAsync(environment, MigrationDirection.Up);
 
-        var permissions = await _influx.Create().GetAuthorizationsApi().FindAuthorizationsByUserIdAsync(user.Id);
-        Assert.That(permissions.Count, Is.EqualTo(1));
-        Assert.That(permissions.First().Permissions.Count, Is.EqualTo(1));
-        Assert.That(permissions.First().Permissions.First().Action, Is.EqualTo(Permission.ActionEnum.Write));
+        NunitExtensions.AssertMigrationSuccess(x);
+
+        var loaded = await _influx.Create().GetAuthorizationsApi().FindAuthorizationsByUserIdAsync(result.User.Id);
+        Assert.That(loaded.Count, Is.EqualTo(1));
+        Assert.That(loaded.First().Status, Is.EqualTo(AuthorizationUpdateRequest.StatusEnum.Inactive));
+    }
+    
+
+    [Test]
+    public async Task ChangeAuthorizationState_ByToken_Success()
+    {
+        var result = await CreateBucketAuth();
+
+        var migration = new Migration("1");
+        migration.AddUp("1",
+            new ChangeAuthorisationStateBuilder()
+                .WithToken(result.Authorization.Token)
+                .WithState("inactive"));
+        
+        var environment = new DefaultEnvironmentExecutionContext(_influx);
+        await environment.Initialise();
+        
+        var x = await migration.ExecuteAsync(environment, MigrationDirection.Up);
+
+        NunitExtensions.AssertMigrationSuccess(x);
+
+        var loaded = await _influx.Create().GetAuthorizationsApi().FindAuthorizationsByUserIdAsync(result.User.Id);
+        Assert.That(loaded.Count, Is.EqualTo(1));
+        Assert.That(loaded.First().Status, Is.EqualTo(AuthorizationUpdateRequest.StatusEnum.Inactive));
+    }
+    
+    [Test]
+    public async Task ChangeAuthorizationState_ByTokenWithMultipleActions_Success()
+    {
+        var result = await CreateBucketAuth(Permission.ActionEnum.Read, Permission.ActionEnum.Write);
+
+        var migration = new Migration("1");
+        migration.AddUp("1",
+            new ChangeAuthorisationStateBuilder()
+                .WithToken(result.Authorization.Token)
+                .WithState("inactive"));
+        
+        var environment = new DefaultEnvironmentExecutionContext(_influx);
+        await environment.Initialise();
+        
+        var x = await migration.ExecuteAsync(environment, MigrationDirection.Up);
+
+        NunitExtensions.AssertMigrationSuccess(x);
+
+        var loaded = await _influx.Create().GetAuthorizationsApi().FindAuthorizationsByUserIdAsync(result.User.Id);
+        Assert.That(loaded.Count, Is.EqualTo(1));
+        Assert.That(loaded.First().Status, Is.EqualTo(AuthorizationUpdateRequest.StatusEnum.Inactive));
     }    
     
     [Test]
-    public async Task DeleteBucketToken_MultipleToken_DeleteAll()
+    public async Task ChangeAuthorizationState_ByUser_Success()
     {
-        var bucketName = _random.RandomString();
-        var organisationName = _random.RandomString();
-        var userName = _random.RandomString();
+        var result = await CreateBucketAuth();
 
-        var organisation = await _influx.Create().GetOrganizationsApi().CreateOrganizationAsync(organisationName);
-        var user = await _influx.Create().GetUsersApi().CreateUserAsync(userName);
-        var bucket = await _influx.Create().GetBucketsApi().CreateBucketAsync(bucketName, organisation);
-
-        await CreateToken(bucket, user, Permission.ActionEnum.Read);
-        await CreateToken(bucket, user, Permission.ActionEnum.Write);
-
-        var migration = new Migration("1.0");
-        migration.AddUp("step 1",
-            new DeleteBucketTokenPermissionsBuilder()
-                .WithBucketId(bucket.Id)
-                .WithUserId(user.Id)
-                .WithPermission("read").WithPermission("write"));
-
-        var env = new DefaultEnvironmentExecutionContext(_influx);
-        await env.Initialise();
+        var migration = new Migration("1");
+        migration.AddUp("1",
+            new ChangeAuthorisationStateBuilder()
+                .WithUserName(result.User.Name)
+                .WithState("inactive"));
         
-        await migration.ExecuteAsync(env, MigrationDirection.Up);
+        var environment = new DefaultEnvironmentExecutionContext(_influx);
+        await environment.Initialise();
+        
+        var x = await migration.ExecuteAsync(environment, MigrationDirection.Up);
 
-        var permissions = await _influx.Create().GetAuthorizationsApi().FindAuthorizationsByUserIdAsync(user.Id);
-        Assert.That(permissions.Count, Is.EqualTo(0));
-    }       
+        NunitExtensions.AssertMigrationSuccess(x);
+
+        var loaded = await _influx.Create().GetAuthorizationsApi().FindAuthorizationsByUserIdAsync(result.User.Id);
+        Assert.That(loaded.Count, Is.EqualTo(1));
+        Assert.That(loaded.First().Status, Is.EqualTo(AuthorizationUpdateRequest.StatusEnum.Inactive));
+    }    
     
     [Test]
-    public async Task DeleteBucketToken_IndividualToken_DeleteAll()
+    public async Task ChangeAuthorizationState_ByUserWithMultipleActions_Success()
     {
-        var bucketName = _random.RandomString();
-        var organisationName = _random.RandomString();
-        var userName = _random.RandomString();
+        var result = await CreateBucketAuth(Permission.ActionEnum.Read, Permission.ActionEnum.Write);
 
-        var organisation = await _influx.Create().GetOrganizationsApi().CreateOrganizationAsync(organisationName);
-        var user = await _influx.Create().GetUsersApi().CreateUserAsync(userName);
-        var bucket = await _influx.Create().GetBucketsApi().CreateBucketAsync(bucketName, organisation);
-
-        await CreateToken(bucket, user, Permission.ActionEnum.Read, Permission.ActionEnum.Write);
-
-        var migration = new Migration("1.0");
-        migration.AddUp("step 1",
-            new DeleteBucketTokenPermissionsBuilder()
-                .WithBucketId(bucket.Id)
-                .WithUserId(user.Id)
-                .WithPermission("read").WithPermission("write"));
-
-        var env = new DefaultEnvironmentExecutionContext(_influx);
-        await env.Initialise();
+        var migration = new Migration("1");
+        migration.AddUp("1",
+            new ChangeAuthorisationStateBuilder()
+                .WithUserName(result.User.Name)
+                .WithState("inactive"));
         
-        await migration.ExecuteAsync(env, MigrationDirection.Up);
+        var environment = new DefaultEnvironmentExecutionContext(_influx);
+        await environment.Initialise();
+        
+        var x = await migration.ExecuteAsync(environment, MigrationDirection.Up);
 
-        var permissions = await _influx.Create().GetAuthorizationsApi().FindAuthorizationsByUserIdAsync(user.Id);
-        Assert.That(permissions.Count, Is.EqualTo(0));
+        NunitExtensions.AssertMigrationSuccess(x);
+
+        var loaded = await _influx.Create().GetAuthorizationsApi().FindAuthorizationsByUserIdAsync(result.User.Id);
+        Assert.That(loaded.Count, Is.EqualTo(1));
+        Assert.That(loaded.First().Status, Is.EqualTo(AuthorizationUpdateRequest.StatusEnum.Inactive));
     }        
 
-    private async Task<Authorization> CreateToken(InfluxDB.Client.Api.Domain.Bucket bucket, InfluxDB.Client.Api.Domain.User user, params Permission.ActionEnum[] actions)
+    [Test]
+    public async Task ChangeAuthorizationState_ByBucket_Success()
     {
-        var permissions = actions.Select(x => new Permission(x, new PermissionResource(type: PermissionResource.TypeBuckets, id: bucket.Id)));
-        
-        var token = await _influx.Create().GetAuthorizationsApi().CreateAuthorizationAsync(
-            new AuthorizationPostRequest(
-                bucket.OrgID,
-                user.Id,
-                permissions.ToList())
-        );
+        var result = await CreateBucketAuth();
 
-        return token;
+        var migration = new Migration("1");
+        migration.AddUp("1",
+            new ChangeAuthorisationStateBuilder()
+                .WithBucketName(result.Bucket.Name)
+                .WithState("inactive"));
+        
+        var environment = new DefaultEnvironmentExecutionContext(_influx);
+        await environment.Initialise();
+        
+        var x = await migration.ExecuteAsync(environment, MigrationDirection.Up);
+
+        NunitExtensions.AssertMigrationSuccess(x);
+
+        var loaded = await _influx.Create().GetAuthorizationsApi().FindAuthorizationsByUserIdAsync(result.User.Id);
+        Assert.That(loaded.Count, Is.EqualTo(1));
+        Assert.That(loaded.First().Status, Is.EqualTo(AuthorizationUpdateRequest.StatusEnum.Inactive));
+    }    
+    
+    [Test]
+    public async Task ChangeAuthorizationState_ByBucketWithMultipleActions_Success()
+    {
+        var result = await CreateBucketAuth(Permission.ActionEnum.Read, Permission.ActionEnum.Write);
+
+        var migration = new Migration("1");
+        migration.AddUp("1",
+            new ChangeAuthorisationStateBuilder()
+                .WithBucketName(result.Bucket.Name)
+                .WithState("inactive"));
+        
+        var environment = new DefaultEnvironmentExecutionContext(_influx);
+        await environment.Initialise();
+        
+        var x = await migration.ExecuteAsync(environment, MigrationDirection.Up);
+
+        NunitExtensions.AssertMigrationSuccess(x);
+
+        var loaded = await _influx.Create().GetAuthorizationsApi().FindAuthorizationsByUserIdAsync(result.User.Id);
+        Assert.That(loaded.Count, Is.EqualTo(1));
+        Assert.That(loaded.First().Status, Is.EqualTo(AuthorizationUpdateRequest.StatusEnum.Inactive));
+    }
+    
+    [Test]
+    public async Task ChangeAuthorizationState_ByBucketAndUserName_Rollback()
+    {
+        var result = await CreateBucketAuth(Permission.ActionEnum.Read, Permission.ActionEnum.Write);
+
+        var migration = new Migration("1");
+        migration.AddUp("1",
+            new ChangeAuthorisationStateBuilder()
+                .WithUserName(result.User.Name)
+                .WithBucketName(result.Bucket.Name)
+                .WithState("inactive"));
+        migration.AddUp("2", new ForceErrorBuilder().ErrorExecute());
+        
+        var environment = new DefaultEnvironmentExecutionContext(_influx);
+        await environment.Initialise();
+        
+        var x = await migration.ExecuteAsync(environment, MigrationDirection.Up);
+
+        NunitExtensions.AssertMigrationRollback(x);
+
+        var loaded = await _influx.Create().GetAuthorizationsApi().FindAuthorizationsByUserIdAsync(result.User.Id);
+        Assert.That(loaded.Count, Is.EqualTo(1));
+        Assert.That(loaded.First().Status, Is.EqualTo(AuthorizationUpdateRequest.StatusEnum.Active));
+    }
+    
+    [Test]
+    public async Task ChangeAuthorizationState_ByUser_Rollback()
+    {
+        var result = await CreateBucketAuth(Permission.ActionEnum.Read, Permission.ActionEnum.Write);
+
+        var migration = new Migration("1");
+        migration.AddUp("1",
+            new ChangeAuthorisationStateBuilder()
+                .WithUserName(result.User.Name)
+                .WithState("inactive"));
+        migration.AddUp("2", new ForceErrorBuilder().ErrorExecute());
+        
+        var environment = new DefaultEnvironmentExecutionContext(_influx);
+        await environment.Initialise();
+        
+        var x = await migration.ExecuteAsync(environment, MigrationDirection.Up);
+
+        NunitExtensions.AssertMigrationRollback(x);
+
+        var loaded = await _influx.Create().GetAuthorizationsApi().FindAuthorizationsByUserIdAsync(result.User.Id);
+        Assert.That(loaded.Count, Is.EqualTo(1));
+        Assert.That(loaded.First().Status, Is.EqualTo(AuthorizationUpdateRequest.StatusEnum.Active));
+    }
+
+    [Test]
+    public async Task ChangeAuthorizationState_ByBucket_Rollback()
+    {
+        var result = await CreateBucketAuth(Permission.ActionEnum.Read, Permission.ActionEnum.Write);
+
+        var migration = new Migration("1");
+        migration.AddUp("1",
+            new ChangeAuthorisationStateBuilder()
+                .WithBucketName(result.Bucket.Name)
+                .WithState("inactive"));
+        migration.AddUp("2", new ForceErrorBuilder().ErrorExecute());
+        
+        var environment = new DefaultEnvironmentExecutionContext(_influx);
+        await environment.Initialise();
+        
+        var x = await migration.ExecuteAsync(environment, MigrationDirection.Up);
+
+        NunitExtensions.AssertMigrationRollback(x);
+
+        var loaded = await _influx.Create().GetAuthorizationsApi().FindAuthorizationsByUserIdAsync(result.User.Id);
+        Assert.That(loaded.Count, Is.EqualTo(1));
+        Assert.That(loaded.First().Status, Is.EqualTo(AuthorizationUpdateRequest.StatusEnum.Active));
+    }
+    
+    [Test]
+    public async Task ChangeAuthorizationState_ByToken_Rollback()
+    {
+        var result = await CreateBucketAuth(Permission.ActionEnum.Read, Permission.ActionEnum.Write);
+
+        var migration = new Migration("1");
+        migration.AddUp("1",
+            new ChangeAuthorisationStateBuilder()
+                .WithToken(result.Authorization.Token)
+                .WithState("inactive"));
+        migration.AddUp("2", new ForceErrorBuilder().ErrorExecute());
+        
+        var environment = new DefaultEnvironmentExecutionContext(_influx);
+        await environment.Initialise();
+        
+        var x = await migration.ExecuteAsync(environment, MigrationDirection.Up);
+
+        NunitExtensions.AssertMigrationRollback(x);
+
+        var loaded = await _influx.Create().GetAuthorizationsApi().FindAuthorizationsByUserIdAsync(result.User.Id);
+        Assert.That(loaded.Count, Is.EqualTo(1));
+        Assert.That(loaded.First().Status, Is.EqualTo(AuthorizationUpdateRequest.StatusEnum.Active));
+    }
+
+    [Test]
+    public async Task DeleteBucketToken_Success()
+    {
+        var result = await CreateBucketAuth();
+
+        var migration = new Migration("1");
+        migration.AddUp("1",
+            new DeleteBucketTokenBuilder().WithBucketName(result.Bucket.Name).WithUserName(result.User.Name));
+        
+        var environment = new DefaultEnvironmentExecutionContext(_influx);
+        await environment.Initialise();
+        
+        var x = await migration.ExecuteAsync(environment, MigrationDirection.Up);
+
+        NunitExtensions.AssertMigrationSuccess(x);
+
+        var loaded = await _influx.Create().GetAuthorizationsApi().FindAuthorizationsByUserIdAsync(result.User.Id);
+        Assert.That(loaded.Count, Is.EqualTo(0));
+    }
+
+    [Test]
+    public async Task DeleteBucketToken_Rollback()
+    {
+        var result = await CreateBucketAuth();
+
+        var migration = new Migration("1");
+        migration.AddUp("1",
+            new DeleteBucketTokenBuilder().WithBucketName(result.Bucket.Name).WithUserName(result.User.Name));
+        migration.AddUp("2", new ForceErrorBuilder().ErrorExecute());
+        
+        var environment = new DefaultEnvironmentExecutionContext(_influx);
+        await environment.Initialise();
+        
+        var x = await migration.ExecuteAsync(environment, MigrationDirection.Up);
+
+        NunitExtensions.AssertMigrationRollback(x);
+
+        var loaded = await _influx.Create().GetAuthorizationsApi().FindAuthorizationsByUserIdAsync(result.User.Id);
+        Assert.That(loaded.Count, Is.EqualTo(1));
     }
     
     
+    
+    record TestAuthCreateResult(
+        Organization Organization, 
+        InfluxDB.Client.Api.Domain.Bucket Bucket, 
+        InfluxDB.Client.Api.Domain.User User,
+        Authorization Authorization
+    );
+    
+    private async Task<TestAuthCreateResult> CreateBucketAuth(params Permission.ActionEnum[] actions)
+    {
+        var bucketName = _random.RandomString();
+        var userName = _random.RandomString();
+        var orgName = _random.RandomString();
+
+        var org = await _influx.Create().GetOrganizationsApi().CreateOrganizationAsync(orgName);
+
+        var bucket = await _influx.Create().GetBucketsApi().CreateBucketAsync(bucketName, org!.Id);
+        var user = await _influx.Create().GetUsersApi().CreateUserAsync(userName);
+
+        if (actions.Length == 0)
+        {
+            actions = new[] { Permission.ActionEnum.Read };
+        }
+
+        var auth = await _influx.Create().GetAuthorizationsApi().CreateAuthorizationAsync(new AuthorizationPostRequest()
+        {
+            OrgID = org.Id,
+            Status = AuthorizationUpdateRequest.StatusEnum.Active,
+            UserID = user.Id,
+            Permissions = actions.Select(x => new Permission(x, new PermissionResource(type: PermissionResource.TypeBuckets, id: bucket.Id))).ToList()
+        });
+        
+        Assert.That(auth.Token, Is.Not.Null);
+        Assert.That(auth.Token, Is.Not.Empty);
+
+        return new TestAuthCreateResult(org, bucket, user, auth);
+    }
 }

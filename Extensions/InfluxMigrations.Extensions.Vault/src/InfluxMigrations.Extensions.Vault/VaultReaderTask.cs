@@ -35,7 +35,7 @@ public class VaultReaderTaskBuilder : IMigrationTask
     }
 }
 
-[YamlTaskParser("vault-reader")]
+[YamlTaskParser("vault:read")]
 public class VaultReaderTaskParser : IYamlTaskParser
 {
     public IOperationTaskBuilder ParseOperationTask(YamlMappingNode node)
