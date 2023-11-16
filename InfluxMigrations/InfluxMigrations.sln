@@ -1,34 +1,34 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "_build", "..\build\_build.csproj", "{60E364F0-4115-4F27-90C5-0D033FAFB833}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InfluxMigrations.Core", "src\Core\InfluxMigrations.Core\InfluxMigrations.Core.csproj", "{E080B9CE-2DE0-4052-89CA-C95A4B9675E1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InfluxMigrations.Core", "src\Core\InfluxMigrations.Core\InfluxMigrations.Core.csproj", "{E080B9CE-2DE0-4052-89CA-C95A4B9675E1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InfluxMigrations.Operations", "src\Core\InfluxMigrations.Operations\InfluxMigrations.Operations.csproj", "{6058CB72-DC4E-4855-B0F2-8B0ADD022BAC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InfluxMigrations.Operations", "src\Core\InfluxMigrations.Operations\InfluxMigrations.Operations.csproj", "{6058CB72-DC4E-4855-B0F2-8B0ADD022BAC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InfluxMigrations.Tasks", "src\Core\InfluxMigrations.Tasks\InfluxMigrations.Tasks.csproj", "{56388496-68D7-48FF-979C-04BFC3FB3159}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InfluxMigrations.Tasks", "src\Core\InfluxMigrations.Tasks\InfluxMigrations.Tasks.csproj", "{56388496-68D7-48FF-979C-04BFC3FB3159}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InfluxMigrations.Impl", "src\Core\InfluxMigrations.Impl\InfluxMigrations.Impl.csproj", "{990ACD8A-25C4-4FB1-AD2F-6E8E1D0F4B41}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InfluxMigrations.Impl", "src\Core\InfluxMigrations.Impl\InfluxMigrations.Impl.csproj", "{990ACD8A-25C4-4FB1-AD2F-6E8E1D0F4B41}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InfluxMigrations.Yaml", "src\Core\InfluxMigrations.Yaml\InfluxMigrations.Yaml.csproj", "{311395FB-3EF1-4225-A03C-81FBF721E388}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InfluxMigrations.Yaml", "src\Core\InfluxMigrations.Yaml\InfluxMigrations.Yaml.csproj", "{311395FB-3EF1-4225-A03C-81FBF721E388}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InfluxMigrations.Yaml.Parsers", "src\Core\InfluxMigrations.Yaml.Parsers\InfluxMigrations.Yaml.Parsers.csproj", "{F2FA054B-7A3B-4104-AAD6-C43B2BC74E80}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InfluxMigrations.Yaml.Parsers", "src\Core\InfluxMigrations.Yaml.Parsers\InfluxMigrations.Yaml.Parsers.csproj", "{F2FA054B-7A3B-4104-AAD6-C43B2BC74E80}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InfluxMigrate", "src\Core\InfluxMigrate\InfluxMigrate.csproj", "{0A05ED36-4622-45BF-887E-2513EEC0DA44}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InfluxMigrate", "src\Core\InfluxMigrate\InfluxMigrate.csproj", "{0A05ED36-4622-45BF-887E-2513EEC0DA44}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InfluxMigrations.CodeFirst", "src\Core\InfluxMigrations.CodeFirst\InfluxMigrations.CodeFirst.csproj", "{CB2BC5EE-0F3B-46F9-BBC0-A112686393E2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InfluxMigrations.CodeFirst", "src\Core\InfluxMigrations.CodeFirst\InfluxMigrations.CodeFirst.csproj", "{CB2BC5EE-0F3B-46F9-BBC0-A112686393E2}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{C9C724A6-A24F-4BE4-8DCC-AE101AE2CFE1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InfluxMigrations.TestCommon", "src\Core\Tests\InfluxMigrations.TestCommon\InfluxMigrations.TestCommon.csproj", "{18D51819-04C0-4582-80DB-45E3BE36CE4B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InfluxMigrations.TestCommon", "src\Core\Tests\InfluxMigrations.TestCommon\InfluxMigrations.TestCommon.csproj", "{18D51819-04C0-4582-80DB-45E3BE36CE4B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InfluxMigrations.Default.IntegrationTests", "src\Core\Tests\InfluxMigrations.Default.IntegrationTests\InfluxMigrations.Default.IntegrationTests.csproj", "{0C36E947-BDAD-4CEC-BE11-D0550FE6DF67}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InfluxMigrations.Default.IntegrationTests", "src\Core\Tests\InfluxMigrations.Default.IntegrationTests\InfluxMigrations.Default.IntegrationTests.csproj", "{0C36E947-BDAD-4CEC-BE11-D0550FE6DF67}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InfluxMigrations.Core.UnitTests", "src\Core\Tests\InfluxMigrations.Core.UnitTests\InfluxMigrations.Core.UnitTests.csproj", "{18376ED9-77EE-4880-8D88-1504B13FD8EC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InfluxMigrations.Core.UnitTests", "src\Core\Tests\InfluxMigrations.Core.UnitTests\InfluxMigrations.Core.UnitTests.csproj", "{18376ED9-77EE-4880-8D88-1504B13FD8EC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InfluxMigrations.Operations.IntegrationTests", "src\Core\Tests\InfluxMigrations.Operations.IntegrationTests\InfluxMigrations.Operations.IntegrationTests.csproj", "{2BB00AF0-FF5F-4E35-A807-06E3D76BD346}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InfluxMigrations.Operations.IntegrationTests", "src\Core\Tests\InfluxMigrations.Operations.IntegrationTests\InfluxMigrations.Operations.IntegrationTests.csproj", "{2BB00AF0-FF5F-4E35-A807-06E3D76BD346}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InfluxMigrations.Yaml.UnitTests", "src\Core\Tests\InfluxMigrations.Yaml.UnitTests\InfluxMigrations.Yaml.UnitTests.csproj", "{51C10F47-D938-4EB7-93E3-385827C87AE2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InfluxMigrations.Yaml.UnitTests", "src\Core\Tests\InfluxMigrations.Yaml.UnitTests\InfluxMigrations.Yaml.UnitTests.csproj", "{51C10F47-D938-4EB7-93E3-385827C87AE2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
